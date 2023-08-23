@@ -1,3 +1,5 @@
+[![wakatime](https://wakatime.com/badge/user/47966c5b-ebb8-433e-b9e3-f366282ab406/project/99d28663-ce7a-4ab5-ad28-6e3d49883354.svg)](https://wakatime.com/badge/user/47966c5b-ebb8-433e-b9e3-f366282ab406/project/99d28663-ce7a-4ab5-ad28-6e3d49883354)
+
 ## Syntax
 
 ```teclang
