@@ -1,0 +1,25 @@
+extern func printf() i8*
+
+func main() i32 {
+    for 0..5 {
+        printf("%d\n", it)
+    }
+
+    /*for 0..5 as i {
+        printf("%d\n", i)
+    }*/
+
+    /*for 0..5 step 2 {
+        printf("%d\n", it)
+    }*/
+
+    /*for 0..5 as i step 2 {
+        printf("%d\n", i)
+    }*/
+
+    /*for 0..5 step 2 as i {
+        printf("%d\n", i)
+    }*/
+
+    return 0
+}

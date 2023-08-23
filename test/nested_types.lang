@@ -1,0 +1,23 @@
+extern func printf() i8*
+extern func malloc() i8*
+
+type User {
+    age: i8 = 420
+}
+
+type Player {
+    id: i32 = 69
+    user: User = new User(21)
+}
+
+func<User> construct(age: i8) {
+    this.age = age
+}
+
+func main() i32 {
+    player = new Player()
+    printf("Player id: %d\n", player.id)
+    printf("Player -> User age: %d\n", player.user.age)
+
+    return 0
+}

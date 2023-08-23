@@ -1,0 +1,16 @@
+enum Color {
+    Red
+    Green
+    Blue
+}
+
+func main() i32 {
+    x = Color::Red
+
+    return when x {
+        Color::Red -> 1
+        Color::Green -> 2
+        Color::Blue -> 3
+        // else -> 4
+    }
+}

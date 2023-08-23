@@ -1,0 +1,13 @@
+func add<T>(a: T, b: T) T {
+    return a + b;
+}
+
+// Generic with constraints
+func add<T: bool | i8 | i16 | i32 | i64 | double>(a: T, b: T) T {
+    return a + b;
+}
+
+// Member generic function (Not sure what use this has)
+func<User> getAge<T>() i32 {
+    return age;
+}
