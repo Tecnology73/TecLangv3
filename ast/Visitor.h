@@ -20,32 +20,10 @@ public:
     }
 
     /*
-     * Expressions
+     * Top level
      */
 
-    virtual llvm::Value *Visit(class ConstructorCall *node) = 0;
-
-    virtual llvm::Value *Visit(class FunctionParameter *node) = 0;
-
-    virtual llvm::Value *Visit(class FunctionCall *node) = 0;
-
-    virtual llvm::Value *Visit(class BinaryOperation *node) = 0;
-
-    virtual llvm::Value *Visit(class VariableReference *node) = 0;
-
-    virtual llvm::Value *Visit(class StaticRef *node) = 0;
-
-    virtual llvm::Value *Visit(class When *node) = 0;
-
-    virtual llvm::Value *Visit(class WhenCondition *node) = 0;
-
-    /*
-     * Statements
-     */
-
-    virtual void Visit(class TypeDefinition *node) = 0;
-
-    virtual llvm::Value *Visit(class Function *node) = 0;
+    virtual llvm::Value *Visit(class TypeDefinition *node) = 0;
 
     virtual llvm::Value *Visit(class Enum *node) = 0;
 
@@ -54,6 +32,14 @@ public:
     virtual llvm::Value *Visit(class EnumConstructor *node) = 0;
 
     virtual llvm::Value *Visit(class EnumParameter *node) = 0;
+
+    virtual llvm::Value *Visit(class Function *node) = 0;
+
+    virtual llvm::Value *Visit(class FunctionParameter *node) = 0;
+
+    /*
+     * Statements
+     */
 
     virtual llvm::Value *Visit(class Return *node) = 0;
 
@@ -66,6 +52,24 @@ public:
     virtual llvm::Value *Visit(class Continue *node) = 0;
 
     virtual llvm::Value *Visit(class Break *node) = 0;
+
+    /*
+     * Expressions
+     */
+
+    virtual llvm::Value *Visit(class ConstructorCall *node) = 0;
+
+    virtual llvm::Value *Visit(class FunctionCall *node) = 0;
+
+    virtual llvm::Value *Visit(class BinaryOperation *node) = 0;
+
+    virtual llvm::Value *Visit(class VariableReference *node) = 0;
+
+    virtual llvm::Value *Visit(class StaticRef *node) = 0;
+
+    virtual llvm::Value *Visit(class When *node) = 0;
+
+    virtual llvm::Value *Visit(class WhenCondition *node) = 0;
 
     /*
      * Literals

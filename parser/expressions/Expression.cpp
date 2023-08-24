@@ -138,13 +138,14 @@ Node *parseExpression(Parser *parser, int minPrecedence) {
             )
             parser->NextToken(); // Consume operator
 
+        // Properly handle paren groups.
         if (parser->currentToken.is(Token::Type::OpenParen)) {
             parser->NextToken(); // Consume '('
             Node *right = parseExpression(parser, 0);
             if (right == nullptr)
                 return nullptr;
 
-            left = BinaryOperation::Create(op, left, right);
+            left = new BinaryOperation(op, left, right);
             if (parser->currentToken.type != Token::Type::CloseParen) {
                 parser->PrintSyntaxError(")");
                 return nullptr;
@@ -156,12 +157,9 @@ Node *parseExpression(Parser *parser, int minPrecedence) {
             if (right == nullptr)
                 return nullptr;
 
-            left = BinaryOperation::Create(op, left, right);
+            left = new BinaryOperation(op, left, right);
         }
     }
-
-    /*if (parser->currentToken.is(Token::Type::Semicolon))
-        parser->NextToken(); // Consume ';'*/
 
     return left;
 }

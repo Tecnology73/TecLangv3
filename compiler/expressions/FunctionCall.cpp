@@ -1,17 +1,17 @@
 #include "FunctionCall.h"
 #include "../Compiler.h"
 #include "VariableReference.h"
-#include "../codegen/FunctionContext.h"
+#include "../context/FunctionContext.h"
 
 llvm::Value *generateTypeFunctionCall(
     Visitor *v,
-    TypeDefinition *parentType,
+    TypeBase *parentType,
     FunctionCall *var,
     llvm::Value *value
 ) {
     if (!var) return value;
 
-    auto func = parentType->getFunction(var->name);
+    /*auto func = parentType->getFunction(var->name);
     if (!func) {
         v->ReportError(ErrorCode::TYPE_UNKNOWN_FUNCTION, {var->name, parentType->name}, var);
         return nullptr;
@@ -40,7 +40,8 @@ llvm::Value *generateTypeFunctionCall(
         return getValueFromType(v, func->returnType, var->next, value);
     }
 
-    return value;
+    return value;*/
+    return nullptr;
 }
 
 llvm::Value *tryGenerateWithThisPrefix(Visitor *v, FunctionCall *node) {
@@ -48,7 +49,7 @@ llvm::Value *tryGenerateWithThisPrefix(Visitor *v, FunctionCall *node) {
     auto context = Compiler::getScopeManager().findContext<FunctionContext>();
     if (!context) return nullptr;
 
-    auto currentFunction = context->function;
+    /*auto currentFunction = context->function;
     if (!currentFunction->ownerType || !currentFunction->ownerType->isStruct) return nullptr;
 
     // Check if the "this" parameter exists.
@@ -59,7 +60,8 @@ llvm::Value *tryGenerateWithThisPrefix(Visitor *v, FunctionCall *node) {
     auto function = currentFunction->ownerType->getFunction(node->name);
     if (!function) return nullptr;
 
-    return generateTypeFunctionCall(v, currentFunction->ownerType, node, param->alloc);
+    return generateTypeFunctionCall(v, currentFunction->ownerType, node, param->alloc);*/
+    return nullptr;
 }
 
 llvm::Value *generateFunctionCall(Visitor *v, FunctionCall *node) {

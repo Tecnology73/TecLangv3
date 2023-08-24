@@ -3,7 +3,7 @@
 #include "../../ast/Literals.h"
 #include "../../ast/TopLevel.h"
 #include "../Compiler.h"
-#include "../codegen/FunctionContext.h"
+#include "../context/FunctionContext.h"
 
 llvm::Function *generateDefaultConstructor(Visitor *v, TypeDefinition *type) {
     auto funcType = llvm::FunctionType::get(
@@ -48,13 +48,12 @@ llvm::Function *generateDefaultConstructor(Visitor *v, TypeDefinition *type) {
     }
 
     // Register the constructor statement.
-    auto function = new Function();
-    function->name = "construct";
+    auto function = new Function("construct");
     function->ownerType = type;
     function->returnType = type;
     function->llvmFunction = func;
 
-    type->addFunction(function);
+    type->add(function);
 
     // Return instance
     Compiler::getBuilder().CreateRet(ptr);
@@ -67,8 +66,8 @@ llvm::Function *generateConstructor(Visitor *visitor, Function *function, llvm::
 
     // Compile a list of all the parameters.
     std::vector<llvm::Type *> params;
-    for (const auto &item: function->parameters)
-        params.push_back(item->type->llvmType);
+    /*for (const auto &item: function->parameters)
+        params.push_back(item->type->llvmType);*/
 
     // Define the statement
     auto funcType = llvm::FunctionType::get(
@@ -93,8 +92,7 @@ llvm::Function *generateConstructor(Visitor *visitor, Function *function, llvm::
     auto ptr = Compiler::getBuilder().CreateCall(defaultConstruct);
 
     // Make sure "this" is available.
-    auto varDecl = new VariableDeclaration(function->token);
-    varDecl->name = "this";
+    auto varDecl = new VariableDeclaration(function->token, "this");
     varDecl->type = type;
     varDecl->alloc = ptr;
     Compiler::getScopeManager().add(varDecl);
@@ -209,11 +207,11 @@ TypeBase *inferType(Visitor *v, Node *n) {
 }
 
 llvm::Type *generateTypeDefinition(Visitor *v, TypeBase *t) {
-    return generateTypeDefinition(v, dynamic_cast<TypeDefinition *>(t));
+    return t->getLlvmType();
 }
 
 llvm::Type *generateTypeDefinition(Visitor *v, TypeDefinition *type) {
-    if (type->llvmType)
+    /*if (type->llvmType)
         return type->llvmType;
 
     if (type->name == "i8")
@@ -256,5 +254,6 @@ llvm::Type *generateTypeDefinition(Visitor *v, TypeDefinition *type) {
     // This includes the constructors.
     generateFunctions(v, type);
 
-    return type->llvmType;
+    return type->llvmType;*/
+    return nullptr;
 }

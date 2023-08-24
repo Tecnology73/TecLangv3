@@ -8,7 +8,8 @@ public:
     explicit VarDeclarationContext(Visitor *visitor, VariableDeclaration *var) : CodegenContext(visitor), var(var) {}
 
     TypeDefinition *getReturnType() override {
-        return dynamic_cast<TypeDefinition *>(var->type);
+        // return var->type;
+        return nullptr;
     }
 
 public:

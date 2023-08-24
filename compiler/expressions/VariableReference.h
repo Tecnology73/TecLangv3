@@ -6,7 +6,7 @@
 
 llvm::Value *getValueFromType(
     Visitor *v,
-    TypeDefinition *parentType,
+    TypeBase *parentType,
     ChainableNode *var,
     llvm::Value *value
 );

@@ -5,7 +5,7 @@
 #include <llvm/IR/Verifier.h>
 #include "../../ast/Statements.h"
 #include "../Compiler.h"
-#include "../codegen/ForLoopContext.h"
+#include "../context/ForLoopContext.h"
 
 llvm::Value *generateBreak(Visitor *v, Break *node) {
     auto context = Compiler::getScopeManager().findContext<ForLoopContext>();

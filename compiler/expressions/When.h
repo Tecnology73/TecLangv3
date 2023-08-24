@@ -2,7 +2,7 @@
 
 #include <llvm/IR/Value.h>
 #include "../../ast/Expressions.h"
-#include "../codegen/WhenContext.h"
+#include "../context/WhenContext.h"
 
 namespace {
     // Check if the When conditions are valid.
@@ -35,7 +35,7 @@ namespace {
             seenValues.emplace(value->next->name);
         }
 
-        when->areAllCasesCovered = seenValues.size() == anEnum->values.size();
+        when->areAllCasesCovered = seenValues.size() == anEnum->GetValues().size();
         return when->areAllCasesCovered;
     }
 }

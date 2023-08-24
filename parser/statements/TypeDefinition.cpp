@@ -12,7 +12,7 @@ TypeDefinition *parseTypeDefinition(Parser *parser) {
         return nullptr;
     }
 
-    auto typeDef = TypeDefinition::Create(parser->NextToken());
+    /*auto typeDef = TypeDefinition::Create(parser->NextToken());
     if (parser->NextToken().isNot(Token::Type::OpenCurly)) {
         parser->PrintSyntaxError("{");
         return nullptr;
@@ -23,7 +23,7 @@ TypeDefinition *parseTypeDefinition(Parser *parser) {
         auto node = parseVariableDeclaration(parser);
         if (node == nullptr) return nullptr;
 
-        typeDef->addField(node);
+        typeDef->add(node);
     }
 
     if (parser->currentToken.isNot(Token::Type::CloseCurly)) {
@@ -32,5 +32,6 @@ TypeDefinition *parseTypeDefinition(Parser *parser) {
     }
 
     parser->NextToken(); // Consume '}'
-    return typeDef;
+    return typeDef;*/
+    return nullptr;
 }

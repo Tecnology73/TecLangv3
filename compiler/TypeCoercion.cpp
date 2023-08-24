@@ -26,7 +26,7 @@ llvm::Value *TypeCoercion::coerce(llvm::Value *value, llvm::Type *toType) {
 }
 
 bool TypeCoercion::canCoerceTo(TypeBase *fromType, TypeBase *toType) {
-    if (toType->isStruct)
+    if (!toType->isValueType)
         return false;
 
     // Allow casting up but not down.
@@ -58,7 +58,7 @@ bool TypeCoercion::canCoerceTo(TypeBase *fromType, TypeBase *toType) {
     else if (fromType->name == "double")
         return toType->name == "double";
 
-    return false;
+    throw std::runtime_error("Unhandled value type: " + fromType->name);
 }
 
 int TypeCoercion::getTypePriority(llvm::Type *type) {

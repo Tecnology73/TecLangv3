@@ -6,7 +6,7 @@
 #include "../../ast/Statements.h"
 #include "../Compiler.h"
 #include "TypeDefinition.h"
-#include "../codegen/VarDeclarationContext.h"
+#include "../context/VarDeclarationContext.h"
 
 llvm::Value *generateVariableDeclaration(Visitor *v, VariableDeclaration *node) {
     if (node->alloc)
@@ -25,14 +25,15 @@ llvm::Value *generateVariableDeclaration(Visitor *v, VariableDeclaration *node) 
     }
 
     // If the expression is a constant, we don't need to do any allocations.
-    if (!node->type->isStruct && dynamic_cast<Literal *>(node->expression)) {
+    /*if (!node->type->isStruct && dynamic_cast<Literal *>(node->expression)) {
         node->alloc = node->expression->Accept(v);
         Compiler::getScopeManager().add(node);
 
         return node->alloc;
-    }
+    }*/
 
-    if (node->type->isStruct) {
+    // if (node->type->isStruct) {
+    if (false) {
         if (node->expression)
             node->alloc = node->expression->Accept(v);
     } else {

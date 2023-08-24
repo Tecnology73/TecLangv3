@@ -1,26 +1,24 @@
 #include "FunctionParameter.h"
 
-FunctionParameter *parseFunctionParameter(Parser *parser) {
+bool parseFunctionParameter(Parser *parser, Function *function) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {
-        parser->PrintSyntaxError("argument name");
-        return nullptr;
+        parser->PrintSyntaxError("parameter name");
+        return false;
     }
 
-    auto parameter = new FunctionParameter(parser->currentToken);
-    parameter->name = parser->currentToken.value;
-
+    auto beginToken = parser->currentToken;
     if (parser->NextToken().isNot(Token::Type::Colon)) {
         parser->PrintSyntaxError(":");
-        return nullptr;
+        return false;
     }
 
     if (parser->NextToken().isNot(Token::Type::Identifier)) {
         parser->PrintSyntaxError("type");
-        return nullptr;
+        return false;
     }
 
-    parameter->type = TypeDefinition::Create(parser->currentToken);
-
+    // function->addParameter(beginToken, beginToken.value, TypeDefinition::Create(parser->currentToken));
+    function->addParameter(beginToken, beginToken.value, nullptr);
     parser->NextToken(); // Consume the type name.
-    return parameter;
+    return true;
 }

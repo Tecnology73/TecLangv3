@@ -14,6 +14,10 @@ void Enum::AddValue(EnumValue *value) {
     valueIndices[value->name] = values.size() - 1;
 }
 
+const std::vector<class EnumValue *> &Enum::GetValues() const {
+    return values;
+}
+
 int Enum::GetValueIndex(const std::string &name) const {
     auto it = valueIndices.find(name);
     if (it == valueIndices.end()) return -1;

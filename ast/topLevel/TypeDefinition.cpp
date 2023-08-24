@@ -16,8 +16,8 @@ llvm::Value *TypeDefinition::getDefaultValue() const {
     else if (name == "bool")
         return Compiler::getBuilder().getInt1(false);
 
-    if (!isStruct)
-        throw std::runtime_error("Cannot get default value of non-type '" + name + "'!");
+    // if (!isStruct)
+    //     throw std::runtime_error("Cannot get default value of non-type '" + name + "'!");
 
     return Compiler::getBuilder().CreateCall(getFunction("construct")->llvmFunction);
 }
@@ -26,7 +26,7 @@ bool TypeDefinition::canCastTo(TypeBase *other) const {
     return TypeCoercion::canCoerceTo((TypeBase *) this, other);
 }
 
-llvm::Type *TypeDefinition::setLlvmType(llvm::Type *type) {
+/*llvm::Type *TypeDefinition::setLlvmType(llvm::Type *type) {
     if (!llvmType) {
         llvmType = type;
         isStruct = llvm::isa<llvm::StructType>(type);
@@ -35,11 +35,18 @@ llvm::Type *TypeDefinition::setLlvmType(llvm::Type *type) {
     } else std::cout << "Type '" << name << "' has already been compiled!" << std::endl;
 
     return llvmType;
-}
+}*/
 
-void TypeDefinition::addField(VariableDeclaration *field) {
+void TypeDefinition::add(VariableDeclaration *field) {
     fields[field->name] = field;
     fieldIndices[field->name] = fields.size() - 1;
+}
+
+void TypeDefinition::add(Function *function) {
+    if (functions.find(function->name) == functions.end())
+        functions[function->name] = std::vector<Function *>();
+
+    functions[function->name].push_back(function);
 }
 
 VariableDeclaration *TypeDefinition::getField(const std::string &fieldName) const {
@@ -56,35 +63,9 @@ int TypeDefinition::getFieldIndex(const std::string &fieldName) {
     return fieldIndices[fieldName];
 }
 
-TypeDefinition *TypeDefinition::getFieldTypeDef(const std::string &fieldName) const {
+TypeDefinition *TypeDefinition::getFieldType(const std::string &fieldName) const {
     return dynamic_cast<TypeDefinition *>(fields.at(fieldName)->type);
 }
-
-void TypeDefinition::addFunction(Function *function) {
-    if (functions.find(function->name) == functions.end())
-        functions[function->name] = std::vector<Function *>();
-
-    functions[function->name].push_back(function);
-}
-
-TypeDefinition *TypeDefinition::Create(const Token &token) {
-    return Create(token, token.value);
-}
-
-TypeDefinition *TypeDefinition::Create(const Token &token, std::string name) {
-    if (auto existingType = Compiler::getScopeManager().getType(name))
-        return existingType;
-
-    auto type = new TypeDefinition(token);
-    type->name = name;
-
-    Compiler::getScopeManager().add(type);
-    return type;
-}
-
-/*
- * Function
- */
 
 Function *TypeDefinition::getFunction(const std::string &name) const {
     if (functions.find(name) == functions.end())
@@ -120,4 +101,17 @@ Function *TypeDefinition::getFunction(const std::string &funcName, const std::ve
     }
 
     return nullptr;
+}
+
+TypeDefinition *TypeDefinition::Create(const Token &token) {
+    return Create(token, token.value);
+}
+
+TypeDefinition *TypeDefinition::Create(const Token &token, std::string name) {
+    if (auto existingType = Compiler::getScopeManager().getType(name))
+        return existingType;
+
+    auto type = new TypeDefinition(token, name);
+    Compiler::getScopeManager().add(type);
+    return type;
 }

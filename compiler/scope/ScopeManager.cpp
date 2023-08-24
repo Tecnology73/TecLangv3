@@ -1,5 +1,5 @@
 #include "ScopeManager.h"
-#include "../codegen/WhenContext.h"
+#include "../context/WhenContext.h"
 #include <iostream>
 
 ScopeManager *ScopeManager::instance = nullptr;
@@ -39,12 +39,11 @@ void ScopeManager::addBuiltinType(const std::string &name, llvm::LLVMContext &co
     auto type = new TypeDefinition(Token{
         .type = Token::Type::Identifier,
         .value = name
-    });
-    type->name = name;
+    }, name);
 
-    root->add(type);
+    type->getLlvmType();
 
-    if (type->name == "bool")
+    /*if (type->name == "bool")
         type->llvmType = llvm::Type::getInt1Ty(context);
     else if (type->name == "i8")
         type->llvmType = llvm::Type::getInt8Ty(context);
@@ -61,7 +60,8 @@ void ScopeManager::addBuiltinType(const std::string &name, llvm::LLVMContext &co
     else if (type->name == "void")
         type->llvmType = llvm::Type::getVoidTy(context);
 
-    root->addCompiledType(type);
+    root->add(type);*/
+    // root->addCompiledType(type);
 }
 
 /*

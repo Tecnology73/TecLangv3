@@ -1,5 +1,5 @@
 #pragma once
 
-#include "../../ast/Statements.h"
+#include "../../ast/topLevel/Function.h"
 
-FunctionParameter *parseFunctionParameter(Parser *parser);
+bool parseFunctionParameter(Parser *parser, Function *function);

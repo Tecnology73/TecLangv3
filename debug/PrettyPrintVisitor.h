@@ -147,7 +147,7 @@ public:
      * Statements
      */
 
-    void Visit(TypeDefinition *node) override {
+    llvm::Value *Visit(TypeDefinition *node) override {
         Print("Type: %s\n", node->name.c_str());
         indent += 2;
 
@@ -166,6 +166,7 @@ public:
         }
 
         indent -= 4;
+        return nullptr;
     }
 
     llvm::Value *Visit(Function *node) override {
@@ -194,9 +195,9 @@ public:
     llvm::Value *Visit(Enum *node) override {
         Print("Enum: %s\n", node->name.c_str());
 
-        Print("Values: %d\n", node->values.size());
+        Print("Values: %d\n", node->GetValues().size());
         indent += 2;
-        for (auto &value: node->values)
+        for (auto &value: node->GetValues())
             value->Accept(this);
 
         indent -= 2;

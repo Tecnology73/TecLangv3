@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdexcept>
 #include <llvm/IR/Value.h>
 #include "../lexer/Token.h"
 
@@ -31,4 +32,13 @@ public:
     ChainableNode *next = nullptr;
 
     class TypeDefinition *ownerType = nullptr;
+};
+
+class Literal : public Node {
+public:
+    using Node::Node;
+
+    llvm::Value *Accept(class Visitor *visitor) override {
+        throw std::runtime_error("Literal::Accept() should never be called.");
+    }
 };

@@ -16,7 +16,7 @@ Function *parseFunction(Parser *parser) {
     }
 
     // Function belongs to a type.
-    TypeDefinition *ownerType = nullptr;
+    TypeBase *ownerType = nullptr;
     if (!isExternal && parser->PeekToken().is(Token::Type::LessThan)) {
         parser->NextToken();
 
@@ -25,7 +25,7 @@ Function *parseFunction(Parser *parser) {
             return nullptr;
         }
 
-        ownerType = TypeDefinition::Create(parser->currentToken);
+        // ownerType = TypeDefinition::Create(parser->currentToken);
         if (parser->NextToken().isNot(Token::Type::GreaterThan)) {
             parser->PrintSyntaxError(">");
             return nullptr;
@@ -39,22 +39,16 @@ Function *parseFunction(Parser *parser) {
     }
 
     auto function = new Function(parser->currentToken);
-    function->name = parser->NextToken().value;
     function->ownerType = ownerType;
     function->isExternal = isExternal;
 
     if (ownerType) {
-        ownerType->addFunction(function);
+        // ownerType->add(function);
 
         // "this" is always the first parameter.
         // Constructors have "this" malloc'd.
-        if (function->name != "construct") {
-            auto thisDecl = new FunctionParameter(function->token);
-            thisDecl->function = function;
-            thisDecl->name = "this";
-            thisDecl->type = ownerType;
-            function->addParameter(thisDecl);
-        }
+        if (function->name != "construct")
+            function->addParameter(parser->currentToken, "this", ownerType);
     }
 
     if (parser->NextToken().isNot(Token::Type::OpenParen)) {
@@ -65,21 +59,13 @@ Function *parseFunction(Parser *parser) {
     // Parse parameters
     parser->NextToken();
     while (parser->currentToken.isNot(Token::Type::CloseParen)) {
-        if (parser->currentToken.isNot(Token::Type::Identifier)) {
-            parser->PrintSyntaxError("argument identifier");
+        if (!parseFunctionParameter(parser, function))
             return nullptr;
-        }
-
-        auto parameter = parseFunctionParameter(parser);
-        if (!parameter)
-            return nullptr;
-
-        function->addParameter(parameter);
 
         if (parser->currentToken.is(Token::Type::Comma)) {
-            parser->NextToken();
+            parser->NextToken(); // Consume ','
         } else if (parser->currentToken.isNot(Token::Type::CloseParen)) {
-            parser->PrintSyntaxError(",  or )");
+            parser->PrintSyntaxError(", or )");
             return nullptr;
         }
     }
@@ -97,7 +83,7 @@ Function *parseFunction(Parser *parser) {
             parser->NextToken();
         }
 
-        function->returnType = TypeDefinition::Create(name);
+        // function->returnType = TypeDefinition::Create(name);
     }
 
     if (!function->isExternal) {

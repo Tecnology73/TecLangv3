@@ -3,7 +3,7 @@
 #include "../../ast/Statements.h"
 #include "../Compiler.h"
 #include "../TypeCoercion.h"
-#include "../codegen/ReturnContext.h"
+#include "../context/ReturnContext.h"
 
 llvm::ReturnInst *generateReturn(Visitor *v, Return *ret) {
     auto returnType = Compiler::getScopeManager().getContext()->getReturnType();

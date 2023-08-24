@@ -5,7 +5,7 @@
 #include <llvm/IR/Verifier.h>
 #include "../../ast/Statements.h"
 #include "../Compiler.h"
-#include "../codegen/ForLoopContext.h"
+#include "../context/ForLoopContext.h"
 
 llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
     // Setup context
@@ -29,7 +29,6 @@ llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
 
     // iterator
     auto it = new VariableDeclaration(node->token);
-    it->name = node->identifier->name;
     // it->type = inferType(v, cond->lhs);
     it->type = Compiler::getScopeManager().getType("i32");
 

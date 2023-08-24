@@ -23,7 +23,7 @@ llvm::Value *generateConstructorCall(Visitor *v, ConstructorCall *node) {
         args.push_back(item->Accept(v));
 
     // Find the constructor that matches the argTypes.
-    auto constructFunction = node->type->getFunction("construct", args);
+    /*auto constructFunction = node->type->getFunction("construct", args);
     if (!constructFunction) {
         std::string argTypes;
         for (const auto &item: args) {
@@ -58,5 +58,6 @@ llvm::Value *generateConstructorCall(Visitor *v, ConstructorCall *node) {
         );
     }
 
-    return ptr;
+    return ptr;*/
+    return nullptr;
 }

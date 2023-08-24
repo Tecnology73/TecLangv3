@@ -19,8 +19,9 @@ file(GLOB_RECURSE AST_SOURCES LIST_DIRECTORIES true ast/*.h ast/*.cpp)
 file(GLOB_RECURSE COMPILER_SOURCES LIST_DIRECTORIES true compiler/*.h compiler/*.cpp)
 file(GLOB_RECURSE LEXER_SOURCES LIST_DIRECTORIES true lexer/*.h lexer/*.cpp)
 file(GLOB_RECURSE PARSER_SOURCES LIST_DIRECTORIES true parser/*.h parser/*.cpp)
+file(GLOB_RECURSE ANALYSIS_SOURCES LIST_DIRECTORIES true analysis/*.h analysis/*.cpp)
 
-add_executable(${BINARY}_run main.cpp Console.cpp ${AST_SOURCES} ${COMPILER_SOURCES} ${LEXER_SOURCES} ${PARSER_SOURCES})
+add_executable(${BINARY}_run main.cpp Console.cpp ${AST_SOURCES} ${COMPILER_SOURCES} ${LEXER_SOURCES} ${PARSER_SOURCES} ${ANALYSIS_SOURCES})
 #add_executable(${BINARY}_run main_network.cpp)
 
 # Find the libraries that correspond to the LLVM components

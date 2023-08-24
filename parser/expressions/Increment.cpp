@@ -1,8 +1,8 @@
-#include "Increment.h"
-#include "../../ast/Literals.h"
 #include "../../ast/Expressions.h"
+#include "../../ast/Literals.h"
 #include "Expression.h"
 
+// TODO: IS THIS ACTUALLY CORRECT!?!?
 Node *parseIncrement(Parser *parser) {
     if (
         parser->currentToken.isNot(Token::Type::PlusPlus) &&
@@ -12,14 +12,14 @@ Node *parseIncrement(Parser *parser) {
         return nullptr;
     }
 
-    auto node = new Integer(parser->currentToken);
-    node->value = 1;
+    auto lhs = new Integer(parser->currentToken);
+    lhs->value = 1;
     parser->NextToken(); // Consume '++' or '--'
 
     // Most likely a suffix/postfix increment/decrement.
     // In this case, the identifier has already been parsed.
     if (parser->currentToken.isNot(Token::Type::Identifier))
-        return node;
+        return lhs;
 
     // Prefix increment/decrement.
     auto rhs = parseExpression(parser);
@@ -28,5 +28,5 @@ Node *parseIncrement(Parser *parser) {
         return nullptr;
     }
 
-    return BinaryOperation::Create(node->token, node, rhs);
+    return new BinaryOperation(lhs->token, lhs, rhs);
 }

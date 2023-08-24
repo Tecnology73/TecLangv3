@@ -7,7 +7,7 @@
 
 llvm::Value *generateTypeFunctionCall(
     Visitor *v,
-    TypeDefinition *parentType,
+    TypeBase *parentType,
     FunctionCall *var,
     llvm::Value *value
 );

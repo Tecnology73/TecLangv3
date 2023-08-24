@@ -3,7 +3,7 @@
 #include <stack>
 #include <llvm/IR/LLVMContext.h>
 #include "Scope.h"
-#include "../codegen/CodegenContext.h"
+#include "../context/CodegenContext.h"
 
 class ScopeManager {
 public:

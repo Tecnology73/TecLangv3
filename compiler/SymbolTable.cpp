@@ -316,7 +316,7 @@ ScopeNode *SymbolTable::getRootScope() {
 }
 
 void SymbolTable::addBuiltinType(const std::string &name, llvm::LLVMContext &context) {
-    auto type = new TypeDefinition(Token{
+    /*auto type = new TypeDefinition(Token{
         .type = Token::Type::Identifier,
         .value = name
     });
@@ -341,5 +341,5 @@ void SymbolTable::addBuiltinType(const std::string &name, llvm::LLVMContext &con
     else if (type->name == "void")
         type->llvmType = llvm::Type::getVoidTy(context);
 
-    rootScope->setLlvmType(type);
+    rootScope->setLlvmType(type);*/
 }

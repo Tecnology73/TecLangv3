@@ -9,7 +9,8 @@ public:
     explicit FunctionContext(Visitor *visitor, Function *function) : CodegenContext(visitor), function(function) {}
 
     TypeDefinition *getReturnType() override {
-        return function->returnType;
+        // return function->returnType;
+        return nullptr;
     }
 
     void handleReturn(const Node *node, llvm::Value *value) override {

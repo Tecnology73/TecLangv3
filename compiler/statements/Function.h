@@ -5,7 +5,7 @@
 #include <llvm/IR/Verifier.h>
 #include "../../ast/Expressions.h"
 #include "../Compiler.h"
-#include "../codegen/FunctionContext.h"
+#include "../context/FunctionContext.h"
 
 llvm::Function *generateFunction(Visitor *v, Function *func) {
     if (func->llvmFunction)
@@ -16,12 +16,12 @@ llvm::Function *generateFunction(Visitor *v, Function *func) {
     // Generate parameters
     std::vector<llvm::Type *> parameters;
     for (auto &param: func->parameters)
-        parameters.push_back(generateTypeDefinition(v, param->type)->getPointerTo());
+        parameters.push_back(param->type->getLlvmType()->getPointerTo());
 
     // Define the statement.
-    auto returnType = generateTypeDefinition(v, func->returnType);
-    if (func->returnType->isStruct)
-        returnType = returnType->getPointerTo();
+    auto returnType = func->returnType->getLlvmType();
+    // if (func->returnType->isStruct)
+    //     returnType = returnType->getPointerTo();
 
     llvm::FunctionType *funcType = llvm::FunctionType::get(
         returnType,
@@ -72,7 +72,7 @@ llvm::Function *generateFunction(Visitor *v, Function *func) {
         //   because we need to make a `llvm::FunctionType` first.
         /*std::set<TypeDefinition *> returnTypes;
         for (const auto &item: context->returnStatements) {
-            auto type = Compiler::getScopeManager().getType(item.first);
+            auto type = Compiler::getScopeManager().getLlvmType(item.first);
             if (!type) {
                 v->ReportError(ErrorCode::UNKNOWN_ERROR, {}, item.second[0]);
                 continue;

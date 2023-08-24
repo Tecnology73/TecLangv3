@@ -28,8 +28,7 @@ ForLoop *parseForLoop(Parser *parser) {
                 return nullptr;
             }
 
-            identifier = new VariableDeclaration(parser->currentToken);
-            identifier->name = parser->currentToken.value;
+            identifier = new VariableDeclaration(parser->currentToken, parser->currentToken.value);
             // TODO: Support type inference
             identifier->type = Compiler::getScopeManager().getType("i32");
 
@@ -48,8 +47,7 @@ ForLoop *parseForLoop(Parser *parser) {
 
     // If no identifier was specified, create one.
     if (!identifier) {
-        identifier = new VariableDeclaration(loop->token);
-        identifier->name = "it";
+        identifier = new VariableDeclaration(loop->token, "it");
         identifier->type = Compiler::getScopeManager().getType("i32");
         // We default to zero here.
         // We'll set this to the actual start value when we generate the for loop.

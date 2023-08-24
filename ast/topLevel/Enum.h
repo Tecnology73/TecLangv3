@@ -7,9 +7,7 @@ class Enum : public TypeBase {
 public:
     using TypeBase::TypeBase;
 
-    std::vector<class EnumValue *> values;
-
-    llvm::Value *Accept(class Visitor *visitor) override {
+    llvm::Value *Accept(Visitor *visitor) override {
         return visitor->Visit(this);
     }
 
@@ -19,43 +17,49 @@ public:
 
     void AddValue(class EnumValue *value);
 
+    const std::vector<class EnumValue *> &GetValues() const;
+
     int GetValueIndex(const std::string &name) const;
 
 private:
+    std::vector<class EnumValue *> values;
     std::map<std::string, int> valueIndices;
 };
 
 class EnumValue : public Node {
 public:
-    using Node::Node;
+    EnumValue(Token beginToken) : Node(std::move(beginToken)), name(token.value) {}
 
-    std::string name;
-    Node *expression = nullptr;
-
-    llvm::Value *Accept(class Visitor *visitor) override {
+    llvm::Value *Accept(Visitor *visitor) override {
         return visitor->Visit(this);
     }
+
+public:
+    std::string const name;
+    Node *expression = nullptr;
 };
 
 class EnumConstructor : public EnumValue {
 public:
     using EnumValue::EnumValue;
 
-    std::vector<class EnumParameter *> parameters;
-
-    llvm::Value *Accept(class Visitor *visitor) override {
+    llvm::Value *Accept(Visitor *visitor) override {
         return visitor->Visit(this);
     }
+
+public:
+    std::vector<class EnumParameter *> parameters;
 };
 
 class EnumParameter : public Node {
 public:
     using Node::Node;
 
-    std::string name;
-    TypeDefinition *type;
-
-    llvm::Value *Accept(class Visitor *visitor) override {
+    llvm::Value *Accept(Visitor *visitor) override {
         return visitor->Visit(this);
     }
+
+public:
+    std::string name; // This is optional
+    TypeBase *type;
 };

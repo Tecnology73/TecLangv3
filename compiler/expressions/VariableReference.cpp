@@ -2,17 +2,17 @@
 #include "../Compiler.h"
 #include "FunctionCall.h"
 #include "../topLevel/Enum.h"
-#include "../codegen/FunctionContext.h"
+#include "../context/FunctionContext.h"
 
 llvm::Value *getValueFromType(
     Visitor *v,
-    TypeDefinition *parentType,
+    TypeBase *parentType,
     ChainableNode *var,
     llvm::Value *value
 ) {
     if (!var) return value;
 
-    auto fieldType = parentType->getFieldTypeDef(var->name);
+    /*auto fieldType = parentType->getFieldType(var->name);
     auto actualType = fieldType->llvmType;
     if (fieldType->isStruct)
         actualType = actualType->getPointerTo();
@@ -33,7 +33,8 @@ llvm::Value *getValueFromType(
         return getValueFromType(v, fieldType, var->next, value);
     }
 
-    return value;
+    return value;*/
+    return nullptr;
 }
 
 llvm::Value *tryGenerateWithThisPrefix(Visitor *v, VariableReference *var) {
@@ -41,7 +42,7 @@ llvm::Value *tryGenerateWithThisPrefix(Visitor *v, VariableReference *var) {
     auto context = Compiler::getScopeManager().findContext<FunctionContext>();
     if (!context) return nullptr;
 
-    auto currentFunction = context->function;
+    /*auto currentFunction = context->function;
     if (!currentFunction->ownerType || !currentFunction->ownerType->isStruct) return nullptr;
 
     // Check if the "this" parameter exists.
@@ -52,7 +53,8 @@ llvm::Value *tryGenerateWithThisPrefix(Visitor *v, VariableReference *var) {
     auto field = currentFunction->ownerType->getField(var->name);
     if (!field) return nullptr;
 
-    return getValueFromType(v, currentFunction->ownerType, var, param->alloc);
+    return getValueFromType(v, currentFunction->ownerType, var, param->alloc);*/
+    return nullptr;
 }
 
 llvm::Value *generateVariableReference(Visitor *v, VariableReference *var) {
@@ -72,12 +74,12 @@ llvm::Value *generateVariableReference(Visitor *v, VariableReference *var) {
     if (!value) return nullptr;
 
     // If the variable is a constant, just return the value.
-    if (!variable->type->isStruct) {
+    /*if (!variable->type->isStruct) {
         if (value->getType()->isPointerTy())
             return Compiler::getBuilder().CreateLoad(variable->type->llvmType, value, var->name);
 
         return value;
-    }
+    }*/
 
     if (auto function = dynamic_cast<FunctionCall *>(var->next))
         return generateTypeFunctionCall(v, dynamic_cast<TypeDefinition *>(variable->type), function, value);

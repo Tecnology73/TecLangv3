@@ -12,8 +12,6 @@ namespace {
         }
 
         auto value = new EnumValue(parser->currentToken);
-        value->name = parser->currentToken.value;
-
         if (parser->NextToken().is(Token::Type::Assign)) {
             parser->NextToken(); // Consume '='
 
@@ -32,7 +30,6 @@ namespace {
         }
 
         auto constructor = new EnumConstructor(parser->currentToken);
-        constructor->name = parser->currentToken.value;
         if (parser->NextToken().isNot(Token::Type::OpenParen)) {
             parser->PrintSyntaxError("(");
             return nullptr;
@@ -71,14 +68,12 @@ Enum *parseEnum(Parser *parser) {
         return nullptr;
     }
 
-    if (parser->NextToken().isNot(Token::Type::Identifier)) {
+    if (parser->PeekToken().isNot(Token::Type::Identifier)) {
         parser->PrintSyntaxError("enum name");
         return nullptr;
     }
 
-    auto anEnum = new Enum(parser->currentToken);
-    anEnum->name = parser->currentToken.value;
-
+    auto anEnum = new Enum(parser->currentToken, parser->NextToken().value);
     if (parser->NextToken().isNot(Token::Type::OpenCurly)) {
         parser->PrintSyntaxError("{");
         return nullptr;
