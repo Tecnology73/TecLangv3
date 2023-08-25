@@ -4,57 +4,15 @@
 #include "../../ast/Expressions.h"
 #include "../context/WhenContext.h"
 
-namespace {
-    // Check if the When conditions are valid.
-    // It's considered valid if:
-    // 1. The value is not an enum, or;
-    // 2. The value is an enum and all the enum values are covered.
-    bool isWhenValid(Visitor *visitor, When *when) {
-        // If an else is present, we consider all cases covered.
-        if (when->hasElse) return true;
-
-        // Figure out if we're using an Enum for the value.
-        auto varRef = dynamic_cast<VariableReference *>(when->condition);
-        if (!varRef) return true;
-
-        auto var = Compiler::getScopeManager().getVar(varRef->name);
-        if (!var) return true;
-
-        auto anEnum = dynamic_cast<Enum *>(var->type);
-        if (!anEnum) return true;
-
-        // Validate all the values are covered.
-        std::set<std::string> seenValues;
-        for (const auto &item: when->body) {
-            // Every item should have a condition (i.e. not be an else)
-            // if `when->hasElse` is false.
-            auto value = dynamic_cast<StaticRef *>(item->condition);
-            if (!value) continue;
-
-            if (value->name != anEnum->name) continue;
-            seenValues.emplace(value->next->name);
-        }
-
-        when->areAllCasesCovered = seenValues.size() == anEnum->GetValues().size();
-        return when->areAllCasesCovered;
-    }
-}
-
 llvm::Value *generateWhen(Visitor *v, When *node) {
     // Setup context
     auto context = Compiler::getScopeManager().enter("when", new WhenContext(v, node));
-
-    // Validate conditions
-    if (!isWhenValid(v, node)) {
-        v->ReportError(ErrorCode::WHEN_UNUSED_ENUM_VALUE, {}, node);
-        return nullptr;
-    }
 
     // Setup switch
     auto entryBlock = Compiler::getBuilder().GetInsertBlock();
     context->exitBlock = llvm::BasicBlock::Create(Compiler::getContext(), "when.exit", entryBlock->getParent());
 
-    auto matchValue = node->condition->Accept(v);
+    auto matchValue = node->expression->Accept(v);
     auto switchInst = Compiler::getBuilder().CreateSwitch(matchValue, context->exitBlock, node->body.size());
 
     // Conditions

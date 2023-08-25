@@ -1,5 +1,4 @@
 #include "ScopeManager.h"
-#include "../context/WhenContext.h"
 #include <iostream>
 
 ScopeManager *ScopeManager::instance = nullptr;
@@ -41,31 +40,29 @@ void ScopeManager::addBuiltinType(const std::string &name, llvm::LLVMContext &co
         .value = name
     }, name);
 
-    type->getLlvmType();
-
-    /*if (type->name == "bool")
-        type->llvmType = llvm::Type::getInt1Ty(context);
+    if (type->name == "bool")
+        type->setLlvmType(llvm::Type::getInt1Ty(context));
     else if (type->name == "i8")
-        type->llvmType = llvm::Type::getInt8Ty(context);
+        type->setLlvmType(llvm::Type::getInt8Ty(context));
     else if (type->name == "i8*")
-        type->llvmType = llvm::Type::getInt8PtrTy(context);
+        type->setLlvmType(llvm::Type::getInt8PtrTy(context));
     else if (type->name == "i16")
-        type->llvmType = llvm::Type::getInt16Ty(context);
+        type->setLlvmType(llvm::Type::getInt16Ty(context));
     else if (type->name == "i32" || type->name == "int")
-        type->llvmType = llvm::Type::getInt32Ty(context);
+        type->setLlvmType(llvm::Type::getInt32Ty(context));
     else if (type->name == "i64")
-        type->llvmType = llvm::Type::getInt64Ty(context);
+        type->setLlvmType(llvm::Type::getInt64Ty(context));
     else if (type->name == "double")
-        type->llvmType = llvm::Type::getDoubleTy(context);
+        type->setLlvmType(llvm::Type::getDoubleTy(context));
     else if (type->name == "void")
-        type->llvmType = llvm::Type::getVoidTy(context);
+        type->setLlvmType(llvm::Type::getVoidTy(context));
 
-    root->add(type);*/
-    // root->addCompiledType(type);
+    root->add(type);
+    root->addCompiledType(type);
 }
 
 /*
- * Add
+ * AddField
  */
 
 void ScopeManager::add(TypeDefinition *typeDef) const {
@@ -87,7 +84,7 @@ void ScopeManager::add(Function *function) const {
 void ScopeManager::add(VariableDeclaration *var) const {
     if (current == root) {
         // TODO: Use the ErrorManager
-        std::cerr << "[Scope] Cannot add variable to root scope" << std::endl;
+        std::cerr << "[Scope] Cannot AddField variable to root scope" << std::endl;
         return;
     }
 

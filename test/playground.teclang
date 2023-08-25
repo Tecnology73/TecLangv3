@@ -2,4 +2,16 @@ enum Color {
     Red
     Green
     Blue
+    Orange
+    Purple
+    Yellow
+    Black = 69
+    White
+}
+
+func main() i32 {
+    return when Color::Red {
+        Color::Red -> 3
+        else -> 4
+    }
 }

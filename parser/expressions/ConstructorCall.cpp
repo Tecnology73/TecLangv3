@@ -1,5 +1,6 @@
 #include "ConstructorCall.h"
 #include "Expression.h"
+#include "../../ast/topLevel/TypeDefinition.h"
 
 bool parseArguments(Parser *parser, ConstructorCall *c) {
     if (parser->currentToken.isNot(Token::Type::OpenParen)) {
@@ -101,7 +102,7 @@ ConstructorCall *parseConstructorCall(Parser *parser) {
         return nullptr;
     }
 
-    // call->type = TypeDefinition::Create(parser->currentToken, parser->currentToken.value);
+    call->type = TypeDefinition::Create(parser->currentToken, parser->currentToken.value);
     parser->NextToken(); // Consume identifier
 
     if (parser->currentToken.is(Token::Type::OpenParen)) {

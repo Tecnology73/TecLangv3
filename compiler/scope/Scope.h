@@ -101,7 +101,7 @@ protected:
 
 private:
     std::unordered_map<std::string, TypeDefinition *> types;
+    std::unordered_map<llvm::Type *, TypeDefinition *> compiledTypes;
     std::unordered_map<std::string, Enum *> enums;
     std::unordered_map<std::string, Function *> functions;
-    std::unordered_map<llvm::Type *, TypeDefinition *> compiledTypes;
 };

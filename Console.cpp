@@ -4,6 +4,10 @@ void Console::print(const std::string &message, const std::vector<std::string> &
     std::cout << format(message + "{reset}", args) << std::endl;
 }
 
+void Console::printRaw(const std::string &message) {
+    std::cout << message << std::endl;
+}
+
 std::string Console::replaceTag(const std::string &tag) {
     if (tag == "r") return "\033[38;2;" + Color::Red.ToString() + "m";
     if (tag == "g") return "\033[38;2;" + Color::Green.ToString() + "m";
@@ -11,6 +15,7 @@ std::string Console::replaceTag(const std::string &tag) {
     if (tag == "o") return "\033[38;2;" + Color::Orange.ToString() + "m";
     if (tag == "y") return "\033[38;2;" + Color::Gray.ToString() + "m";
     if (tag == "w") return "\033[38;2;" + Color::White.ToString() + "m";
+    if (tag == "Y") return "\033[38;2;" + Color::Yellow.ToString() + "m";
     if (tag == "error") return "\033[38;2;" + Color::Error.ToString() + "m";
     if (tag == "warn") return "\033[38;2;" + Color::Warning.ToString() + "m";
     if (tag == "info") return "\033[38;2;" + Color::Info.ToString() + "m";

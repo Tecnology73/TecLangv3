@@ -3,40 +3,20 @@
 #include "../Node.h"
 #include "../Visitor.h"
 #include "../topLevel/TypeBase.h"
-// #include "../../compiler/Compiler.h"
 
 class VariableDeclaration : public Node {
 public:
     using Node::Node;
 
-    VariableDeclaration(Token beginToken, Node *expression = nullptr) : Node(std::move(beginToken)), name(token.value), expression(expression) {}
+    VariableDeclaration(const Token &beginToken, Node *expression = nullptr);
 
-    VariableDeclaration(Token beginToken, std::string name, Node *expression = nullptr) : Node(std::move(beginToken)), name(std::move(name)), expression(expression) {}
+    VariableDeclaration(const Token &beginToken, const std::string &name, Node *expression = nullptr);
 
-    ~VariableDeclaration() override {
-        delete expression;
-    }
+    ~VariableDeclaration() override;
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
-    }
+    llvm::Value *Accept(Visitor *visitor) override;
 
-    TypeDefinition *GetCompiledType(Visitor *visitor) {
-        /*if (!type) {
-            type = inferType(v, this);
-            if (!type) return nullptr;
-        }
-
-        if (!type->llvmType) {
-            if (auto typeDef = dynamic_cast<TypeDefinition *>(type))
-                generateTypeDefinition(visitor, typeDef);
-            else
-                type->llvmType = Compiler::getScopeManager().getType("i32")->llvmType;
-        }
-
-        return dynamic_cast<TypeDefinition *>(type);*/
-        return nullptr;
-    }
+    TypeBase *GetCompiledType(Visitor *visitor);
 
 public:
     std::string const name;

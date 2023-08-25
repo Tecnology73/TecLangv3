@@ -12,7 +12,7 @@ ForLoop *parseForLoop(Parser *parser) {
     auto loop = new ForLoop(parser->currentToken);
     parser->NextToken(); // Consume 'for'
 
-    // Parse value (what to loop over, i.e. range, array, etc.)
+    // Parse expression (what to loop over, i.e. range, array, etc.)
     loop->value = parseExpression(parser);
     if (!loop->value)
         return nullptr;
@@ -50,7 +50,7 @@ ForLoop *parseForLoop(Parser *parser) {
         identifier = new VariableDeclaration(loop->token, "it");
         identifier->type = Compiler::getScopeManager().getType("i32");
         // We default to zero here.
-        // We'll set this to the actual start value when we generate the for loop.
+        // We'll set this to the actual start expression when we generate the for loop.
         identifier->expression = new Integer(loop->token);
     }
     loop->identifier = identifier;

@@ -35,4 +35,5 @@ llvm::ReturnInst *generateReturn(Visitor *v, Return *ret) {
         coercedValue = Compiler::getBuilder().CreateLoad(returnType->llvmType, coercedValue);
 
     Compiler::getScopeManager().getContext()->handleReturn(ret, coercedValue);
+    return nullptr;
 }

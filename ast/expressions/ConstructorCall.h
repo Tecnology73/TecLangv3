@@ -4,6 +4,20 @@
 #include "../Visitor.h"
 #include "../topLevel/TypeBase.h"
 
+// Used for `new T { field1 = value1, field2 = value2, ... }`
+class ConstructorField : public Node {
+public:
+    ConstructorField(Token beginToken, Node *value) : Node(std::move(beginToken)), name(token.value), value(value) {}
+
+    llvm::Value *Accept(Visitor *visitor) override {
+        return nullptr;
+    }
+
+public:
+    std::string const name;
+    Node *const value;
+};
+
 class ConstructorCall : public Node {
 public:
     using Node::Node;
@@ -25,19 +39,5 @@ public:
     // Filled when doing `new T(arg1, arg2, ...)`
     std::vector<Node *> arguments;
     // Filled when doing `new T { field1 = value1, field2 = value2, ... }`
-    std::vector<class ConstructorField *> fields;
-};
-
-// Used for `new T { field1 = value1, field2 = value2, ... }`
-class ConstructorField : public Node {
-public:
-    ConstructorField(Token beginToken, Node *value) : Node(std::move(beginToken)), name(token.value), value(value) {}
-
-    llvm::Value *Accept(Visitor *visitor) override {
-        return nullptr;
-    }
-
-public:
-    std::string const name;
-    Node *const value;
+    std::vector<ConstructorField *> fields;
 };

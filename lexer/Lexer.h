@@ -22,7 +22,7 @@ public:
 
     bool IsAtEnd() const;
 
-    std::tuple<unsigned int, std::string, std::string> GetSurroundingCode(Position startPos, Position endPos);
+    std::vector<std::string> GetSurroundingCode(Position startPos, Position endPos, long &topHalfIndex);
 
     static Lexer *FromSource(const std::string &source);
 

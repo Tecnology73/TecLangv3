@@ -7,7 +7,7 @@ class ReturnContext : public CodegenContext {
 public:
     explicit ReturnContext(Visitor *visitor, Return *aReturn) : CodegenContext(visitor), aReturn(aReturn) {}
 
-    TypeDefinition *getReturnType() override;
+    TypeBase *getReturnType() override;
 
     void handleReturn(const Node *node, llvm::Value *value) override;
 

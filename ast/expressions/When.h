@@ -12,7 +12,7 @@ public:
     }
 
 public:
-    Node *condition;
+    Node *expression;
     std::vector<class WhenCondition *> body;
 
     // TODO: This is a messy. Fix it.

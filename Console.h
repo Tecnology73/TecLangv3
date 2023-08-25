@@ -22,6 +22,7 @@ struct Color {
     constexpr static const RGB Orange = {255, 152, 0};
     constexpr static const RGB Gray = {158, 158, 158};
     constexpr static const RGB White = {255, 255, 255};
+    constexpr static const RGB Yellow = {255, 235, 59};
 
     constexpr static const RGB Debug = Gray;
     constexpr static const RGB Error = Red;
@@ -60,6 +61,8 @@ void printInfo(const std::string &format, Args... args) {
 class Console {
 public:
     static void print(const std::string &message, const std::vector<std::string> &args);
+
+    static void printRaw(const std::string &message);
 
     static std::string format(const std::string &str, const std::vector<std::string> &args);
 

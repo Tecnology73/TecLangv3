@@ -141,7 +141,7 @@ namespace {
         );
         Compiler::getBuilder().CreateCondBr(lhsValue, rhsBlock, mergeBlock);
 
-        // Compare value.second
+        // Compare expression.second
         // If it's 1, br and_merge
         // If it's 0, br and_merge
         Compiler::getBuilder().SetInsertPoint(rhsBlock);
@@ -197,7 +197,7 @@ namespace {
         );
         Compiler::getBuilder().CreateCondBr(lhsValue, mergeBlock, rhsBlock);
 
-        // Compare value.second
+        // Compare expression.second
         // If it's 1, br or_merge
         // If it's 0, br or_merge
         Compiler::getBuilder().SetInsertPoint(rhsBlock);

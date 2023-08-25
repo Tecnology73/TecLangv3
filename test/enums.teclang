@@ -38,7 +38,7 @@ func printColor(color: Color) {}
 
 func main() i32 {
     // printColor(1.(Color)) // "Red"
-    // printColor(4.(Color)) // Error: 4 is not a valid Color value
+    // printColor(4.(Color)) // Error: 4 is not a valid Color expression
 }
 
 // --------------------------------------------

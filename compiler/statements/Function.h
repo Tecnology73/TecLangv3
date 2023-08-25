@@ -15,13 +15,13 @@ llvm::Function *generateFunction(Visitor *v, Function *func) {
 
     // Generate parameters
     std::vector<llvm::Type *> parameters;
-    for (auto &param: func->parameters)
-        parameters.push_back(param->type->getLlvmType()->getPointerTo());
+    for (auto &paramName: func->parameterOrder)
+        parameters.push_back(func->parameters[paramName]->type->getLlvmType()->getPointerTo());
 
-    // Define the statement.
+    // Define the function.
     auto returnType = func->returnType->getLlvmType();
-    // if (func->returnType->isStruct)
-    //     returnType = returnType->getPointerTo();
+    if (!func->returnType->isValueType)
+        returnType = returnType->getPointerTo();
 
     llvm::FunctionType *funcType = llvm::FunctionType::get(
         returnType,
@@ -29,7 +29,7 @@ llvm::Function *generateFunction(Visitor *v, Function *func) {
         func->isExternal
     );
 
-    // Create the statement.
+    // Create the function.
     auto linkage = llvm::Function::PrivateLinkage;
     if (func->isExternal || func->name == "main")
         linkage = llvm::Function::ExternalLinkage;
@@ -57,34 +57,15 @@ llvm::Function *generateFunction(Visitor *v, Function *func) {
         Compiler::getBuilder().SetInsertPoint(basicBlock);
 
         // Create a scope
-        auto context = Compiler::getScopeManager().enter(func->name, new FunctionContext(v, func));
+        Compiler::getScopeManager().enter(func->name, new FunctionContext(v, func));
 
         // Generate the parameters.
-        for (const auto &item: func->parameters)
-            item->Accept(v);
+        for (const auto &paramName: func->parameterOrder)
+            func->parameters[paramName]->Accept(v);
 
         // Generate the body.
         for (auto &statement: func->body)
             statement->Accept(v);
-
-        // Infer return type.
-        // TODO: We need to somehow infer the return type before anything is generated
-        //   because we need to make a `llvm::FunctionType` first.
-        /*std::set<TypeDefinition *> returnTypes;
-        for (const auto &item: context->returnStatements) {
-            auto type = Compiler::getScopeManager().getLlvmType(item.first);
-            if (!type) {
-                v->ReportError(ErrorCode::UNKNOWN_ERROR, {}, item.second[0]);
-                continue;
-            }
-
-            returnTypes.emplace(type);
-        }
-
-        if (returnTypes.size() != 1) {
-            v->ReportError(ErrorCode::UNKNOWN_ERROR, {}, func);
-            return nullptr;
-        }*/
 
         // Close the scope
         Compiler::getScopeManager().popContext();
@@ -94,7 +75,7 @@ llvm::Function *generateFunction(Visitor *v, Function *func) {
     // Validate the generated code, checking for consistency.
     llvm::verifyFunction(*function);
 
-    // Add the statement to the symbol table.
+    // AddField the statement to the symbol table.
     if (!func->ownerType)
         Compiler::getScopeManager().add(func);
 

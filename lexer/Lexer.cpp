@@ -138,31 +138,18 @@ bool Lexer::IsAtEnd() const {
     return position.index >= (long) this->sourceLength;
 }
 
-std::tuple<unsigned int, std::string, std::string> Lexer::GetSurroundingCode(Position startPos, Position endPos) {
+std::vector<std::string> Lexer::GetSurroundingCode(Position startPos, Position endPos, long &topHalfIndex) {
     constexpr int NUM_LINES = 2; // How many extra lines to get before/after the provided positions.
     long startLine = std::max(0l, startPos.line - NUM_LINES);
-    long endLine = std::min((long) lines.size() - 1, endPos.line + 1 + NUM_LINES);
-    int maxGutterWidth = std::max(3, (int) std::to_string(endLine).length());
+    long endLine = std::min((long) lines.size(), endPos.line + 1 + NUM_LINES);
 
-    std::stringstream before;
-    for (long i = startLine; i <= startPos.line; i++) {
-        before << std::setw(maxGutterWidth) << (i + 1) << "| " << lines[i];
-        if (i != startPos.line)
-            before << std::endl;
-    }
+    topHalfIndex = startPos.line - startLine;
 
-    std::stringstream after;
-    for (long i = startPos.line + 1; i <= endLine; i++) {
-        after << std::setw(maxGutterWidth) << (i + 1) << "| " << lines[i];
-        if (i != endLine)
-            after << std::endl;
-    }
+    auto startIt = lines.begin() + startLine;
+    auto endIt = lines.begin() + endLine;
 
-    return {
-        maxGutterWidth + 2,  // +2 for "| "
-        before.str(),
-        after.str()
-    };
+    std::vector<std::string> code(startIt, endIt);
+    return code;
 }
 
 char Lexer::consumeChar() {

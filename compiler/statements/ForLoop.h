@@ -19,7 +19,7 @@ llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
     auto loopExit = context->exitBlock = llvm::BasicBlock::Create(Compiler::getContext(), "loop.exit", entryBlock->getParent());
 
     //
-    // Head - Create iterator & check loop condition
+    // Head - Create iterator & check loop expression
     //
     Compiler::getBuilder().CreateBr(loop);
     Compiler::getBuilder().SetInsertPoint(loop);
@@ -37,13 +37,13 @@ llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
 
     Compiler::getScopeManager().add(it);
 
-    // Initial value of the iterator
+    // Initial expression of the iterator
     keyPhi->addIncoming(
         TypeCoercion::coerce(cond->lhs->Accept(v), it->type->llvmType), // Range lower bound
         entryBlock
     );
 
-    // Loop condition
+    // Loop expression
     auto conditionValue = Compiler::getBuilder().CreateICmpSLT(
         keyPhi,
         TypeCoercion::coerce(cond->rhs->Accept(v), it->type->llvmType), // Range upper bound

@@ -23,6 +23,8 @@ public:
      * Top level
      */
 
+    virtual llvm::Value *Visit(class TypeField *node) = 0;
+
     virtual llvm::Value *Visit(class TypeDefinition *node) = 0;
 
     virtual llvm::Value *Visit(class Enum *node) = 0;

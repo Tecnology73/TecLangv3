@@ -27,7 +27,7 @@ llvm::Value *generateVariableDeclaration(Visitor *v, VariableDeclaration *node) 
     // If the expression is a constant, we don't need to do any allocations.
     /*if (!node->type->isStruct && dynamic_cast<Literal *>(node->expression)) {
         node->alloc = node->expression->Accept(v);
-        Compiler::getScopeManager().add(node);
+        Compiler::getScopeManager().AddField(node);
 
         return node->alloc;
     }*/
@@ -43,7 +43,7 @@ llvm::Value *generateVariableDeclaration(Visitor *v, VariableDeclaration *node) 
             node->name
         );
 
-        // Assign the default value for the type.
+        // Assign the default expression for the type.
         Compiler::getBuilder().CreateStore(node->type->getDefaultValue(), node->alloc);
 
         // Generate the expression.
@@ -51,7 +51,7 @@ llvm::Value *generateVariableDeclaration(Visitor *v, VariableDeclaration *node) 
             Compiler::getScopeManager().enter(node->name, new VarDeclarationContext(v, node));
 
             auto expr = node->expression->Accept(v);
-            // Some expressions (like when) don't return a value directly.
+            // Some expressions (like when) don't return a expression directly.
             if (expr)
                 Compiler::getBuilder().CreateStore(
                     TypeCoercion::coerce(expr, node->type->llvmType),

@@ -11,7 +11,7 @@ llvm::Value *generateTypeFunctionCall(
 ) {
     if (!var) return value;
 
-    /*auto func = parentType->getFunction(var->name);
+    auto func = parentType->GetFunction(var->name);
     if (!func) {
         v->ReportError(ErrorCode::TYPE_UNKNOWN_FUNCTION, {var->name, parentType->name}, var);
         return nullptr;
@@ -34,14 +34,13 @@ llvm::Value *generateTypeFunctionCall(
     // Recurse
     if (var->next) {
         if (auto function = dynamic_cast<FunctionCall *>(var->next))
-            // return value;
+            // return expression;
             return generateTypeFunctionCall(v, func->returnType, function, value);
 
         return getValueFromType(v, func->returnType, var->next, value);
     }
 
-    return value;*/
-    return nullptr;
+    return value;
 }
 
 llvm::Value *tryGenerateWithThisPrefix(Visitor *v, FunctionCall *node) {
@@ -49,19 +48,18 @@ llvm::Value *tryGenerateWithThisPrefix(Visitor *v, FunctionCall *node) {
     auto context = Compiler::getScopeManager().findContext<FunctionContext>();
     if (!context) return nullptr;
 
-    /*auto currentFunction = context->function;
-    if (!currentFunction->ownerType || !currentFunction->ownerType->isStruct) return nullptr;
+    auto currentFunction = context->function;
+    if (!currentFunction->ownerType || currentFunction->ownerType->isValueType) return nullptr;
 
     // Check if the "this" parameter exists.
-    auto param = currentFunction->getParameter("this");
+    auto param = currentFunction->GetParameter("this");
     if (!param) return nullptr;
 
     // Make sure the statement exists on the type.
-    auto function = currentFunction->ownerType->getFunction(node->name);
+    auto function = currentFunction->ownerType->GetFunction(node->name);
     if (!function) return nullptr;
 
-    return generateTypeFunctionCall(v, currentFunction->ownerType, node, param->alloc);*/
-    return nullptr;
+    return generateTypeFunctionCall(v, currentFunction->ownerType, node, param->alloc);
 }
 
 llvm::Value *generateFunctionCall(Visitor *v, FunctionCall *node) {

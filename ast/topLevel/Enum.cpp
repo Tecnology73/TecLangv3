@@ -9,18 +9,11 @@ bool Enum::canCastTo(TypeBase *other) const {
     return false;
 }
 
-void Enum::AddValue(EnumValue *value) {
-    values.push_back(value);
-    valueIndices[value->name] = values.size() - 1;
-}
+Enum *Enum::Create(const Token &token, std::string name) {
+    if (auto existingEnum = Compiler::getScopeManager().getEnum(name))
+        return existingEnum;
 
-const std::vector<class EnumValue *> &Enum::GetValues() const {
-    return values;
-}
-
-int Enum::GetValueIndex(const std::string &name) const {
-    auto it = valueIndices.find(name);
-    if (it == valueIndices.end()) return -1;
-
-    return it->second;
+    auto anEnum = new Enum(token, name);
+    Compiler::getScopeManager().add(anEnum);
+    return anEnum;
 }

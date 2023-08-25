@@ -1,34 +1,36 @@
 #include "Function.h"
 
-bool Function::addParameter(Token token, std::string paramName, TypeBase *type) {
-    if (parameterIndices.find(paramName) != parameterIndices.end())
+bool Function::AddParameter(const Token &token, std::string paramName, TypeBase *type) {
+    if (parameters.find(paramName) != parameters.end())
         return false;
 
-    auto param = new FunctionParameter(
-        std::move(token),
-        paramName,
-        type,
-        this
-    );
-
-    parameters.push_back(param);
-    parameterIndices[paramName] = param->index = parameters.size() - 1;
+    auto param = new FunctionParameter(token, paramName, type, this);
+    param->index = parameters.size();
+    parameters.emplace(paramName, param);
+    parameterOrder.push_back(paramName);
 
     return true;
 }
 
-FunctionParameter *Function::getParameter(const std::string &parameterName) const {
-    auto it = parameterIndices.find(parameterName);
-    if (it == parameterIndices.end())
+FunctionParameter *Function::GetParameter(const std::string &parameterName) const {
+    auto it = parameters.find(parameterName);
+    if (it == parameters.end())
         return nullptr;
 
-    return parameters[it->second];
+    return it->second;
 }
 
-int Function::getParameterIndex(const std::string &parameterName) {
-    auto it = parameterIndices.find(parameterName);
-    if (it == parameterIndices.end())
+FunctionParameter *Function::GetParameter(unsigned int index) const {
+    if (index >= parameters.size())
+        return nullptr;
+
+    return parameters.at(parameterOrder[index]);
+}
+
+int Function::GetParameterIndex(const std::string &parameterName) {
+    auto it = parameters.find(parameterName);
+    if (it == parameters.end())
         return -1;
 
-    return it->second;
+    return it->second->index;
 }

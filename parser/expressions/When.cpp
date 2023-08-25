@@ -29,7 +29,7 @@ When *parseWhen(Parser *parser) {
         parser->NextToken(); // Consumes '('
 
     // Condition
-    when->condition = parseExpression(parser);
+    when->expression = parseExpression(parser);
     if (hasOpenParen) {
         if (parser->currentToken.isNot(Token::Type::CloseParen)) {
             parser->PrintSyntaxError(")");

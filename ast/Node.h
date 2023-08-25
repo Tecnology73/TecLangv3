@@ -6,7 +6,7 @@
 
 class Node {
 public:
-    explicit Node(Token beginToken) : token(std::move(beginToken)) {}
+    explicit Node(const Token &beginToken) : token(beginToken) {}
 
     virtual ~Node() = default;
 

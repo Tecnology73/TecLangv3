@@ -1,5 +1,31 @@
 #include "TypeDefinition.h"
-#include "VariableDeclaration.h"
+#include "../expressions/Expression.h"
+
+namespace {
+    TypeField *parseField(Parser *parser) {
+        if (parser->currentToken.isNot(Token::Type::Identifier)) {
+            parser->PrintSyntaxError("field name");
+            return nullptr;
+        }
+
+        auto field = new TypeField(parser->currentToken, parser->currentToken.value);
+        if (parser->NextToken().is(Token::Type::Colon)) {
+            parser->NextToken(); // Consume ':'
+
+            field->type = TypeDefinition::Create(parser->currentToken);
+            parser->NextToken(); // Consume type
+        }
+
+        if (parser->currentToken.is(Token::Type::Assign)) {
+            parser->NextToken(); // Consume '='
+            field->expression = parseExpression(parser);
+            if (!field->expression)
+                return nullptr;
+        }
+
+        return field;
+    }
+}
 
 TypeDefinition *parseTypeDefinition(Parser *parser) {
     if (parser->currentToken.isNot(Token::Type::Type)) {
@@ -12,7 +38,7 @@ TypeDefinition *parseTypeDefinition(Parser *parser) {
         return nullptr;
     }
 
-    /*auto typeDef = TypeDefinition::Create(parser->NextToken());
+    auto typeDef = TypeDefinition::Create(parser->NextToken());
     if (parser->NextToken().isNot(Token::Type::OpenCurly)) {
         parser->PrintSyntaxError("{");
         return nullptr;
@@ -20,10 +46,11 @@ TypeDefinition *parseTypeDefinition(Parser *parser) {
 
     parser->NextToken(); // Consume '{'
     while (parser->currentToken.isNot(Token::Type::CloseCurly)) {
-        auto node = parseVariableDeclaration(parser);
-        if (node == nullptr) return nullptr;
+        auto field = parseField(parser);
+        if (!field)
+            return nullptr;
 
-        typeDef->add(node);
+        typeDef->AddField(field);
     }
 
     if (parser->currentToken.isNot(Token::Type::CloseCurly)) {
@@ -32,6 +59,5 @@ TypeDefinition *parseTypeDefinition(Parser *parser) {
     }
 
     parser->NextToken(); // Consume '}'
-    return typeDef;*/
-    return nullptr;
+    return typeDef;
 }

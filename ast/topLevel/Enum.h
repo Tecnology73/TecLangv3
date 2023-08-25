@@ -15,28 +15,16 @@ public:
 
     bool canCastTo(TypeBase *other) const override;
 
-    void AddValue(class EnumValue *value);
-
-    const std::vector<class EnumValue *> &GetValues() const;
-
-    int GetValueIndex(const std::string &name) const;
-
-private:
-    std::vector<class EnumValue *> values;
-    std::map<std::string, int> valueIndices;
+    static Enum *Create(const Token &token, std::string name);
 };
 
-class EnumValue : public Node {
+class EnumValue : public TypeField {
 public:
-    EnumValue(Token beginToken) : Node(std::move(beginToken)), name(token.value) {}
+    using TypeField::TypeField;
 
     llvm::Value *Accept(Visitor *visitor) override {
         return visitor->Visit(this);
     }
-
-public:
-    std::string const name;
-    Node *expression = nullptr;
 };
 
 class EnumConstructor : public EnumValue {

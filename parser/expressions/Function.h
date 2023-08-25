@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../ast/Statements.h"
+#include "../../ast/TopLevel.h"
 #include "../Parser.h"
 #include "Expression.h"
 #include "../statements/FunctionParameter.h"
@@ -25,7 +26,8 @@ Function *parseFunction(Parser *parser) {
             return nullptr;
         }
 
-        // ownerType = TypeDefinition::Create(parser->currentToken);
+        // TODO: Allow enum/type def.
+        ownerType = TypeDefinition::Create(parser->currentToken);
         if (parser->NextToken().isNot(Token::Type::GreaterThan)) {
             parser->PrintSyntaxError(">");
             return nullptr;
@@ -38,17 +40,17 @@ Function *parseFunction(Parser *parser) {
         return nullptr;
     }
 
-    auto function = new Function(parser->currentToken);
+    auto function = new Function(parser->currentToken, parser->NextToken().value);
     function->ownerType = ownerType;
     function->isExternal = isExternal;
 
     if (ownerType) {
-        // ownerType->add(function);
+        ownerType->AddFunction(function);
 
         // "this" is always the first parameter.
         // Constructors have "this" malloc'd.
         if (function->name != "construct")
-            function->addParameter(parser->currentToken, "this", ownerType);
+            function->AddParameter(parser->currentToken, "this", ownerType);
     }
 
     if (parser->NextToken().isNot(Token::Type::OpenParen)) {
@@ -83,7 +85,8 @@ Function *parseFunction(Parser *parser) {
             parser->NextToken();
         }
 
-        // function->returnType = TypeDefinition::Create(name);
+        // TODO: Allow enum/type def.
+        function->returnType = TypeDefinition::Create(name);
     }
 
     if (!function->isExternal) {

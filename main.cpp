@@ -41,9 +41,9 @@ int main() {
     //
 
     std::vector<std::unique_ptr<Visitor>> visitorPipeline;
-    // visitorPipeline.emplace_back(std::make_unique<PrettyPrintVisitor>(parser));
     visitorPipeline.emplace_back(std::make_unique<SemanticAnalysisVisitor>(parser));
-    // visitorPipeline.emplace_back(std::make_unique<CodegenVisitor>(parser));
+    visitorPipeline.emplace_back(std::make_unique<PrettyPrintVisitor>(parser));
+    visitorPipeline.emplace_back(std::make_unique<CodegenVisitor>(parser));
 
     for (const auto &visitor: visitorPipeline) {
         auto visitorTime = measure(visitor->name);

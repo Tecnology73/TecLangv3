@@ -1,7 +1,7 @@
 #include "ReturnContext.h"
 #include "FunctionContext.h"
 
-TypeDefinition *ReturnContext::getReturnType() {
+TypeBase *ReturnContext::getReturnType() {
     if (auto functionContext = dynamic_cast<FunctionContext *>(parent))
         return functionContext->getReturnType();
 

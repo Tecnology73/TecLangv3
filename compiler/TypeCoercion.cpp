@@ -58,7 +58,7 @@ bool TypeCoercion::canCoerceTo(TypeBase *fromType, TypeBase *toType) {
     else if (fromType->name == "double")
         return toType->name == "double";
 
-    throw std::runtime_error("Unhandled value type: " + fromType->name);
+    throw std::runtime_error("Unhandled expression type: " + fromType->name);
 }
 
 int TypeCoercion::getTypePriority(llvm::Type *type) {
@@ -76,7 +76,7 @@ llvm::Value *TypeCoercion::coerceToInt(llvm::Value *value, llvm::Type *type) {
         return Compiler::getBuilder().CreateZExt(value, type);
     else if (valueBitWidth > targetBitWidth)
         // TODO: Make sure that down-casts are actually explicit.
-        // return Compiler::getBuilder().CreateTrunc(value, type);
+        // return Compiler::getBuilder().CreateTrunc(expression, type);
         return nullptr;
 
     return value;

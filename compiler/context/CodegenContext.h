@@ -3,6 +3,8 @@
 #include <llvm/IR/Value.h>
 #include "../../ast/Visitor.h"
 
+class TypeBase;
+
 class CodegenContext {
     friend class ScopeManager;
 
@@ -11,7 +13,7 @@ public:
 
     virtual ~CodegenContext() = default;
 
-    virtual TypeDefinition *getReturnType() {
+    virtual TypeBase *getReturnType() {
         return nullptr;
     }
 

@@ -12,7 +12,7 @@ llvm::Value *generateStaticRef(Visitor *v, StaticRef *ref) {
             return nullptr;
         }
 
-        auto valueIndex = anEnum->GetValueIndex(ref->next->name);
+        auto valueIndex = anEnum->GetFieldIndex(ref->next->name);
         if (valueIndex == -1) {
             v->ReportError(ErrorCode::ENUM_UNKNOWN_VALUE, {ref->next->name, anEnum->name}, ref->next);
             return nullptr;

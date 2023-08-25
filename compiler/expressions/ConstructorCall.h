@@ -12,7 +12,8 @@
 #include "../TypeCoercion.h"
 
 llvm::Value *generateConstructorCall(Visitor *v, ConstructorCall *node) {
-    generateTypeDefinition(v, node->type);
+    auto nodeType = dynamic_cast<TypeDefinition *>(node->type);
+    generateTypeDefinition(v, nodeType);
 
     // FIXME: This could probably be a little cleaner/efficient if we just pass in `node->parameters`
     //  to the statement lookup and (somehow) get the TypeDefinition from the node.
@@ -23,7 +24,7 @@ llvm::Value *generateConstructorCall(Visitor *v, ConstructorCall *node) {
         args.push_back(item->Accept(v));
 
     // Find the constructor that matches the argTypes.
-    /*auto constructFunction = node->type->getFunction("construct", args);
+    auto constructFunction = nodeType->FindFunction("construct", args);
     if (!constructFunction) {
         std::string argTypes;
         for (const auto &item: args) {
@@ -31,33 +32,32 @@ llvm::Value *generateConstructorCall(Visitor *v, ConstructorCall *node) {
             if (&item != &args.back()) argTypes += ", ";
         }
 
-        v->ReportError(ErrorCode::TYPE_UNKNOWN_CONSTRUCTOR, {node->type->name, argTypes}, node);
+        v->ReportError(ErrorCode::TYPE_UNKNOWN_CONSTRUCTOR, {nodeType->name, argTypes}, node);
         return nullptr;
     }
 
     // Make sure that the parameters are all the same type as the statement parameters so LLVM doesn't complain.
     for (int i = 0; i < args.size(); i++)
-        args[i] = TypeCoercion::coerce(args[i], constructFunction->parameters[i]->type->llvmType);
+        args[i] = TypeCoercion::coerce(args[i], constructFunction->GetParameter(i)->type->llvmType);
 
     // Call the constructor
     auto ptr = Compiler::getBuilder().CreateCall(constructFunction->llvmFunction, args);
 
     // If this is actually "assignment constructor", do all the assignments.
     // a = new T { x = 1, y = 2 }
-    for (const auto &item: node->assignments) {
+    for (const auto &item: node->fields) {
         // Make sure the field exists on the type.
-        auto fieldIndex = node->type->getFieldIndex(item->name);
+        auto fieldIndex = nodeType->GetFieldIndex(item->name);
         if (fieldIndex == -1) {
-            v->ReportError(ErrorCode::TYPE_UNKNOWN_FIELD, {item->name, node->type->name}, item);
+            v->ReportError(ErrorCode::TYPE_UNKNOWN_FIELD, {item->name, nodeType->name}, item);
             return nullptr;
         }
 
         Compiler::getBuilder().CreateStore(
-            item->expression->Accept(v),
-            Compiler::getBuilder().CreateStructGEP(node->type->llvmType, ptr, fieldIndex)
+            item->value->Accept(v),
+            Compiler::getBuilder().CreateStructGEP(nodeType->llvmType, ptr, fieldIndex)
         );
     }
 
-    return ptr;*/
-    return nullptr;
+    return ptr;
 }

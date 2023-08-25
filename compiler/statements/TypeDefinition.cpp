@@ -30,19 +30,20 @@ llvm::Function *generateDefaultConstructor(Visitor *v, TypeDefinition *type) {
     );
 
     // Set the default values for the fields.
-    for (const auto &item: type->fields) {
+    for (const auto &fieldName: type->fieldOrder) {
+        auto item = type->fields[fieldName];
         auto field = Compiler::getBuilder().CreateStructGEP(
             type->llvmType,
             ptr,
-            type->getFieldIndex(item.first),
-            item.second->name
+            item->index,
+            item->name
         );
 
         llvm::Value *value;
-        if (item.second->expression)
-            value = item.second->expression->Accept(v);
+        if (item->expression)
+            value = item->expression->Accept(v);
         else
-            value = item.second->type->getDefaultValue();
+            value = item->type->getDefaultValue();
 
         Compiler::getBuilder().CreateStore(value, field);
     }
@@ -53,7 +54,7 @@ llvm::Function *generateDefaultConstructor(Visitor *v, TypeDefinition *type) {
     function->returnType = type;
     function->llvmFunction = func;
 
-    type->add(function);
+    type->AddFunction(function);
 
     // Return instance
     Compiler::getBuilder().CreateRet(ptr);
@@ -66,8 +67,8 @@ llvm::Function *generateConstructor(Visitor *visitor, Function *function, llvm::
 
     // Compile a list of all the parameters.
     std::vector<llvm::Type *> params;
-    /*for (const auto &item: function->parameters)
-        params.push_back(item->type->llvmType);*/
+    for (const auto &paramName: function->parameterOrder)
+        params.push_back(function->parameters[paramName]->type->llvmType);
 
     // Define the statement
     auto funcType = llvm::FunctionType::get(
@@ -98,8 +99,8 @@ llvm::Function *generateConstructor(Visitor *visitor, Function *function, llvm::
     Compiler::getScopeManager().add(varDecl);
 
     // Generate the parameters.
-    for (const auto &item: function->parameters)
-        item->Accept(visitor);
+    for (const auto &paramName: function->parameterOrder)
+        function->parameters[paramName]->Accept(visitor);
 
     // Generate the body.
     for (auto &statement: function->body)
@@ -175,7 +176,7 @@ TypeBase *inferType(Visitor *v, Node *n) {
         Function *function;
         if (pFunctionCall->prev && pFunctionCall->prev->ownerType)
             // Lookup the statement on the type.
-            function = pFunctionCall->prev->ownerType->getFunction(pFunctionCall->name);
+            function = pFunctionCall->prev->ownerType->GetFunction(pFunctionCall->name);
         else
             // Lookup the global statement.
             function = Compiler::getScopeManager().getFunction(pFunctionCall->name);
@@ -211,7 +212,7 @@ llvm::Type *generateTypeDefinition(Visitor *v, TypeBase *t) {
 }
 
 llvm::Type *generateTypeDefinition(Visitor *v, TypeDefinition *type) {
-    /*if (type->llvmType)
+    if (type->llvmType)
         return type->llvmType;
 
     if (type->name == "i8")
@@ -233,9 +234,10 @@ llvm::Type *generateTypeDefinition(Visitor *v, TypeDefinition *type) {
 
     // Generate the fields for the struct
     std::vector<llvm::Type *> fields;
-    for (const auto &item: type->fields) {
-        auto t = item.second->GetCompiledType(v)->llvmType;
-        if (item.second->type->isStruct)
+    for (const auto &fieldName: type->fieldOrder) {
+        auto field = type->fields[fieldName];
+        auto t = field->type->getLlvmType();
+        if (!field->type->isValueType)
             t = t->getPointerTo();
 
         fields.push_back(t);
@@ -254,6 +256,5 @@ llvm::Type *generateTypeDefinition(Visitor *v, TypeDefinition *type) {
     // This includes the constructors.
     generateFunctions(v, type);
 
-    return type->llvmType;*/
-    return nullptr;
+    return type->llvmType;
 }

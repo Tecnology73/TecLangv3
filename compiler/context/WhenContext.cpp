@@ -6,9 +6,9 @@
 
 WhenContext::WhenContext(Visitor *visitor, When *when) : CodegenContext(visitor), when(when) {}
 
-TypeDefinition *WhenContext::getReturnType() {
+TypeBase *WhenContext::getReturnType() {
     if (auto varContext = dynamic_cast<VarDeclarationContext *>(parent))
-        return dynamic_cast<TypeDefinition *>(varContext->var->type);
+        return varContext->var->type;
     else if (auto returnContext = dynamic_cast<ReturnContext *>(parent))
         return returnContext->getReturnType();
 

@@ -29,7 +29,7 @@ public:
     void leave(const std::string &name);
 
     /*
-     * Add
+     * AddField
      */
 
     void add(TypeDefinition *typeDef) const;

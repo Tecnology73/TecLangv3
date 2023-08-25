@@ -1,6 +1,11 @@
 #pragma once
 
 #include "../ast/Visitor.h"
+//
+#include "topLevel/Enum.h"
+#include "topLevel/Function.h"
+//
+#include "expressions/When.h"
 
 class SemanticAnalysisVisitor : public Visitor {
 public:
@@ -10,9 +15,14 @@ public:
      * Top level
      */
 
+    llvm::Value *Visit(class TypeField *node) override { return nullptr; }
+
     llvm::Value *Visit(class TypeDefinition *node) override { return nullptr; }
 
-    llvm::Value *Visit(class Enum *node) override { return nullptr; }
+    llvm::Value *Visit(class Enum *node) override {
+        EnumAnalyzer(this, node).Analyze();
+        return nullptr;
+    }
 
     llvm::Value *Visit(class EnumValue *node) override { return nullptr; }
 
@@ -20,7 +30,10 @@ public:
 
     llvm::Value *Visit(class EnumParameter *node) override { return nullptr; }
 
-    llvm::Value *Visit(class Function *node) override { return nullptr; }
+    llvm::Value *Visit(class Function *node) override {
+        FunctionAnalyzer(this, node).Analyze();
+        return nullptr;
+    }
 
     llvm::Value *Visit(class FunctionParameter *node) override { return nullptr; }
 
@@ -54,7 +67,10 @@ public:
 
     llvm::Value *Visit(class StaticRef *node) override { return nullptr; }
 
-    llvm::Value *Visit(class When *node) override { return nullptr; }
+    llvm::Value *Visit(class When *node) override {
+        WhenAnalyzer(this, node).Analyze();
+        return nullptr;
+    }
 
     llvm::Value *Visit(class WhenCondition *node) override { return nullptr; }
 

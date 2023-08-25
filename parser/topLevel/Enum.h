@@ -11,7 +11,7 @@ namespace {
             return nullptr;
         }
 
-        auto value = new EnumValue(parser->currentToken);
+        auto value = new EnumValue(parser->currentToken, parser->currentToken.value);
         if (parser->NextToken().is(Token::Type::Assign)) {
             parser->NextToken(); // Consume '='
 
@@ -29,7 +29,7 @@ namespace {
             return nullptr;
         }
 
-        auto constructor = new EnumConstructor(parser->currentToken);
+        auto constructor = new EnumConstructor(parser->currentToken, parser->currentToken.value);
         if (parser->NextToken().isNot(Token::Type::OpenParen)) {
             parser->PrintSyntaxError("(");
             return nullptr;
@@ -73,7 +73,7 @@ Enum *parseEnum(Parser *parser) {
         return nullptr;
     }
 
-    auto anEnum = new Enum(parser->currentToken, parser->NextToken().value);
+    auto anEnum = Enum::Create(parser->currentToken, parser->NextToken().value);
     if (parser->NextToken().isNot(Token::Type::OpenCurly)) {
         parser->PrintSyntaxError("{");
         return nullptr;
@@ -92,13 +92,13 @@ Enum *parseEnum(Parser *parser) {
             if (!constructor)
                 return nullptr;
 
-            anEnum->AddValue(constructor);
+            anEnum->AddField(constructor);
         } else {
             auto value = parseEnumValue(parser);
             if (!value)
                 return nullptr;
 
-            anEnum->AddValue(value);
+            anEnum->AddField(value);
         }
     }
 

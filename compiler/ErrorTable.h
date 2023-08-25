@@ -36,7 +36,7 @@ const std::map<ErrorCode, std::string> ErrorTable = {
     {ErrorCode::VARIABLE_ALREADY_DECLARED,     "The variable '{}' has already been declared."},
     {ErrorCode::SYNTAX_UNEXPECTED_TOKEN,       "Unexpected token '{}'. Expected {}."},
     {ErrorCode::STATIC_REF_UNKNOWN,            "Unknown static reference '{}'."},
-    {ErrorCode::ENUM_UNKNOWN_VALUE,            "'{}' is not a valid value for 'enum {}'."},
+    {ErrorCode::ENUM_UNKNOWN_VALUE,            "'{}' is not a valid expression for 'enum {}'."},
     {ErrorCode::SYNTAX_ERROR,                  "Syntax error: '{}' cannot be used in the current context or is invalid."},
     {ErrorCode::WHEN_UNUSED_ENUM_VALUE,        "'else' is required when some enum values are not covered."},
 };

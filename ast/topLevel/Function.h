@@ -1,56 +1,61 @@
 #pragma once
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include "../Node.h"
 #include "TypeBase.h"
 #include "../statements/VarDeclaration.h"
 
-class Function;
-
-class FunctionParameter : public Node {
-public:
-    FunctionParameter(Token beginToken, std::string name, TypeBase *type, Function *function) : Node(std::move(beginToken)), name(std::move(name)), type(type), function(function) {}
-
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
-    }
-
-public:
-    std::string const name;
-    Node *const value = nullptr;
-    TypeBase *const type = nullptr;
-    Function *const function = nullptr;
-
-    int index;
-};
+class FunctionParameter;
 
 class Function : public Node {
 public:
     using Node::Node;
 
-    Function(std::string name) : Node(Token{}), name(std::move(name)), isExternal(true) {}
+    Function(std::string name) : Node(Token{}), name(name), isExternal(true) {}
 
-    Function(Token beginToken) : Node(std::move(beginToken)), name(token.value) {}
+    Function(const Token &beginToken, const std::string &name) : Node(beginToken), name(name) {}
 
     llvm::Value *Accept(Visitor *visitor) override {
         return visitor->Visit(this);
     }
 
-    bool addParameter(Token token, std::string paramName, TypeBase *type);
+    bool AddParameter(const Token &token, std::string paramName, TypeBase *type);
 
-    FunctionParameter *getParameter(const std::string &parameterName) const;
+    FunctionParameter *GetParameter(const std::string &parameterName) const;
 
-    int getParameterIndex(const std::string &parameterName);
+    FunctionParameter *GetParameter(unsigned index) const;
+
+    int GetParameterIndex(const std::string &parameterName);
 
 public:
     std::string const name;
-    std::vector<FunctionParameter *> parameters;
-    std::map<std::string, int> parameterIndices;
+    std::unordered_map<std::string, FunctionParameter *> parameters;
+    std::vector<std::string> parameterOrder;
     std::vector<Node *> body;
     TypeBase *returnType = nullptr;
     TypeBase *ownerType = nullptr;
     bool isExternal = false;
 
     llvm::Function *llvmFunction = nullptr;
+};
+
+class FunctionParameter : public VariableDeclaration {
+public:
+    FunctionParameter(const Token &beginToken, const std::string &name, TypeBase *type, Function *function) :
+        VariableDeclaration(beginToken),
+        name(name),
+        type(type),
+        function(function) {}
+
+    llvm::Value *Accept(Visitor *visitor) override {
+        return visitor->Visit(this);
+    }
+
+public:
+    std::string const name;
+    TypeBase *const type = nullptr;
+    Function *const function = nullptr;
+
+    int index;
 };

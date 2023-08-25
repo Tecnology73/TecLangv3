@@ -35,6 +35,10 @@ public:
      * Top-level
      */
 
+    llvm::Value *Visit(class TypeField *node) override {
+        return nullptr;
+    }
+
     llvm::Value *Visit(TypeDefinition *node) override {
         // Types are generated on an as-needed basis.
         return nullptr;

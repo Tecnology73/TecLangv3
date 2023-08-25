@@ -19,7 +19,7 @@ void ConstructorCall::AddField(Token token, Node *value) {
 
 ConstructorCall *ConstructorCall::Create(const Token &token) {
     auto node = new ConstructorCall(token);
-    // node->type = TypeDefinition::Create(token, token.value);
+    // node->type = TypeDefinition::Create(token, token.expression);
 
     return node;
 }

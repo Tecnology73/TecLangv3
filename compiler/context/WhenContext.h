@@ -6,7 +6,7 @@ class WhenContext : public CodegenContext {
 public:
     explicit WhenContext(Visitor *visitor, When *when);
 
-    TypeDefinition *getReturnType() override;
+    TypeBase *getReturnType() override;
 
     void handleReturn(const Node *node, llvm::Value *value) override;
 

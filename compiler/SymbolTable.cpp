@@ -318,7 +318,7 @@ ScopeNode *SymbolTable::getRootScope() {
 void SymbolTable::addBuiltinType(const std::string &name, llvm::LLVMContext &context) {
     /*auto type = new TypeDefinition(Token{
         .type = Token::Type::Identifier,
-        .value = name
+        .expression = name
     });
     type->name = name;
 

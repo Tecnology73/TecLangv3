@@ -7,9 +7,8 @@ class VarDeclarationContext : public CodegenContext {
 public:
     explicit VarDeclarationContext(Visitor *visitor, VariableDeclaration *var) : CodegenContext(visitor), var(var) {}
 
-    TypeDefinition *getReturnType() override {
-        // return var->type;
-        return nullptr;
+    TypeBase *getReturnType() override {
+        return var->type;
     }
 
 public:
