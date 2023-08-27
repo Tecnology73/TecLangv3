@@ -1,4 +1,4 @@
-enum Color {
+/*enum Color {
     Red
     Green
     Blue
@@ -7,11 +7,16 @@ enum Color {
     Yellow
     Black = 69
     White
-}
+}*/
+
+// extern func printf() i8*
 
 func main() i32 {
-    return when Color::Red {
+    i = 1
+    if i == 1 && 2 == i {}
+    return 42
+    /*return when Color::Red {
         Color::Red -> 3
         else -> 4
-    }
+    }*/
 }

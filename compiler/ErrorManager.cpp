@@ -58,8 +58,8 @@ void ErrorManager::Report(ErrorCode errorCode, const std::vector<std::string> &a
                 {
                     std::string(spaces, ' '),
                     std::string(token.position.column + spaces - 2, ' '),
-                    std::string(token.position.length, '^'),
-                    it->second
+                    std::string(token.position.length + 1, '^'),
+                    Console::format(it->second, args)
                 }
             );
         }

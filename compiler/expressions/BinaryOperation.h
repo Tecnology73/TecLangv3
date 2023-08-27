@@ -239,7 +239,13 @@ namespace {
 llvm::Value *generateBinaryOperation(Visitor *visitor, BinaryOperation *node) {
     auto lhs = generateValue(visitor, node->lhs);
     auto rhs = generateValue(visitor, node->rhs);
-    auto values = TypeCoercion::coerce(lhs, rhs);
+    std::pair<llvm::Value *, llvm::Value *> values;
+    if (node->op == Token::Type::Divide) {
+        // If we're doing a division, we need to make sure that both sides are doubles.
+        values.first = TypeCoercion::coerce(lhs, Compiler::getScopeManager().getType("double")->llvmType);
+        values.second = TypeCoercion::coerce(rhs, Compiler::getScopeManager().getType("double")->llvmType);
+    } else
+        values = TypeCoercion::coerce(lhs, rhs);
 
     switch (node->op) {
         case Token::Type::Plus:

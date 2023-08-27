@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <stdarg.h>
+#include "lexer/Token.h"
 
 struct RGB {
     int r;
@@ -65,6 +66,8 @@ public:
     static void printRaw(const std::string &message);
 
     static std::string format(const std::string &str, const std::vector<std::string> &args);
+
+    static std::string OpToString(Token::Type op);
 
 private:
     static std::string replaceTag(const std::string &tag);

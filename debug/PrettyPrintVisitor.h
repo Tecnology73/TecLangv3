@@ -289,7 +289,7 @@ public:
     }
 
     llvm::Value *Visit(BinaryOperation *node) override {
-        Print("Binary operation: %d\n", node->op);
+        Print("Binary operation: %s\n", Console::OpToString(node->op).c_str());
         indent += 2;
 
         Print("Left:\n");

@@ -3,7 +3,6 @@
 #include <charconv>
 #include <fstream>
 #include <sstream>
-#include <iomanip>
 #include "Lexer.h"
 #include "PunctuationTrie.h"
 #include "util.h"
@@ -83,10 +82,10 @@ Lexer::Lexer(const std::string &source) {
     sourceLength = (long) source.length();
 
     // Split the source into lines.
-    std::stringstream ss(source);
+    /*std::stringstream ss(source);
     std::string line;
     while (std::getline(ss, line, '\n'))
-        lines.push_back(line);
+        lines.push_back(line);*/
 }
 
 Token Lexer::GetNextToken() {
@@ -183,7 +182,7 @@ Token Lexer::parseIdentifier() {
     if (keywords.count(identifier) > 0)
         type = keywords.at(identifier);
 
-    return makeToken(type, identifier, pos);
+    return makeToken(type, std::move(identifier), pos);
 }
 
 Token Lexer::parseNumber() {
@@ -194,9 +193,17 @@ Token Lexer::parseNumber() {
     // Otherwise, it's an integer.
     bool isDouble = false;
     std::string number;
+    char c = peekChar(0);
 
-    char c;
-    while (c = peekChar(0), c != EOF && (isdigit(c) || c == '.' || c == '_' || c == '-' || c == '+')) {
+    // Only allow signs ('-' or '+') at the start of the number.
+    if ((c == '-' || c == '+') && isdigit(peekChar(1))) {
+        if (position.index == 0 || !isdigit(peekChar(-1))) {
+            number += consumeChar();
+        } else
+            return parsePunctuation();
+    }
+
+    while (c = peekChar(0), c != EOF && (isdigit(c) || c == '.' || c == '_')) {
         if (c == '_') {
             consumeChar();
             continue;
@@ -234,7 +241,7 @@ Token Lexer::parseNumber() {
             return makeToken(Token::Type::Integer, value, pos);
     }
 
-    return makeToken(Token::Type::Unknown, number, pos);
+    return makeToken(Token::Type::Unknown, std::move(number), pos);
 }
 
 Token Lexer::parseString() {
@@ -297,14 +304,14 @@ Token Lexer::parseString() {
         }
     }
 
-    return makeToken(Token::Type::String, string, pos);
+    return makeToken(Token::Type::String, std::move(string), pos);
 }
 
 Token Lexer::parsePunctuation() {
-    // Negative numbers.
+    // Signed numbers.
     char c = peekChar(0);
     char nc = peekChar(1);
-    if ((c == '-' || c == '.') && isdigit(nc))
+    if ((c == '-' || c == '+' || c == '.') && isdigit(nc) && !isdigit(peekChar(-1)))
         return parseNumber();
 
     std::string punctuation;
@@ -317,7 +324,7 @@ Token Lexer::parsePunctuation() {
 
     // Create the token based on the punctuation
     Token::Type tokenType = (curr != nullptr) ? curr->tokenType : Token::Type::Punctuation;
-    return makeToken(tokenType, punctuation, position);
+    return makeToken(tokenType, std::move(punctuation), position);
 }
 
 void Lexer::parseLineComment() {

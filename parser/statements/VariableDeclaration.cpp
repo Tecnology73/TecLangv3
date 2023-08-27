@@ -1,5 +1,6 @@
 #include "VariableDeclaration.h"
 #include "../expressions/Expression.h"
+#include "../../ast/topLevel/TypeDefinition.h"
 
 VariableDeclaration *parseVariableDeclaration(Parser *parser) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {
@@ -15,7 +16,7 @@ VariableDeclaration *parseVariableDeclaration(Parser *parser) {
             return nullptr;
         }
 
-        // node->type = TypeDefinition::Create(parser->currentToken);
+        node->type = TypeDefinition::Create(parser->currentToken);
     } else if (parser->PeekToken().isNot(Token::Type::Assign)) {
         parser->PrintSyntaxError(": or =");
         return nullptr;

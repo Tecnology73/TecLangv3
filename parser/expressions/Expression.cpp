@@ -124,7 +124,7 @@ Node *parseExpression(Parser *parser, int minPrecedence) {
     Node *left = parseFactor(parser);
     if (left == nullptr)
         return nullptr;
-
+    
     while (true) {
         Token op = parser->currentToken;
         int precedence = getPrecedence(op.type);
@@ -132,33 +132,14 @@ Node *parseExpression(Parser *parser, int minPrecedence) {
             break;
 
         // edge-case because of how ++/-- are parsed.
-        if (
-            op.isNot(Token::Type::PlusPlus) &&
-            op.isNot(Token::Type::MinusMinus)
-            )
+        if (op.isNot(Token::Type::PlusPlus) && op.isNot(Token::Type::MinusMinus))
             parser->NextToken(); // Consume operator
 
-        // Properly handle paren groups.
-        if (parser->currentToken.is(Token::Type::OpenParen)) {
-            parser->NextToken(); // Consume '('
-            Node *right = parseExpression(parser, 0);
-            if (right == nullptr)
-                return nullptr;
+        Node *right = parseExpression(parser, precedence + 1);
+        if (right == nullptr)
+            return nullptr;
 
-            left = new BinaryOperation(op, left, right);
-            if (parser->currentToken.type != Token::Type::CloseParen) {
-                parser->PrintSyntaxError(")");
-                return nullptr;
-            }
-
-            parser->NextToken(); // Consume ')'
-        } else {
-            Node *right = parseExpression(parser, precedence + 1);
-            if (right == nullptr)
-                return nullptr;
-
-            left = new BinaryOperation(op, left, right);
-        }
+        left = new BinaryOperation(op, left, right);
     }
 
     return left;
