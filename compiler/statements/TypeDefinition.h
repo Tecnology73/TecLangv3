@@ -5,10 +5,8 @@
 
 class TypeDefinition;
 
-class TypeBase;
+TypeVariant* inferType(Visitor* v, Node* node);
 
-TypeBase *inferType(Visitor *v, Node *node);
+llvm::Type* generateTypeDefinition(Visitor* v, TypeBase* type);
 
-llvm::Type *generateTypeDefinition(Visitor *v, TypeBase *type);
-
-llvm::Type *generateTypeDefinition(Visitor *v, TypeDefinition *type);
+llvm::Type* generateTypeDefinition(Visitor* v, TypeDefinition* type);

@@ -2,6 +2,7 @@
 
 #include "../Node.h"
 #include "../Visitor.h"
+#include "../../compiler/Compiler.h"
 
 class Boolean : public Literal {
 public:
@@ -9,7 +10,11 @@ public:
 
     bool value;
 
-    llvm::Value *Accept(class Visitor *visitor) override {
-        return visitor->Visit(this);
+    void Accept(class Visitor* visitor) override {
+        visitor->Visit(this);
+    }
+
+    TypeVariant* getType() override {
+        return Compiler::getScopeManager().getType("bool")->createVariant();
     }
 };

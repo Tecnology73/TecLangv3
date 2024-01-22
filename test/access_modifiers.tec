@@ -1,0 +1,9 @@
+type User {
+  pub age: i32
+  creditCardNumber: i32
+}
+
+pub type User {
+  age: i32
+  priv creditCardNumber: i32
+}

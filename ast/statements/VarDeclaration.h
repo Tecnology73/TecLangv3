@@ -2,26 +2,33 @@
 
 #include "../Node.h"
 #include "../Visitor.h"
-#include "../topLevel/TypeBase.h"
+#include "../expressions/TypeReference.h"
 
 class VariableDeclaration : public Node {
 public:
     using Node::Node;
 
-    VariableDeclaration(const Token &beginToken, Node *expression = nullptr);
+    explicit VariableDeclaration(const Token& beginToken, Node* expression = nullptr);
 
-    VariableDeclaration(const Token &beginToken, const std::string &name, Node *expression = nullptr);
+    VariableDeclaration(const Token& beginToken, const std::string& name, Node* expression = nullptr);
+
+    VariableDeclaration(
+        const Token& beginToken,
+        const std::string& name,
+        TypeReference* type,
+        Node* expression = nullptr
+    );
 
     ~VariableDeclaration() override;
 
-    llvm::Value *Accept(Visitor *visitor) override;
+    void Accept(Visitor* visitor) override;
 
-    TypeBase *GetCompiledType(Visitor *visitor);
+    // TypeVariant* GetCompiledType(Visitor* visitor);
 
 public:
     std::string const name;
-    TypeBase *type = nullptr;
-    Node *expression = nullptr;
+    TypeReference* type = nullptr;
+    Node* expression = nullptr;
 
-    llvm::Value *alloc = nullptr;
+    llvm::Value* alloc = nullptr;
 };

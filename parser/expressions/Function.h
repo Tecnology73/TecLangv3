@@ -1,13 +1,15 @@
 #pragma once
 
 #include "../../ast/Statements.h"
-#include "../../ast/TopLevel.h"
 #include "../Parser.h"
 #include "Expression.h"
+#include "TypeReference.h"
 #include "../statements/FunctionParameter.h"
+#include "../../compiler/Compiler.h"
+#include "../../context/SymbolTable.h"
 
-Function *parseFunction(Parser *parser) {
-    bool isExternal = parser->currentToken.is(Token::Type::Extern);
+Function* parseFunction(Parser* parser) {
+    auto isExternal = parser->currentToken.is(Token::Type::Extern);
     if (isExternal)
         parser->NextToken(); // Consume 'extern'
 
@@ -17,7 +19,7 @@ Function *parseFunction(Parser *parser) {
     }
 
     // Function belongs to a type.
-    TypeBase *ownerType = nullptr;
+    TypeBase* ownerType = nullptr;
     if (!isExternal && parser->PeekToken().is(Token::Type::LessThan)) {
         parser->NextToken();
 
@@ -26,8 +28,9 @@ Function *parseFunction(Parser *parser) {
             return nullptr;
         }
 
-        // TODO: Allow enum/type def.
-        ownerType = TypeDefinition::Create(parser->currentToken);
+        // ownerType = parseTypeReference(parser);
+        // if (parser->currentToken.isNot(Token::Type::GreaterThan)) {
+        ownerType = TypeDefinition::CreateUndeclared(parser->currentToken);
         if (parser->NextToken().isNot(Token::Type::GreaterThan)) {
             parser->PrintSyntaxError(">");
             return nullptr;
@@ -50,8 +53,9 @@ Function *parseFunction(Parser *parser) {
         // "this" is always the first parameter.
         // Constructors have "this" malloc'd.
         if (function->name != "construct")
-            function->AddParameter(parser->currentToken, "this", ownerType);
-    }
+            function->AddParameter(parser->currentToken, "this", ownerType->CreateReference());
+    } else
+        SymbolTable::GetInstance()->Add(function);
 
     if (parser->NextToken().isNot(Token::Type::OpenParen)) {
         parser->PrintSyntaxError("(");
@@ -78,21 +82,13 @@ Function *parseFunction(Parser *parser) {
     }
 
     // The return type could be omitted when it needs to be inferred.
-    if (parser->NextToken().is(Token::Type::Identifier)) {
-        auto name = parser->currentToken;
-        if (parser->NextToken().is(Token::Type::Multiply)) {
-            name.value += "*";
-            parser->NextToken();
-        }
-
-        // TODO: Allow enum/type def.
-        function->returnType = TypeDefinition::Create(name);
-    }
+    if (parser->NextToken().is(Token::Type::Identifier))
+        function->returnType = parseTypeReference(parser);
 
     if (!function->isExternal) {
         // If the return type is omitted and this is a constructor, the return type is the owner type.
         if (!function->returnType && function->ownerType && function->name == "construct")
-            function->returnType = function->ownerType;
+            function->returnType = function->ownerType->CreateReference();
 
         if (parser->currentToken.isNot(Token::Type::OpenCurly)) {
             parser->PrintSyntaxError("{'");

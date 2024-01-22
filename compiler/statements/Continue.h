@@ -1,19 +1,16 @@
 #pragma once
 
-#include <llvm/IR/Value.h>
-#include <llvm/IR/Function.h>
-#include <llvm/IR/Verifier.h>
-#include "../../ast/Statements.h"
 #include "../Compiler.h"
-#include "../context/ForLoopContext.h"
+#include "../../context/compiler/ForLoopCompilerContext.h"
 
-llvm::Value *generateContinue(Visitor *v, Continue *node) {
-    auto context = Compiler::getScopeManager().findContext<ForLoopContext>();
+void generateContinue(Visitor* v, Continue* node) {
+    auto context = Compiler::getScopeManager().findContext<ForLoopCompilerContext>();
     if (!context) {
         // v->PrintError("Continue statement must be inside a for loop");
-        return nullptr;
+        // v->AddFailure();
+        return;
     }
 
     context->handleContinue(node);
-    return nullptr;
+    v->AddSuccess();
 }

@@ -15,8 +15,8 @@ public:
             delete node;
     }
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
+    void Accept(Visitor *visitor) override {
+        visitor->Visit(this);
     }
 
 public:

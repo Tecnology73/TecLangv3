@@ -1,0 +1,92 @@
+enum Color {
+    Red
+    Green
+    Blue
+}
+
+/*func main() i32 {
+    color = Color::Red
+    if (color == Color::Red) {
+        return 42
+    }
+
+    return 0
+}*/
+
+/*func main() i32 {
+    color = Color::Red
+
+    result = when color {
+        Color::Red -> {
+            if false {
+                return 0
+            }
+
+            return 42
+        }
+
+        Color::Green -> 1
+        Color::Blue -> 69
+    }
+
+    return result
+}*/
+
+extern func printf() i8*
+
+func main() i32 {
+    for 0..10 step 2 {
+        result = when it {
+            0 -> 10
+            2 -> 20
+            4 -> 30
+            5 -> break
+            6 -> 40
+            8 -> 50
+            else -> 0
+        }
+
+        if result > 0 {
+            printf("[%d] result: %d\n", it, result)
+        } else {
+            printf("[%d] no result\n", it)
+        }
+    }
+
+    return 0
+}
+
+/*enum IpAddress {
+    v4(i32, i32, i32, i32)
+    // v5(a: i32, b: i32, c: i32, d: i32)
+    v6(string)
+}
+
+func main() i32 {
+    loopback = IpAddress::v4(127, 0, 0, 1)
+
+    return loopback[0] // 127
+}*/
+
+/*func main() i32 {
+    loopback = IpAddress.v4(127, 0, 0, 1)
+    loopback[0] // 127
+    loopback[1] // 0
+    loopback[2] // 0
+    loopback[3] // 1
+
+    google = Ipaddress.v6("::")
+    google[0] // "::"
+
+    when loopback {
+        is IpAddress.v4 {
+            it[0] // 127
+            it[3] // 1
+        }
+
+        is IpAddress.v6 {
+            it[0] // "::"
+            it[1] // Error
+        }
+    }
+}*/

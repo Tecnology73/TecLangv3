@@ -1,7 +1,8 @@
 #include "Function.h"
+#include "../../compiler/Compiler.h"
 
-bool Function::AddParameter(const Token &token, std::string paramName, TypeBase *type) {
-    if (parameters.find(paramName) != parameters.end())
+bool Function::AddParameter(const Token& token, std::string paramName, TypeReference* type) {
+    if (parameters.contains(paramName))
         return false;
 
     auto param = new FunctionParameter(token, paramName, type, this);
@@ -12,7 +13,7 @@ bool Function::AddParameter(const Token &token, std::string paramName, TypeBase 
     return true;
 }
 
-FunctionParameter *Function::GetParameter(const std::string &parameterName) const {
+FunctionParameter* Function::GetParameter(const std::string& parameterName) const {
     auto it = parameters.find(parameterName);
     if (it == parameters.end())
         return nullptr;
@@ -20,14 +21,14 @@ FunctionParameter *Function::GetParameter(const std::string &parameterName) cons
     return it->second;
 }
 
-FunctionParameter *Function::GetParameter(unsigned int index) const {
+FunctionParameter* Function::GetParameter(unsigned int index) const {
     if (index >= parameters.size())
         return nullptr;
 
     return parameters.at(parameterOrder[index]);
 }
 
-int Function::GetParameterIndex(const std::string &parameterName) {
+int Function::GetParameterIndex(const std::string& parameterName) {
     auto it = parameters.find(parameterName);
     if (it == parameters.end())
         return -1;

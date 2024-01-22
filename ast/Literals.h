@@ -4,3 +4,4 @@
 #include "literals/Integer.h"
 #include "literals/Double.h"
 #include "literals/String.h"
+#include "literals/Null.h"

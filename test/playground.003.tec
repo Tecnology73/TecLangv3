@@ -1,0 +1,70 @@
+extern func printf() i8*
+extern func malloc() i8*
+
+type Account {
+    balance: i32
+    user: User?
+}
+
+func getAge() {
+    return 42
+}
+
+func<User> getAge() {
+    return this.age
+}
+
+type User {
+    age: i32
+}
+
+enum Color {
+    Red
+    Green
+    Blue
+}
+
+func main() {
+    account: Account?
+
+    /*if account is Account {
+        // account narrowed to Account
+        return 1
+    }
+
+    account = new Account()
+
+    account.balance = 100*/
+
+    return 0
+}
+
+/*func main() {
+    account: Account?
+
+    // log(account.balance) // Error: Value `account` is possibly null.
+
+    if account is null {
+        // account narrowed to null
+
+        return 1
+    }
+
+    // account narrowed to Account
+
+    log(account.balance) // OK
+
+    // log(account.user.age) // Error: Value `account.user` is possibly null.
+
+    if account.user is null {
+        // account.user narrowed to null
+
+        return 1
+    }
+
+    // account.user narrowed to User
+
+    log(account.user.age) // OK
+
+    return 0
+}*/

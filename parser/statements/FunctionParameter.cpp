@@ -1,7 +1,7 @@
 #include "FunctionParameter.h"
 #include "../../ast/topLevel/TypeDefinition.h"
 
-bool parseFunctionParameter(Parser *parser, Function *function) {
+bool parseFunctionParameter(Parser* parser, Function* function) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {
         parser->PrintSyntaxError("parameter name");
         return false;
@@ -18,7 +18,7 @@ bool parseFunctionParameter(Parser *parser, Function *function) {
         return false;
     }
 
-    function->AddParameter(beginToken, beginToken.value, TypeDefinition::Create(parser->currentToken));
+    function->AddParameter(beginToken, beginToken.value.data(), new TypeReference(parser->currentToken));
     parser->NextToken(); // Consume the type name.
     return true;
 }

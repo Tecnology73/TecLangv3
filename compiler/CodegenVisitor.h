@@ -27,7 +27,7 @@
 
 class CodegenVisitor : public Visitor {
 public:
-    explicit CodegenVisitor(Parser *p) : Visitor("CodegenVisitor", p) {
+    explicit CodegenVisitor(Parser* p) : Visitor("CodegenVisitor", p) {
         Compiler::getInstance();
     }
 
@@ -35,118 +35,121 @@ public:
      * Top-level
      */
 
-    llvm::Value *Visit(class TypeField *node) override {
-        return nullptr;
+    void Visit(class TypeField* node) override {
     }
 
-    llvm::Value *Visit(TypeDefinition *node) override {
+    void Visit(TypeDefinition* node) override {
         // Types are generated on an as-needed basis.
-        return nullptr;
     }
 
-    llvm::Value *Visit(Enum *node) override {
-        return generateEnum(this, node);
+    void Visit(Enum* node) override {
+        generateEnum(this, node);
     }
 
-    llvm::Value *Visit(EnumValue *node) override {
-        return nullptr;
+    void Visit(EnumValue* node) override {
     }
 
-    llvm::Value *Visit(EnumConstructor *node) override {
-        return nullptr;
+    void Visit(EnumConstructor* node) override {
     }
 
-    llvm::Value *Visit(EnumParameter *node) override {
-        return nullptr;
+    void Visit(EnumParameter* node) override {
     }
 
-    llvm::Value *Visit(Function *node) override {
-        return generateFunction(this, node);
+    void Visit(Function* node) override {
+        generateFunction(this, node);
     }
 
-    llvm::Value *Visit(FunctionParameter *node) override {
-        return generateFunctionParameter(this, node);
+    void Visit(FunctionParameter* node) override {
+        generateFunctionParameter(this, node);
     }
 
     /*
      * Statements
      */
 
-    llvm::Value *Visit(Return *node) override {
-        return generateReturn(this, node);
+    void Visit(Return* node) override {
+        generateReturn(this, node);
     }
 
-    llvm::Value *Visit(VariableDeclaration *node) override {
-        return generateVariableDeclaration(this, node);
+    void Visit(VariableDeclaration* node) override {
+        generateVariableDeclaration(this, node);
     }
 
-    llvm::Value *Visit(IfStatement *node) override {
-        return generateIfStatement(this, node);
+    void Visit(IfStatement* node) override {
+        generateIfStatement(this, node);
     }
 
-    llvm::Value *Visit(ForLoop *node) override {
-        return generateForLoop(this, node);
+    void Visit(ForLoop* node) override {
+        generateForLoop(this, node);
     }
 
-    llvm::Value *Visit(Continue *node) override {
-        return generateContinue(this, node);
+    void Visit(Continue* node) override {
+        generateContinue(this, node);
     }
 
-    llvm::Value *Visit(Break *node) override {
-        return generateBreak(this, node);
+    void Visit(Break* node) override {
+        generateBreak(this, node);
     }
 
     /*
      * Expressions
      */
 
-    llvm::Value *Visit(ConstructorCall *node) override {
-        return generateConstructorCall(this, node);
+    void Visit(ConstructorCall* node) override {
+        generateConstructorCall(this, node);
     }
 
-    llvm::Value *Visit(FunctionCall *node) override {
-        return generateFunctionCall(this, node);
+    void Visit(FunctionCall* node) override {
+        generateFunctionCall(this, node);
     }
 
-    llvm::Value *Visit(BinaryOperation *node) override {
-        return generateBinaryOperation(this, node);
+    void Visit(BinaryOperation* node) override {
+        generateBinaryOperation(this, node);
     }
 
-    llvm::Value *Visit(VariableReference *node) override {
-        return generateVariableReference(this, node);
+    void Visit(TypeReference* node) override {
     }
 
-    llvm::Value *Visit(StaticRef *node) override {
-        return generateStaticRef(this, node);
+    void Visit(VariableReference* node) override {
+        generateVariableReference(this, node);
     }
 
-    llvm::Value *Visit(When *node) override {
-        return generateWhen(this, node);
+    void Visit(StaticRef* node) override {
+        generateStaticRef(this, node);
     }
 
-    llvm::Value *Visit(WhenCondition *node) override {
+    void Visit(When* node) override {
+        generateWhen(this, node);
+    }
+
+    void Visit(WhenCondition* node) override {
         // The generation for this is handled by the When expression.
-        return nullptr;
     }
 
     /*
      * Literals
      */
 
-    llvm::Value *Visit(Integer *node) override {
-        return Compiler::getBuilder().getIntN(node->numBits, node->value);
+    void Visit(Integer* node) override {
+        AddSuccess(Compiler::getBuilder().getIntN(node->numBits, node->value), node->getType());
     }
 
-    llvm::Value *Visit(Double *node) override {
-        return llvm::ConstantFP::get(Compiler::getBuilder().getDoubleTy(), node->value);
+    void Visit(Double* node) override {
+        AddSuccess(llvm::ConstantFP::get(Compiler::getBuilder().getDoubleTy(), node->value), node->getType());
     }
 
-    llvm::Value *Visit(Boolean *node) override {
-        return Compiler::getBuilder().getInt1(node->value);
+    void Visit(Boolean* node) override {
+        AddSuccess(Compiler::getBuilder().getInt1(node->value), node->getType());
     }
 
-    llvm::Value *Visit(String *node) override {
-        return Compiler::getBuilder().CreateGlobalStringPtr(node->value);
+    void Visit(String* node) override {
+        AddSuccess(Compiler::getBuilder().CreateGlobalStringPtr(node->value));
+    }
+
+    void Visit(Null* node) override {
+        // We need to know the type of the null value to generate it.
+        // This means we can't exactly generate it here.
+        AddFailure();
     }
 };
 

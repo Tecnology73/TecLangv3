@@ -3,17 +3,16 @@
 #include "Expression.h"
 
 // TODO: IS THIS ACTUALLY CORRECT!?!?
-Node *parseIncrement(Parser *parser) {
-    if (
-        parser->currentToken.isNot(Token::Type::PlusPlus) &&
-        parser->currentToken.isNot(Token::Type::MinusMinus)
-        ) {
+Node* parseIncrement(Parser* parser) {
+    if (parser->currentToken.isNot(Token::Type::PlusPlus, Token::Type::MinusMinus)) {
         parser->PrintSyntaxError("++ or --");
         return nullptr;
     }
 
-    auto lhs = new Integer(parser->currentToken);
-    lhs->value = 1;
+    auto lhs = new Integer(
+        parser->currentToken,
+        parser->currentToken.is(Token::Type::PlusPlus) ? 1 : -1
+    );
     parser->NextToken(); // Consume '++' or '--'
 
     // Most likely a suffix/postfix increment/decrement.

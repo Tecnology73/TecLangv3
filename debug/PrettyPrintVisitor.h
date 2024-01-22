@@ -12,11 +12,12 @@ class PrettyPrintVisitor : public Visitor {
 public:
     int indent = 0;
 
-    explicit PrettyPrintVisitor(Parser *p) : Visitor("PrettyPrintVisitor", p) {}
+    explicit PrettyPrintVisitor(Parser* p) : Visitor("PrettyPrintVisitor", p) {
+    }
 
     template<typename... Args>
-    inline void Print(const char *format, Args... args) const {
-        // AddField a pipe every other indentation level.
+    inline void Print(const char* format, Args... args) const {
+        // Add a pipe every other indentation level.
         for (int i = 0; i < indent / 2; i++) {
             if (i % 2 == 1) std::cout << "  ";
             else std::cout << "|  ";
@@ -25,18 +26,49 @@ public:
         printInfo(format, args...);
     }
 
+    std::string FormatType(const TypeVariant* type) const {
+        if (type == nullptr)
+            return "infer";
+
+        if (type->flags.Has(TypeFlag::OPTIONAL))
+            return std::format("Option<{}>", type->type->name);
+
+        return type->type->name;
+    }
+
+    std::string FormatTypeRef(const TypeReference* type) const {
+        if (type == nullptr)
+            return "infer";
+
+        if (type->flags.Has(TypeFlag::OPTIONAL))
+            return std::format("Option<{}>", type->name);
+
+        return type->name;
+    }
+
+    void PrintTypeFlags(const BitFlag<TypeFlag>& flags) {
+        Print("Flags:\n");
+        indent += 2;
+
+        if (flags.Has(TypeFlag::PUBLIC))Print("Access: Public\n");
+        else if (flags.Has(TypeFlag::PRIVATE)) Print("Access: Private\n");
+        else Print("Access: Inherit\n");
+
+        Print("Optional: %s\n", flags.Has(TypeFlag::OPTIONAL) ? "true" : "false");
+
+        indent -= 2;
+    }
+
     /*
      * Top level
      */
 
-    llvm::Value *Visit(class TypeField *node) override {
+    void Visit(class TypeField* node) override {
         Print("Type Field: %s\n", node->name.c_str());
         indent += 2;
 
-        if (node->type != nullptr)
-            Print("Type: %s\n", node->type->name.c_str());
-        else
-            Print("Type: infer\n");
+        Print("Type: %s\n", FormatTypeRef(node->type).c_str());
+        PrintTypeFlags(node->flags);
 
         Print("Expression:\n");
         indent += 2;
@@ -47,44 +79,43 @@ public:
             Print("default\n");
 
         indent -= 4;
-        return nullptr;
     }
 
-    llvm::Value *Visit(TypeDefinition *node) override {
+    void Visit(TypeDefinition* node) override {
         Print("Type: %s\n", node->name.c_str());
         indent += 2;
 
+        PrintTypeFlags(node->flags);
+
         Print("Fields: %d\n", node->fields.size());
         indent += 2;
-        for (const auto &fieldName: node->fieldOrder)
+        for (const auto& fieldName: node->fieldOrder)
             node->fields[fieldName]->Accept(this);
 
         indent -= 2;
         Print("Functions: %d\n", node->functions.size());
         indent += 2;
-        for (auto &function: node->functions) {
-            for (const auto &item: function.second)
+        for (auto& function: node->functions) {
+            for (const auto& item: function.second)
                 item->Accept(this);
         }
 
         indent -= 4;
-        return nullptr;
     }
 
-    llvm::Value *Visit(Enum *node) override {
+    void Visit(Enum* node) override {
         Print("Enum: %s\n", node->name.c_str());
         indent += 2;
 
         Print("Values: %d\n", node->fields.size());
         indent += 2;
-        for (auto &fieldName: node->fieldOrder)
+        for (auto& fieldName: node->fieldOrder)
             node->fields[fieldName]->Accept(this);
 
         indent -= 4;
-        return nullptr;
     }
 
-    llvm::Value *Visit(EnumValue *node) override {
+    void Visit(EnumValue* node) override {
         Print("EnumValue: %s\n", node->name.c_str());
         indent += 2;
 
@@ -94,60 +125,56 @@ public:
             Print("default\n");
 
         indent -= 2;
-        return nullptr;
     }
 
-    llvm::Value *Visit(EnumConstructor *node) override {
+    void Visit(EnumConstructor* node) override {
         Print("EnumConstructor: %s\n", node->name.c_str());
         indent += 2;
 
-        for (auto &parameter: node->parameters)
+        for (auto& parameter: node->parameters)
             parameter->Accept(this);
 
         indent -= 2;
-        return nullptr;
     }
 
-    llvm::Value *Visit(EnumParameter *node) override {
+    void Visit(EnumParameter* node) override {
         Print("%s: %s\n", node->name.c_str(), node->type->name.c_str());
-        return nullptr;
     }
 
-    llvm::Value *Visit(Function *node) override {
-        Print("Function: %s\n", node->name.c_str());
+    void Visit(Function* node) override {
+        Print("Function: %s\n", std::string(node->name).c_str());
         indent += 2;
 
-        if (node->returnType)
-            Print("Return type: %s\n", node->returnType->name.c_str());
-        else
-            Print("Return type: infer\n");
+        Print("Return type: %s\n", FormatTypeRef(node->returnType).c_str());
 
         Print("Parameters: %d\n", node->parameters.size());
         indent += 2;
-        for (auto &paramName: node->parameterOrder)
+        for (auto& paramName: node->parameterOrder)
             node->parameters[paramName]->Accept(this);
 
         indent -= 2;
         Print("Body: %d\n", node->body.size());
         indent += 2;
-        for (auto &statement: node->body) {
+        for (auto& statement: node->body) {
             statement->Accept(this);
         }
 
         indent -= 4;
-        return nullptr;
     }
 
-    llvm::Value *Visit(FunctionParameter *node) override {
-        Print("%s: %s\n", node->name.c_str(), node->type->name.c_str());
-        return nullptr;
+    void Visit(FunctionParameter* node) override {
+        Print(
+            "%s: %s\n",
+            node->name.c_str(),
+            FormatTypeRef(node->type).c_str()
+        );
     }
 
     /*
      * Statements
      */
 
-    llvm::Value *Visit(Return *node) override {
+    void Visit(Return* node) override {
         Print("Return:\n");
         indent += 2;
 
@@ -157,17 +184,13 @@ public:
             Print("default\n");
 
         indent -= 2;
-        return nullptr;
     }
 
-    llvm::Value *Visit(VariableDeclaration *node) override {
+    void Visit(VariableDeclaration* node) override {
         Print("Variable declaration: %s\n", node->name.c_str());
         indent += 2;
 
-        if (node->type != nullptr)
-            Print("Type: %s\n", node->type->name.c_str());
-        else
-            Print("Type: infer\n");
+        Print("Type: %s\n", FormatTypeRef(node->type).c_str());
 
         Print("Expression:\n");
         indent += 2;
@@ -178,10 +201,9 @@ public:
             Print("default\n");
 
         indent -= 4;
-        return nullptr;
     }
 
-    llvm::Value *Visit(IfStatement *node) override {
+    void Visit(IfStatement* node) override {
         if (node->condition != nullptr) {
             Print("If:\n");
             indent += 2;
@@ -194,9 +216,8 @@ public:
 
         Print("Then:\n");
         indent += 2;
-        for (auto &statement: node->body) {
+        for (auto& statement: node->body)
             statement->Accept(this);
-        }
         indent -= 2;
 
         if (node->elseStatement) {
@@ -205,10 +226,9 @@ public:
             node->elseStatement->Accept(this);
             indent -= 2;
         }
-        return nullptr;
     }
 
-    llvm::Value *Visit(ForLoop *node) override {
+    void Visit(ForLoop* node) override {
         Print("For:\n");
         indent += 2;
 
@@ -235,49 +255,45 @@ public:
 
         Print("Body:\n");
         indent += 2;
-        for (auto &statement: node->body)
+        for (auto& statement: node->body)
             statement->Accept(this);
         indent -= 2;
 
         indent -= 2;
-        return nullptr;
     }
 
-    llvm::Value *Visit(Continue *node) override {
+    void Visit(Continue* node) override {
         Print("Continue\n");
-        return nullptr;
     }
 
-    llvm::Value *Visit(Break *node) override {
+    void Visit(Break* node) override {
         Print("Break\n");
-        return nullptr;
     }
 
     /*
      * Expressions
      */
 
-    llvm::Value *Visit(ConstructorCall *node) override {
-        Print("Constructor call: %s\n", node->type->name.c_str());
+    void Visit(ConstructorCall* node) override {
+        Print("Constructor call: %s\n", node->type->ResolveType()->type->name.c_str());
         indent += 2;
 
         Print("Arguments: %d\n", node->arguments.size());
         indent += 2;
-        for (auto &argument: node->arguments) {
+        for (auto& argument: node->arguments) {
             argument->Accept(this);
         }
 
         indent -= 4;
-        return nullptr;
     }
 
-    llvm::Value *Visit(FunctionCall *node) override {
+    void Visit(FunctionCall* node) override {
         Print("Function call: %s\n", node->name.c_str());
         indent += 2;
 
         Print("Arguments: %d\n", node->arguments.size());
         indent += 2;
-        for (auto &argument: node->arguments)
+        for (auto& argument: node->arguments)
             argument->Accept(this);
         indent -= 2;
 
@@ -285,10 +301,9 @@ public:
             node->next->Accept(this);
 
         indent -= 2;
-        return nullptr;
     }
 
-    llvm::Value *Visit(BinaryOperation *node) override {
+    void Visit(BinaryOperation* node) override {
         Print("Binary operation: %s\n", Console::OpToString(node->op).c_str());
         indent += 2;
 
@@ -302,30 +317,31 @@ public:
         node->rhs->Accept(this);
 
         indent -= 4;
-        return nullptr;
     }
 
-    llvm::Value *Visit(VariableReference *node) override {
+    void Visit(TypeReference* node) override {
+        Print("TypeRef: %s\n", node->name.c_str());
+    }
+
+    void Visit(VariableReference* node) override {
         Print("VarRef: %s\n", node->name.c_str());
         indent += 2;
         if (node->next)
             node->next->Accept(this);
 
         indent -= 2;
-        return nullptr;
     }
 
-    llvm::Value *Visit(StaticRef *node) override {
+    void Visit(StaticRef* node) override {
         Print("StaticRef: %s\n", node->name.c_str());
         indent += 2;
         if (node->next)
             node->next->Accept(this);
 
         indent -= 2;
-        return nullptr;
     }
 
-    llvm::Value *Visit(When *node) override {
+    void Visit(When* node) override {
         Print("When:\n");
         indent += 2;
 
@@ -336,15 +352,14 @@ public:
 
         Print("Cases: %d\n", node->body.size());
         indent += 2;
-        for (auto &item: node->body)
+        for (auto& item: node->body)
             item->Accept(this);
         indent -= 2;
 
         indent -= 2;
-        return nullptr;
     }
 
-    llvm::Value *Visit(WhenCondition *node) override {
+    void Visit(WhenCondition* node) override {
         Print("WhenCondition:\n");
         indent += 2;
 
@@ -358,35 +373,34 @@ public:
 
         Print("Body: %d\n", node->body.size());
         indent += 2;
-        for (auto &statement: node->body)
+        for (auto& statement: node->body)
             statement->Accept(this);
         indent -= 2;
 
         indent -= 2;
-        return nullptr;
     }
 
     /*
      * Literals
      */
 
-    llvm::Value *Visit(Integer *node) override {
+    void Visit(Integer* node) override {
         Print("Integer: %d\n", node->value);
-        return nullptr;
     }
 
-    llvm::Value *Visit(Double *node) override {
+    void Visit(Double* node) override {
         Print("Double: %f\n", node->value);
-        return nullptr;
     }
 
-    llvm::Value *Visit(Boolean *node) override {
+    void Visit(Boolean* node) override {
         Print("Boolean: %d\n", node->value);
-        return nullptr;
     }
 
-    llvm::Value *Visit(String *node) override {
+    void Visit(String* node) override {
         Print("String: %s\n", node->value.c_str());
-        return nullptr;
+    }
+
+    void Visit(Null* node) override {
+        Print("Null\n");
     }
 };

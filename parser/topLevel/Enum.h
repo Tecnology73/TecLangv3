@@ -3,15 +3,17 @@
 #include "../../ast/TopLevel.h"
 #include "../Parser.h"
 #include "../expressions/Expression.h"
+#include "../../context/SymbolTable.h"
+#include "../expressions/TypeReference.h"
 
 namespace {
-    EnumValue *parseEnumValue(Parser *parser) {
+    EnumValue* parseEnumValue(Parser* parser) {
         if (parser->currentToken.isNot(Token::Type::Identifier)) {
             parser->PrintSyntaxError("enum value name");
             return nullptr;
         }
 
-        auto value = new EnumValue(parser->currentToken, parser->currentToken.value);
+        auto value = new EnumValue(parser->currentToken, parser->currentToken.value.data());
         if (parser->NextToken().is(Token::Type::Assign)) {
             parser->NextToken(); // Consume '='
 
@@ -23,13 +25,13 @@ namespace {
         return value;
     }
 
-    EnumConstructor *parseEnumConstructor(Parser *parser) {
+    EnumConstructor* parseEnumConstructor(Parser* parser) {
         if (parser->currentToken.isNot(Token::Type::Identifier)) {
             parser->PrintSyntaxError("enum value name");
             return nullptr;
         }
 
-        auto constructor = new EnumConstructor(parser->currentToken, parser->currentToken.value);
+        auto constructor = new EnumConstructor(parser->currentToken, parser->currentToken.value.data());
         if (parser->NextToken().isNot(Token::Type::OpenParen)) {
             parser->PrintSyntaxError("(");
             return nullptr;
@@ -45,10 +47,11 @@ namespace {
                 // ID: TypeName
                 argument->name = parser->currentToken.value;
                 parser->NextToken(); // Consume ':'
-                argument->type = TypeDefinition::Create(parser->NextToken());
+
+                argument->type = parseTypeReference(parser);
             } else {
                 // TypeName
-                argument->type = TypeDefinition::Create(parser->currentToken);
+                argument->type = parseTypeReference(parser);
             }
 
             constructor->parameters.push_back(argument);
@@ -62,7 +65,7 @@ namespace {
     }
 }
 
-Enum *parseEnum(Parser *parser) {
+Enum* parseEnum(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::Enum)) {
         parser->PrintSyntaxError("enum");
         return nullptr;
@@ -73,7 +76,8 @@ Enum *parseEnum(Parser *parser) {
         return nullptr;
     }
 
-    auto anEnum = Enum::Create(parser->currentToken, parser->NextToken().value);
+    auto anEnum = Enum::Create(parser->currentToken, parser->NextToken().value.data());
+    SymbolTable::GetInstance()->Add(anEnum);
     if (parser->NextToken().isNot(Token::Type::OpenCurly)) {
         parser->PrintSyntaxError("{");
         return nullptr;

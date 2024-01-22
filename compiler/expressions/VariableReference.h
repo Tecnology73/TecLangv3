@@ -2,13 +2,12 @@
 
 #include <llvm/IR/Value.h>
 #include "../../ast/Expressions.h"
-#include "../../ast/Statements.h"
 
-llvm::Value *getValueFromType(
-    Visitor *v,
-    TypeBase *parentType,
-    ChainableNode *var,
-    llvm::Value *value
+void getValueFromType(
+    Visitor* v,
+    const TypeBase* parentType,
+    const ChainableNode* var,
+    llvm::Value* value
 );
 
-llvm::Value *generateVariableReference(Visitor *v, VariableReference *var);
+void generateVariableReference(Visitor* v, VariableReference* var);

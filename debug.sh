@@ -1,7 +1,7 @@
 echo "Building..."
-clang++ ./out/out.ll -o ./out/app.exe || exit 1
+clang++ ./build/out.ll -o ./build/app.exe || exit 1
 echo "--- START ---"
-./out/app.exe
+./build/app.exe
 R=$?
 echo "--- END ---"
 echo "Exit code: ${R}"

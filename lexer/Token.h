@@ -11,13 +11,13 @@ struct Position {
 
 struct Token {
     enum class Type {
+        Unknown,
         Identifier,
         Integer,
         Double,
         String,
         Punctuation,
         EndOfFile,
-        Unknown,
 
         // Keywords
         Function,
@@ -37,6 +37,10 @@ struct Token {
         As,
         Step,
         Enum,
+        Public,
+        Private,
+        Is,
+        Null,
 
         // Symbols
         OpenParen,
@@ -89,39 +93,49 @@ struct Token {
     Type type = Type::Unknown;
     Position position;
 
-    std::string value;
-    int intValue;
-    double doubleValue;
+    std::string_view value;
+    int intValue = 0;
+    double doubleValue = 0;
 
-    inline bool is(Type t) const {
+    inline bool is(const Type t) const {
         return type == t;
     }
 
-    inline bool is(Type t, const std::string &v) const {
+    template<typename... Args>
+    inline bool is(const Type t, Args... args) const {
+        return is(t) || is(args...);
+    }
+
+    inline bool is(const Type t, const std::string& v) const {
         return type == t && value == v;
     }
 
-    inline bool is(Type t, int v) const {
+    inline bool is(const Type t, const int v) const {
         return type == t && intValue == v;
     }
 
-    inline bool is(Type t, double v) const {
+    inline bool is(const Type t, const double v) const {
         return type == t && doubleValue == v;
     }
 
-    inline bool isNot(Type t) const {
+    inline bool isNot(const Type t) const {
         return !is(t);
     }
 
-    inline bool isNot(Type t, const std::string &v) const {
+    template<typename... Args>
+    inline bool isNot(const Type t, Args... args) const {
+        return isNot(t) && isNot(args...);
+    }
+
+    inline bool isNot(const Type t, const std::string& v) const {
         return !is(t, v);
     }
 
-    inline bool isNot(Type t, int v) const {
+    inline bool isNot(const Type t, const int v) const {
         return !is(t, v);
     }
 
-    inline bool isNot(Type t, double v) const {
+    inline bool isNot(const Type t, const double v) const {
         return !is(t, v);
     }
 };

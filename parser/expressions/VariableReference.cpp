@@ -14,7 +14,7 @@ ChainableNode *parseChainable(Parser *parser) {
 }
 
 VariableReference *parseVariableReference(Parser *parser) {
-    if (parser->currentToken.isNot(Token::Type::Identifier)) {
+    if (parser->currentToken.isNot(Token::Type::Identifier, Token::Type::Type)) {
         parser->PrintSyntaxError("identifier");
         return nullptr;
     }

@@ -2,86 +2,106 @@
 #include "../Compiler.h"
 #include "FunctionCall.h"
 #include "../topLevel/Enum.h"
-#include "../context/FunctionContext.h"
+#include "../../context/compiler/FunctionCompilerContext.h"
 
-llvm::Value *getValueFromType(
-    Visitor *v,
-    TypeBase *parentType,
-    ChainableNode *var,
-    llvm::Value *value
+void getValueFromType(
+    Visitor* v,
+    const TypeBase* parentType,
+    const ChainableNode* var,
+    llvm::Value* value
 ) {
-    if (!var) return value;
+    if (!var) {
+        v->AddSuccess(value);
+        return;
+    }
 
-    /*auto fieldType = parentType->getFieldType(var->name);
-    auto actualType = fieldType->llvmType;
-    if (fieldType->isStruct)
+    auto fieldType = parentType->GetField(var->name)->type;
+    auto actualType = fieldType->ResolveType()->type->llvmType;
+    if (!fieldType->ResolveType()->type->isValueType)
         actualType = actualType->getPointerTo();
 
-    expression = Compiler::getBuilder().CreateStructGEP(
+    value = Compiler::getBuilder().CreateStructGEP(
         parentType->llvmType,
-        expression,
+        value,
         parentType->GetFieldIndex(var->name),
         var->name
     );
 
     if (var->next) {
-        expression = Compiler::getBuilder().CreateLoad(actualType, expression, var->name);
+        value = Compiler::getBuilder().CreateLoad(actualType, value, var->name);
 
-        if (auto function = dynamic_cast<FunctionCall *>(var->next))
-            return generateTypeFunctionCall(v, fieldType, function, expression);
+        if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
+            generateTypeFunctionCall(v, fieldType->ResolveType()->type, function, value);
+            return;
+        }
 
-        return getValueFromType(v, fieldType, var->next, expression);
+        getValueFromType(v, fieldType->ResolveType()->type, var->next, value);
+        return;
     }
 
-    return expression;*/
-    return nullptr;
+    v->AddSuccess(value, fieldType->ResolveType());
 }
 
-llvm::Value *tryGenerateWithThisPrefix(Visitor *v, VariableReference *var) {
+void tryGenerateWithThisPrefix(Visitor* v, const VariableReference* var) {
     // This allows for accessing fields of the current type without prefixing it with 'this.'
-    auto context = Compiler::getScopeManager().findContext<FunctionContext>();
-    if (!context) return nullptr;
+    auto context = Compiler::getScopeManager().findContext<FunctionCompilerContext>();
+    if (!context) {
+        v->AddFailure();
+        return;
+    }
 
     auto currentFunction = context->function;
-    if (!currentFunction->ownerType || currentFunction->ownerType->isValueType) return nullptr;
+    if (!currentFunction->ownerType || currentFunction->ownerType->isValueType) {
+        v->AddFailure();
+        return;
+    }
 
     // Check if the "this" parameter exists.
     auto param = currentFunction->GetParameter("this");
-    if (!param) return nullptr;
+    if (!param) {
+        v->AddFailure();
+        return;
+    }
 
     // Make sure the field exists on the type.
-    auto field = ((TypeDefinition *) currentFunction->ownerType)->GetField(var->name);
-    if (!field) return nullptr;
+    auto field = currentFunction->ownerType->GetField(var->name);
+    if (!field) {
+        v->AddFailure();
+        return;
+    }
 
-    return getValueFromType(v, currentFunction->ownerType, var, param->alloc);
+    getValueFromType(v, currentFunction->ownerType, var, param->alloc);
 }
 
-llvm::Value *generateVariableReference(Visitor *v, VariableReference *var) {
-    auto variable = Compiler::getScopeManager().getVar(var->name);
-    if (!variable) {
-        // See if the variable exists if we prefix it with 'this.'
-        auto thisValue = tryGenerateWithThisPrefix(v, var);
-        if (!thisValue) {
-            v->ReportError(ErrorCode::VARIABLE_UNDECLARED, {var->name}, var);
-            return nullptr;
-        }
+void generateVariableReference(Visitor* v, VariableReference* var) {
+    auto symbol = Compiler::getScopeManager().GetVar(var->name);
+    if (!symbol) {
+        tryGenerateWithThisPrefix(v, var);
+        return;
+    }
 
-        return thisValue;
+    auto variable = dynamic_cast<const VariableDeclaration *>(symbol->node);
+    if (!variable) {
+        v->AddFailure();
+        return;
     }
 
     auto value = variable->alloc;
-    if (!value) return nullptr;
-
-    // If the variable is a constant, just return the expression.
-    if (variable->type->isValueType) {
-        if (value->getType()->isPointerTy())
-            return Compiler::getBuilder().CreateLoad(variable->type->llvmType, value, var->name);
-
-        return value;
+    if (!value) {
+        v->AddFailure();
+        return;
     }
 
-    if (auto function = dynamic_cast<FunctionCall *>(var->next))
-        return generateTypeFunctionCall(v, variable->type, function, value);
+    // If the variable is a constant, just return the expression.
+    if (variable->type->ResolveType()->type->isValueType) {
+        v->AddSuccess(value);
+        return;
+    }
 
-    return getValueFromType(v, variable->type, var->next, value);
+    if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
+        generateTypeFunctionCall(v, variable->type->ResolveType()->type, function, value);
+        return;
+    }
+
+    getValueFromType(v, variable->type->ResolveType()->type, var->next, value);
 }

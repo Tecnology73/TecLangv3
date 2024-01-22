@@ -7,13 +7,14 @@ class When : public Node {
 public:
     using Node::Node;
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
+    void Accept(Visitor* visitor) override {
+        visitor->Visit(this);
     }
 
 public:
-    Node *expression;
+    Node* expression;
     std::vector<class WhenCondition *> body;
+    TypeVariant* returnType = nullptr;
 
     // TODO: This is a messy. Fix it.
     bool hasElse = false;
@@ -24,12 +25,12 @@ class WhenCondition : public Node {
 public:
     using Node::Node;
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
+    void Accept(Visitor* visitor) override {
+        visitor->Visit(this);
     }
 
 public:
-    Node *condition = nullptr; // null if it's an else.
+    Node* condition = nullptr; // null if it's an else.
     std::vector<Node *> body;
     // This is set to true when there are no curly braces around the body.
     bool implicitReturn = false;

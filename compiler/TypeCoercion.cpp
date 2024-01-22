@@ -1,21 +1,21 @@
 #include "TypeCoercion.h"
 
-std::pair<llvm::Value *, llvm::Value *> TypeCoercion::coerce(llvm::Value *valueA, llvm::Value *valueB) {
-    int priorityA = getTypePriority(valueA->getType());
-    int priorityB = getTypePriority(valueB->getType());
+std::pair<llvm::Value *, llvm::Value *> TypeCoercion::coerce(llvm::Value* valueA, llvm::Value* valueB) {
+    auto priorityA = getTypePriority(valueA->getType());
+    auto priorityB = getTypePriority(valueB->getType());
 
-    if (priorityA < priorityB)
-        // Up-cast valueA to valueB's type.
+    if (priorityA < priorityB) // Upcast A -> B
         valueA = coerce(valueA, valueB->getType());
-    else if (priorityB < priorityA)
-        // Up-cast valueB to valueA's type.
+    else if (priorityA > priorityB) // Upcast B -> A
         valueB = coerce(valueB, valueA->getType());
+    /*else
+        coerce(valueA, valueB);*/
 
     return {valueA, valueB};
 }
 
-llvm::Value *TypeCoercion::coerce(llvm::Value *value, llvm::Type *toType) {
-    if (value->getType()->isPointerTy())
+llvm::Value* TypeCoercion::coerce(llvm::Value* value, llvm::Type* toType, bool forcePointerCast) {
+    if (!forcePointerCast && value->getType()->isPointerTy())
         return value; // TODO: Implement pointer coercion?
 
     if (toType->isIntegerTy())
@@ -23,66 +23,121 @@ llvm::Value *TypeCoercion::coerce(llvm::Value *value, llvm::Type *toType) {
 
     if (toType->isDoubleTy())
         return coerceToDouble(value, toType);
+
+    return nullptr;
 }
 
-bool TypeCoercion::canCoerceTo(TypeBase *fromType, TypeBase *toType) {
-    if (!toType->isValueType)
+TypeBase* TypeCoercion::getCommonType(const TypeVariant* typeA, const TypeVariant* typeB) {
+    return getCommonType(typeA->type, typeB->type);
+}
+
+TypeBase* TypeCoercion::getCommonType(TypeBase* typeA, TypeBase* typeB) {
+    auto priorityA = getTypePriority(typeA);
+    auto priorityB = getTypePriority(typeB);
+
+    if (priorityA == priorityB) // Same type
+        return typeA;
+
+    if (priorityA == 0 || priorityB == 0) // Object?
+        return nullptr;
+
+    if (priorityA > priorityB) // Upcast A -> B
+        return typeA;
+
+    if (priorityA < priorityB) // Upcast B -> A
+        return typeB;
+
+    return nullptr; // Differing/Incompatible types
+}
+
+llvm::Type* TypeCoercion::getCommonType(llvm::Type* typeA, llvm::Type* typeB) {
+    auto priorityA = getTypePriority(typeA);
+    auto priorityB = getTypePriority(typeB);
+
+    if (priorityA > priorityB)
+        return typeA;
+
+    if (priorityA < priorityB)
+        return typeB;
+
+    return typeA;
+}
+
+bool TypeCoercion::isTypeCompatible(const TypeVariant* type, const TypeVariant* otherType) {
+    return isTypeCompatible(type->type, otherType->type);
+}
+
+bool TypeCoercion::isTypeCompatible(const TypeBase* type, const TypeBase* otherType) {
+    if (!type->isValueType) {
+        if (type->name == otherType->name) // Same type
+            return true;
+
+        // TODO: Check if type is a subtype of otherType
+        return false;
+    }
+
+    if (!otherType->isValueType)
         return false;
 
-    // Allow casting up but not down.
-    if (fromType->name == "bool")
-        return toType->name == "bool" ||
-               toType->name == "i8" ||
-               toType->name == "i16" ||
-               toType->name == "i32" ||
-               toType->name == "i64" ||
-               toType->name == "double";
-    else if (fromType->name == "i8")
-        return toType->name == "i8" ||
-               toType->name == "i16" ||
-               toType->name == "i32" ||
-               toType->name == "i64" ||
-               toType->name == "double";
-    else if (fromType->name == "i16")
-        return toType->name == "i16" ||
-               toType->name == "i32" ||
-               toType->name == "i64" ||
-               toType->name == "double";
-    else if (fromType->name == "i32")
-        return toType->name == "i32" ||
-               toType->name == "i64" ||
-               toType->name == "double";
-    else if (fromType->name == "i64")
-        return toType->name == "i64" ||
-               toType->name == "double";
-    else if (fromType->name == "double")
-        return toType->name == "double";
-
-    throw std::runtime_error("Unhandled expression type: " + fromType->name);
+    return getTypePriority(type) <= getTypePriority(otherType);
 }
 
-int TypeCoercion::getTypePriority(llvm::Type *type) {
-    if (type->isIntegerTy()) return static_cast<int>(Priority::Integer);
+bool TypeCoercion::canCoerceTo(const TypeBase* fromType, const TypeBase* toType) {
+    if (!toType->isValueType || !fromType->isValueType)
+        return false;
+
+    auto priorityA = getTypePriority(fromType);
+    auto priorityB = getTypePriority(toType);
+
+    if (priorityA == priorityB) // Same type
+        return true;
+
+    if (priorityB > priorityA) // B can "fit inside" A (i8 -> i32)
+        return true;
+
+    return false; // Differing/Incompatible types
+}
+
+int TypeCoercion::getTypePriority(const llvm::Type* type) {
+    if (type->isIntegerTy()) {
+        auto width = type->getIntegerBitWidth();
+        if (width == 1) return static_cast<int>(Priority::Boolean);
+        if (width == 8) return static_cast<int>(Priority::Int8);
+        if (width == 16) return static_cast<int>(Priority::Int16);
+        if (width == 32) return static_cast<int>(Priority::Int32);
+        if (width == 64) return static_cast<int>(Priority::Int64);
+    }
     if (type->isDoubleTy()) return static_cast<int>(Priority::Double);
 
     return static_cast<int>(Priority::None);
 }
 
-llvm::Value *TypeCoercion::coerceToInt(llvm::Value *value, llvm::Type *type) {
+int TypeCoercion::getTypePriority(const TypeBase* type) {
+    if (type->name == "bool") return static_cast<int>(Priority::Boolean);
+    if (type->name == "i8") return static_cast<int>(Priority::Int8);
+    if (type->name == "i16") return static_cast<int>(Priority::Int16);
+    if (type->name == "i32") return static_cast<int>(Priority::Int32);
+    if (type->name == "i64") return static_cast<int>(Priority::Int64);
+    if (type->name == "double") return static_cast<int>(Priority::Double);
+
+    return static_cast<int>(Priority::None);
+}
+
+llvm::Value* TypeCoercion::coerceToInt(llvm::Value* value, llvm::Type* type) {
     unsigned valueBitWidth = getBitWidth(value->getType());
     unsigned targetBitWidth = getBitWidth(type);
 
     if (valueBitWidth < targetBitWidth)
         return Compiler::getBuilder().CreateZExt(value, type);
-    else if (valueBitWidth > targetBitWidth)
+    /*else if (valueBitWidth > targetBitWidth)
         // TODO: Make sure that down-casts are actually explicit.
         // return Compiler::getBuilder().CreateTrunc(expression, type);
-        return nullptr;
+        return nullptr;*/
 
     return value;
 }
 
-llvm::Value *TypeCoercion::coerceToDouble(llvm::Value *value, llvm::Type *type) {
+llvm::Value* TypeCoercion::coerceToDouble(llvm::Value* value, llvm::Type* type) {
     if (value->getType()->isDoubleTy())
         return value;
 
@@ -92,7 +147,7 @@ llvm::Value *TypeCoercion::coerceToDouble(llvm::Value *value, llvm::Type *type) 
     return nullptr;
 }
 
-unsigned TypeCoercion::getBitWidth(llvm::Type *type) {
+unsigned TypeCoercion::getBitWidth(llvm::Type* type) {
     if (type->isIntegerTy())
         return type->getIntegerBitWidth();
 

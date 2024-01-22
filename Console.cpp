@@ -1,21 +1,21 @@
 #include "Console.h"
 
-void Console::print(const std::string &message, const std::vector<std::string> &args) {
+void Console::print(const std::string& message, const std::vector<std::string>& args) {
     std::cout << format(message + "{reset}", args) << std::endl;
 }
 
-void Console::printRaw(const std::string &message) {
+void Console::printRaw(const std::string& message) {
     std::cout << message << std::endl;
 }
 
-std::string Console::replaceTag(const std::string &tag) {
+std::string Console::replaceTag(const std::string& tag) {
     if (tag == "r") return "\033[38;2;" + Color::Red.ToString() + "m";
     if (tag == "g") return "\033[38;2;" + Color::Green.ToString() + "m";
     if (tag == "b") return "\033[38;2;" + Color::Blue.ToString() + "m";
-    if (tag == "o") return "\033[38;2;" + Color::Orange.ToString() + "m";
+    if (tag == "o" || tag == "keyword") return "\033[38;2;" + Color::Orange.ToString() + "m";
     if (tag == "y") return "\033[38;2;" + Color::Gray.ToString() + "m";
     if (tag == "w") return "\033[38;2;" + Color::White.ToString() + "m";
-    if (tag == "Y") return "\033[38;2;" + Color::Yellow.ToString() + "m";
+    if (tag == "Y" || tag == "type") return "\033[38;2;" + Color::Yellow.ToString() + "m";
     if (tag == "error") return "\033[38;2;" + Color::Error.ToString() + "m";
     if (tag == "warn") return "\033[38;2;" + Color::Warning.ToString() + "m";
     if (tag == "info") return "\033[38;2;" + Color::Info.ToString() + "m";
@@ -27,7 +27,7 @@ std::string Console::replaceTag(const std::string &tag) {
     return "{" + tag + "}";
 }
 
-std::string Console::format(const std::string &str, const std::vector<std::string> &args) {
+std::string Console::format(const std::string& str, const std::vector<std::string>& args) {
     // Replace all the color tags.
     std::string result;
     result.reserve(str.size()); // Reserve space for optimization
@@ -53,7 +53,7 @@ std::string Console::format(const std::string &str, const std::vector<std::strin
     }
 
     // Replace all the argument tags.
-    for (const auto &arg: args) {
+    for (const auto& arg: args) {
         auto pos = result.find("{}");
         if (pos == std::string::npos) break;
 
@@ -80,7 +80,7 @@ std::string Console::OpToString(Token::Type op) {
         case Token::Type::Unknown:
             return "Unknown";
 
-            // Keywords
+        // Keywords
         case Token::Type::Function:
             return "Function";
         case Token::Type::Return:
@@ -115,8 +115,16 @@ std::string Console::OpToString(Token::Type op) {
             return "Step";
         case Token::Type::Enum:
             return "Enum";
+        case Token::Type::Public:
+            return "Public";
+        case Token::Type::Private:
+            return "Private";
+        case Token::Type::Is:
+            return "Is";
+        case Token::Type::Null:
+            return "Null";
 
-            // Symbols
+        // Symbols
         case Token::Type::OpenParen:
             return "OpenParen";
         case Token::Type::CloseParen:

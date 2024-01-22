@@ -2,21 +2,28 @@
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Function.h>
-#include <llvm/IR/Verifier.h>
 #include "../../ast/Statements.h"
 #include "../Compiler.h"
-#include "../context/ForLoopContext.h"
+#include "../../context/compiler/ForLoopCompilerContext.h"
 
-llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
+void generateForLoop(Visitor* v, ForLoop* node) {
     // Setup context
-    auto context = Compiler::getScopeManager().enter("for", new ForLoopContext(v, node));
+    auto context = Compiler::getScopeManager().enter("for", new ForLoopCompilerContext(v, node));
 
     // Basic Blocks
     auto entryBlock = Compiler::getBuilder().GetInsertBlock();
     auto loop = llvm::BasicBlock::Create(Compiler::getContext(), "loop", entryBlock->getParent());
     auto loopBody = llvm::BasicBlock::Create(Compiler::getContext(), "loop.body", entryBlock->getParent());
-    auto loopTail = context->tailBlock = llvm::BasicBlock::Create(Compiler::getContext(), "loop.tail", entryBlock->getParent());
-    auto loopExit = context->exitBlock = llvm::BasicBlock::Create(Compiler::getContext(), "loop.exit", entryBlock->getParent());
+    auto loopTail = context->tailBlock = llvm::BasicBlock::Create(
+                        Compiler::getContext(),
+                        "loop.tail",
+                        entryBlock->getParent()
+                    );
+    auto loopExit = context->exitBlock = llvm::BasicBlock::Create(
+                        Compiler::getContext(),
+                        "loop.exit",
+                        entryBlock->getParent()
+                    );
 
     //
     // Head - Create iterator & check loop expression
@@ -25,28 +32,38 @@ llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
     Compiler::getBuilder().SetInsertPoint(loop);
 
     // TODO: Support more than just a range expression (lower..upper)
-    auto cond = (BinaryOperation *) node->value;
+    auto cond = static_cast<BinaryOperation *>(node->value);
 
     // iterator
-    auto it = new VariableDeclaration(node->token);
+    auto it = new VariableDeclaration(node->token, "it");
     // it->type = inferType(v, cond->lhs);
-    it->type = Compiler::getScopeManager().getType("i32");
+    it->type = Compiler::getScopeManager().getType("i32")->createVariant()->CreateReference();
 
-    auto keyPhi = Compiler::getBuilder().CreatePHI(it->type->llvmType, 2, node->identifier->name);
+    auto keyPhi = Compiler::getBuilder().CreatePHI(it->type->ResolveType()->type->llvmType, 2, node->identifier->name);
     it->alloc = keyPhi;
 
-    Compiler::getScopeManager().add(it);
+    Compiler::getScopeManager().Add(it);
 
     // Initial expression of the iterator
+    cond->lhs->Accept(v);
+    VisitorResult lhsResult;
+    if (!v->TryGetResult(lhsResult)) return;
+
     keyPhi->addIncoming(
-        TypeCoercion::coerce(cond->lhs->Accept(v), it->type->llvmType), // Range lower bound
+        TypeCoercion::coerce(lhsResult.value, it->type->ResolveType()->type->llvmType),
+        // Range lower bound
         entryBlock
     );
 
     // Loop expression
+    cond->rhs->Accept(v);
+    VisitorResult rhsResult;
+    if (!v->TryGetResult(rhsResult)) return;
+
     auto conditionValue = Compiler::getBuilder().CreateICmpSLT(
         keyPhi,
-        TypeCoercion::coerce(cond->rhs->Accept(v), it->type->llvmType), // Range upper bound
+        TypeCoercion::coerce(rhsResult.value, it->type->ResolveType()->type->llvmType),
+        // Range upper bound
         "cond"
     );
     Compiler::getBuilder().CreateCondBr(conditionValue, loopBody, loopExit);
@@ -55,7 +72,7 @@ llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
     // Body
     //
     Compiler::getBuilder().SetInsertPoint(loopBody);
-    for (const auto &item: node->body)
+    for (const auto& item: node->body)
         item->Accept(v);
 
     //
@@ -64,10 +81,14 @@ llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
     Compiler::getBuilder().CreateBr(loopTail);
     Compiler::getBuilder().SetInsertPoint(loopTail);
 
-    llvm::Value *stepValue;
-    if (node->step)
-        stepValue = TypeCoercion::coerce(node->step->Accept(v), it->type->llvmType);
-    else
+    llvm::Value* stepValue;
+    if (node->step) {
+        node->step->Accept(v);
+        VisitorResult stepResult;
+        if (!v->TryGetResult(stepResult)) return;
+
+        stepValue = TypeCoercion::coerce(stepResult.value, it->type->ResolveType()->type->llvmType);
+    } else
         stepValue = Compiler::getBuilder().getInt32(1);
 
     auto nextIndex = Compiler::getBuilder().CreateAdd(keyPhi, stepValue, "next_index");
@@ -83,5 +104,5 @@ llvm::Value *generateForLoop(Visitor *v, ForLoop *node) {
     Compiler::getScopeManager().leave("for");
     Compiler::getBuilder().SetInsertPoint(loopExit);
 
-    return nullptr;
+    v->AddSuccess();
 }

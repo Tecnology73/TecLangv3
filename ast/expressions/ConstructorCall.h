@@ -7,35 +7,35 @@
 // Used for `new T { field1 = value1, field2 = value2, ... }`
 class ConstructorField : public Node {
 public:
-    ConstructorField(Token beginToken, Node *value) : Node(std::move(beginToken)), name(token.value), value(value) {}
+    ConstructorField(Token beginToken, Node* value) : Node(std::move(beginToken)), name(token.value), value(value) {
+    }
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return nullptr;
+    void Accept(Visitor* visitor) override {
     }
 
 public:
     std::string const name;
-    Node *const value;
+    Node* const value;
 };
 
 class ConstructorCall : public Node {
 public:
     using Node::Node;
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
+    void Accept(Visitor* visitor) override {
+        visitor->Visit(this);
     }
 
     Position GetEndPosition() const override;
 
-    void AddArgument(Node *arg);
+    void AddArgument(Node* arg);
 
-    void AddField(Token token, Node *value);
+    void AddField(Token token, Node* value);
 
-    static ConstructorCall *Create(const Token &token);
+    static ConstructorCall* Create(const Token& token);
 
 public:
-    TypeBase *type;
+    TypeReference* type;
     // Filled when doing `new T(arg1, arg2, ...)`
     std::vector<Node *> arguments;
     // Filled when doing `new T { field1 = value1, field2 = value2, ... }`

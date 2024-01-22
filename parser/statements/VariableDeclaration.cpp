@@ -1,9 +1,11 @@
 #include "VariableDeclaration.h"
-#include "../expressions/Expression.h"
-#include "../../ast/topLevel/TypeDefinition.h"
 
-VariableDeclaration *parseVariableDeclaration(Parser *parser) {
-    if (parser->currentToken.isNot(Token::Type::Identifier)) {
+#include "../../compiler/Compiler.h"
+#include "../expressions/Expression.h"
+#include "../expressions/TypeReference.h"
+
+VariableDeclaration* parseVariableDeclaration(Parser* parser) {
+    if (parser->currentToken.isNot(Token::Type::Identifier, Token::Type::Type)) {
         parser->PrintSyntaxError("variable name");
         return nullptr;
     }
@@ -11,12 +13,12 @@ VariableDeclaration *parseVariableDeclaration(Parser *parser) {
     auto node = new VariableDeclaration(parser->currentToken);
     if (parser->PeekToken().is(Token::Type::Colon)) {
         parser->NextToken(); // Consume ':'
-        if (parser->NextToken().isNot(Token::Type::Identifier)) {
+        if (parser->NextToken().isNot(Token::Type::Identifier, Token::Type::Type)) {
             parser->PrintSyntaxError("type");
             return nullptr;
         }
 
-        node->type = TypeDefinition::Create(parser->currentToken);
+        node->type = parseTypeReference(parser);
     } else if (parser->PeekToken().isNot(Token::Type::Assign)) {
         parser->PrintSyntaxError(": or =");
         return nullptr;

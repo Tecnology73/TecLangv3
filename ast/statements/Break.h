@@ -7,7 +7,7 @@ class Break : public Node {
 public:
     using Node::Node;
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
+    void Accept(Visitor *visitor) override {
+        visitor->Visit(this);
     }
 };

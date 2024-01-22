@@ -1,22 +1,27 @@
 #pragma once
 
 #include "TypeBase.h"
-#include "../Expressions.h"
+#include "../Visitor.h"
 
 class TypeDefinition : public TypeBase {
 public:
     using TypeBase::TypeBase;
 
-    llvm::Value *Accept(class Visitor *visitor) override {
+    void Accept(class Visitor* visitor) override {
         visitor->Visit(this);
-        return nullptr;
     }
 
-    llvm::Value *getDefaultValue() const override;
+    llvm::Value* getDefaultValue() const override;
 
-    bool canCastTo(TypeBase *other) const override;
+    bool canCastTo(TypeBase* other) const override;
 
-    static TypeDefinition *Create(const Token &token);
+    /*static TypeVariant* Create(const Token& token);
 
-    static TypeDefinition *Create(const Token &token, std::string name);
+    static TypeVariant* Create(const Token& token, const std::string& name);
+
+    static TypeVariant* CreateTemporary(const Token& token);*/
+
+    static TypeDefinition* Create(const Token& token);
+
+    static TypeBase* CreateUndeclared(const Token& token);
 };

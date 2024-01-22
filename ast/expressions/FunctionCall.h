@@ -7,9 +7,13 @@ class FunctionCall : public ChainableNode {
 public:
     using ChainableNode::ChainableNode;
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
+    void Accept(Visitor* visitor) override {
+        visitor->Visit(this);
     }
+
+    TypeVariant* getFinalType() override;
+
+    TypeVariant* getFinalType(TypeVariant* parentType) override;
 
 public:
     std::vector<Node *> arguments;

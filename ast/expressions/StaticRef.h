@@ -7,7 +7,15 @@ class StaticRef : public ChainableNode {
 public:
     using ChainableNode::ChainableNode;
 
-    llvm::Value *Accept(Visitor *visitor) override {
-        return visitor->Visit(this);
+    explicit StaticRef(const Token& beginToken) : ChainableNode(beginToken) {
+        name = beginToken.value;
     }
+
+    void Accept(Visitor* visitor) override {
+        visitor->Visit(this);
+    }
+
+    TypeVariant* getFinalType() override;
+
+    TypeVariant* getFinalType(TypeVariant* parentType) override;
 };

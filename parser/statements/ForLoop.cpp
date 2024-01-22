@@ -3,7 +3,7 @@
 #include "../../compiler/Compiler.h"
 #include "../../ast/Literals.h"
 
-ForLoop *parseForLoop(Parser *parser) {
+ForLoop* parseForLoop(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::For)) {
         parser->PrintSyntaxError("for");
         return nullptr;
@@ -18,7 +18,7 @@ ForLoop *parseForLoop(Parser *parser) {
         return nullptr;
 
     // Parse `as` and `step` (both optional and in any order)
-    VariableDeclaration *identifier = nullptr;
+    VariableDeclaration* identifier = nullptr;
     while (parser->currentToken.isNot(Token::Type::OpenCurly)) {
         if (parser->currentToken.is(Token::Type::As)) {
             parser->NextToken(); // Consume 'as'
@@ -28,9 +28,8 @@ ForLoop *parseForLoop(Parser *parser) {
                 return nullptr;
             }
 
-            identifier = new VariableDeclaration(parser->currentToken, parser->currentToken.value);
-            // TODO: Support type inference
-            identifier->type = Compiler::getScopeManager().getType("i32");
+            identifier = new VariableDeclaration(parser->currentToken, parser->currentToken.value.data());
+            identifier->type = TypeReference::Infer();
 
             parser->NextToken(); // Consume identifier
         } else if (parser->currentToken.is(Token::Type::Step)) {
@@ -48,7 +47,7 @@ ForLoop *parseForLoop(Parser *parser) {
     // If no identifier was specified, create one.
     if (!identifier) {
         identifier = new VariableDeclaration(loop->token, "it");
-        identifier->type = Compiler::getScopeManager().getType("i32");
+        identifier->type = TypeReference::Infer();
         // We default to zero here.
         // We'll set this to the actual start expression when we generate the for loop.
         identifier->expression = new Integer(loop->token);

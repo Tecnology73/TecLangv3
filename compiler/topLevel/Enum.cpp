@@ -1,6 +1,6 @@
 #include "Enum.h"
 
-llvm::Value *generateEnum(Visitor *v, Enum *anEnum) {
+void generateEnum(Visitor* v, Enum* anEnum) {
     // Compiler::getScopeManager().add(anEnum);
-    return nullptr;
+    v->AddSuccess();
 }

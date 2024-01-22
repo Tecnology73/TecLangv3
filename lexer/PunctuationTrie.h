@@ -14,12 +14,12 @@ public:
     PunctuationTrie(
         std::initializer_list<std::pair<std::string, Token::Type>> punctuation
     ) : root(new TrieNode()) {
-        for (auto &pair: punctuation)
+        for (auto& pair: punctuation)
             insert(pair.first, pair.second);
     }
 
-    void insert(const std::string &symbol, Token::Type tokenType) {
-        TrieNode *curr = root;
+    void insert(const std::string& symbol, Token::Type tokenType) {
+        TrieNode* curr = root;
         for (char c: symbol) {
             if (curr->children.count(c) == 0)
                 curr->children[c] = new TrieNode();
@@ -30,8 +30,8 @@ public:
         curr->tokenType = tokenType;
     }
 
-    Token::Type findTokenType(const std::string &symbol) const {
-        TrieNode *curr = root;
+    Token::Type findTokenType(const std::string& symbol) const {
+        TrieNode* curr = root;
         for (char c: symbol) {
             if (curr->children.count(c) == 0)
                 return Token::Type::Punctuation;
@@ -42,10 +42,10 @@ public:
         return curr->tokenType;
     }
 
-    TrieNode *getRoot() const {
+    TrieNode* getRoot() const {
         return root;
     }
 
 private:
-    TrieNode *root;
+    TrieNode* root;
 };

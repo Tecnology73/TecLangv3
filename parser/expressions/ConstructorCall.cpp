@@ -1,8 +1,10 @@
 #include "ConstructorCall.h"
 #include "Expression.h"
+#include "TypeReference.h"
 #include "../../ast/topLevel/TypeDefinition.h"
+#include "../../compiler/Compiler.h"
 
-bool parseArguments(Parser *parser, ConstructorCall *c) {
+bool parseArguments(Parser* parser, ConstructorCall* c) {
     if (parser->currentToken.isNot(Token::Type::OpenParen)) {
         parser->PrintSyntaxError("(");
         return false;
@@ -38,7 +40,7 @@ bool parseArguments(Parser *parser, ConstructorCall *c) {
     return true;
 }
 
-bool parseAssignments(Parser *parser, ConstructorCall *call) {
+bool parseAssignments(Parser* parser, ConstructorCall* call) {
     if (parser->currentToken.isNot(Token::Type::OpenCurly)) {
         parser->PrintSyntaxError("{");
         return false;
@@ -46,7 +48,7 @@ bool parseAssignments(Parser *parser, ConstructorCall *call) {
 
     parser->NextToken(); // Consume '{'
     while (parser->currentToken.isNot(Token::Type::CloseCurly)) {
-        if (parser->currentToken.isNot(Token::Type::Identifier)) {
+        if (parser->currentToken.isNot(Token::Type::Identifier, Token::Type::Type)) {
             parser->PrintSyntaxError("identifier");
             return false;
         }
@@ -58,6 +60,7 @@ bool parseAssignments(Parser *parser, ConstructorCall *call) {
             return false;
         }
 
+        parser->NextToken(); // Consume '='
         auto value = parseExpression(parser, 1);
         if (!value)
             return false;
@@ -68,12 +71,12 @@ bool parseAssignments(Parser *parser, ConstructorCall *call) {
         if (parser->currentToken.is(Token::Type::CloseCurly))
             break;
 
-        if (parser->currentToken.isNot(Token::Type::Comma)) {
+        /*if (parser->currentToken.isNot(Token::Type::Comma)) {
             parser->PrintSyntaxError(", or }");
             return false;
-        }
+        }*/
 
-        parser->NextToken(); // Consume ','
+        // parser->NextToken(); // Consume ','
     }
 
     if (parser->currentToken.isNot(Token::Type::CloseCurly)) {
@@ -85,7 +88,7 @@ bool parseAssignments(Parser *parser, ConstructorCall *call) {
     return true;
 }
 
-ConstructorCall *parseConstructorCall(Parser *parser) {
+ConstructorCall* parseConstructorCall(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::New)) {
         parser->PrintSyntaxError("new");
         return nullptr;
@@ -102,7 +105,7 @@ ConstructorCall *parseConstructorCall(Parser *parser) {
         return nullptr;
     }
 
-    call->type = TypeDefinition::Create(parser->currentToken, parser->currentToken.value);
+    call->type = new TypeReference(parser->currentToken);
     parser->NextToken(); // Consume identifier
 
     if (parser->currentToken.is(Token::Type::OpenParen)) {

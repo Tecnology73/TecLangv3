@@ -1,26 +1,23 @@
 #include "StaticRef.h"
+#include "../Compiler.h"
 
-llvm::Value *generateStaticRef(Visitor *v, StaticRef *ref) {
-    auto scope = Compiler::getScopeManager();
-    if (auto type = scope.getType(ref->name)) {
-        return nullptr;
+void generateStaticRef(Visitor* v, StaticRef* ref) {
+    if (!ref->ownerType) {
+        ref->ownerType = Compiler::getScopeManager().getEnum(ref->name)->createVariant();
+        if (!ref->ownerType) {
+            v->ReportError(ErrorCode::STATIC_REF_UNKNOWN, {ref->name}, ref);
+            return;
+        }
     }
 
-    if (auto anEnum = scope.getEnum(ref->name)) {
-        if (!ref->next) {
-            // Is this even possible??
-            return nullptr;
-        }
-
-        auto valueIndex = anEnum->GetFieldIndex(ref->next->name);
-        if (valueIndex == -1) {
-            v->ReportError(ErrorCode::ENUM_UNKNOWN_VALUE, {ref->next->name, anEnum->name}, ref->next);
-            return nullptr;
-        }
-
-        return Compiler::getBuilder().getInt32(valueIndex);
+    auto key = ref->ownerType->type->GetField(ref->next->name);
+    if (!key) {
+        v->ReportError(ErrorCode::ENUM_UNKNOWN_VALUE, {ref->next->name, ref->ownerType->type->name}, ref->next);
+        return;
     }
 
-    v->ReportError(ErrorCode::STATIC_REF_UNKNOWN, {ref->name}, ref);
-    return nullptr;
+    key->expression->Accept(v);
+
+    if (VisitorResult result; v->TryGetResult(result))
+        v->AddSuccess(result.value, ref->ownerType);
 }

@@ -6,13 +6,13 @@
 
 class Lexer {
 public:
-    explicit Lexer(const std::string &source);
+    explicit Lexer(const std::string& source);
 
-    Lexer(const std::string &source, const std::string &sourcePath) : Lexer(source) {
+    Lexer(const std::string& source, const std::string& sourcePath) : Lexer(source) {
         this->sourcePath = sourcePath;
     }
 
-    const std::string &GetSourcePath() const {
+    const std::string& GetSourcePath() const {
         return sourcePath;
     }
 
@@ -22,11 +22,13 @@ public:
 
     bool IsAtEnd() const;
 
-    std::vector<std::string> GetSurroundingCode(Position startPos, Position endPos, long &topHalfIndex);
+    size_t CountLines() const;
 
-    static Lexer *FromSource(const std::string &source);
+    std::vector<std::string> GetSurroundingCode(Position startPos, Position endPos, long& topHalfIndex);
 
-    static Lexer *FromFile(const std::string &path);
+    static Lexer* FromSource(const std::string& source);
+
+    static Lexer* FromFile(const std::string& path);
 
 private:
     inline char consumeChar();
@@ -45,7 +47,7 @@ private:
 
     void parseBlockComment();
 
-    inline Token makeToken(Token::Type type, std::string value, Position pos) const;
+    inline Token makeToken(Token::Type type, std::string_view value, Position pos) const;
 
     inline Token makeToken(Token::Type type, double value, Position pos) const;
 

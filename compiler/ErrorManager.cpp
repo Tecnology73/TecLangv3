@@ -1,21 +1,24 @@
 #include "ErrorManager.h"
 #include "../parser/Parser.h"
+#include "../Console.h"
 
 std::stack<std::string> ErrorManager::hintQueue;
 
 void ErrorManager::Report(
-    ErrorCode errorCode,
-    const std::vector<std::string> &args,
-    const Parser *parser,
-    const Node *node
+    const ErrorCode errorCode,
+    const std::vector<std::string>& args,
+    const Parser* parser,
+    const Node* node
 ) {
     Report(errorCode, args, parser, node->token);
-    outputHint(errorCode, parser, node);
-
-    exit(static_cast<int>(errorCode));
 }
 
-void ErrorManager::Report(ErrorCode errorCode, const std::vector<std::string> &args, const struct Parser *parser, const Token &token) {
+void ErrorManager::Report(
+    ErrorCode errorCode,
+    const std::vector<std::string>& args,
+    const Parser* parser,
+    const Token& token
+) {
     auto it = ErrorTable.find(errorCode);
     auto errorCodeStr = std::to_string(static_cast<int>(errorCode));
     if (it == ErrorTable.end())
@@ -24,13 +27,16 @@ void ErrorManager::Report(ErrorCode errorCode, const std::vector<std::string> &a
     // Error message.
     Console::print("{error}[Error " + errorCodeStr + "]{reset}: " + it->second, args);
     // Source location.
-    Console::print("  {b}--> {w}{}:{}:{}", {
-        parser->lexer->GetSourcePath(),
-        std::to_string(token.position.line + 1),
-        std::to_string(token.position.column)
-    });
+    Console::print(
+        "  {b}--> {w}{}:{}:{}",
+        {
+            parser->lexer->GetSourcePath(),
+            std::to_string(token.position.line + 1),
+            std::to_string(token.position.column)
+        }
+    );
     //
-    Console::print(std::string(80, '-'), {});
+    Console::printRaw(std::string(80, '-'));
 
     // Source code.
     long topHalfIndex;
@@ -40,7 +46,8 @@ void ErrorManager::Report(ErrorCode errorCode, const std::vector<std::string> &a
     int spaces = std::to_string(token.position.line + code.size()).length();
 
     for (int i = 0; i < code.size(); i++) {
-        auto line = std::to_string(token.position.line + i);
+        // I'm too stupid to understand why I need to do `i - topHalfIndex + 1` here.
+        auto line = std::to_string(token.position.line + i - topHalfIndex + 1);
 
         Console::print(
             "{b}{}{} | {reset}{}",
@@ -57,7 +64,7 @@ void ErrorManager::Report(ErrorCode errorCode, const std::vector<std::string> &a
                 "{b}{} | {error}{}{} {}",
                 {
                     std::string(spaces, ' '),
-                    std::string(token.position.column + spaces - 2, ' '),
+                    std::string(std::max<int>(0, token.position.column + spaces - 2), ' '),
                     std::string(token.position.length + 1, '^'),
                     Console::format(it->second, args)
                 }
@@ -65,10 +72,13 @@ void ErrorManager::Report(ErrorCode errorCode, const std::vector<std::string> &a
         }
     }
 
+    Console::printRaw(std::string(80, '-') + "\n");
+    outputHint();
+
     // exit(static_cast<int>(errorCode));
 }
 
-void ErrorManager::outputHint(ErrorCode code, const Parser *parser, const Node *node) {
+void ErrorManager::outputHint() {
     if (hintQueue.empty()) return;
 
     Console::printRaw(std::string(80, '-'));
@@ -76,6 +86,6 @@ void ErrorManager::outputHint(ErrorCode code, const Parser *parser, const Node *
     hintQueue.pop();
 }
 
-void ErrorManager::QueueHint(std::string msg, const std::vector<std::string> &args) {
+void ErrorManager::QueueHint(const std::string& msg, const std::vector<std::string>& args) {
     hintQueue.emplace(Console::format("{b}Hint{reset}: " + msg, args));
 }

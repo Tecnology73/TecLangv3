@@ -1,31 +1,68 @@
 #include "Parser.h"
 #include <format>
 #include "expressions/Function.h"
-#include "statements/TypeDefinition.h"
+#include "topLevel/TypeDefinition.h"
 #include "topLevel/Enum.h"
 
-Parser::Parser(Lexer *lexer) {
+Parser::Parser(Lexer* lexer) {
     this->lexer = lexer;
 }
 
 bool Parser::Parse() {
+    int nodes = 0;
     NextToken();
     while (!lexer->IsAtEnd()) {
         if (currentToken.is(Token::Type::EndOfFile)) break;
 
-        Node *node = nullptr;
-        if (currentToken.type == Token::Type::Function || currentToken.type == Token::Type::Extern) {
+        // std::cout << "Nodes: " << ++nodes << "\n";
+
+        Node* node = nullptr;
+        if (currentToken.is(Token::Type::Function, Token::Type::Extern)) {
             auto fn = parseFunction(this);
+            // Does commenting this out break anything?
+            // Yes... It fucks up the entire flow of when types & their functions are generated.
             if (fn && fn->ownerType) continue;
 
             node = fn;
-        } else if (currentToken.type == Token::Type::Type) {
+        } else if (currentToken.is(Token::Type::Type, Token::Type::Public, Token::Type::Private)) {
             node = parseTypeDefinition(this);
-        } else if (currentToken.type == Token::Type::Enum) {
+        } else if (currentToken.is(Token::Type::Enum)) {
             node = parseEnum(this);
-        }
+        } else {
+            // idk why I wrote this... Because why not I guess?
+            std::string hintWord;
+            switch (currentToken.value[0]) {
+                case 'e':
+                    if (currentToken.value.length() < 2)
+                        hintWord = "'extern' or 'enum'";
+                    if (currentToken.value[1] == 'x')
+                        hintWord = "'extern'";
+                    else if (currentToken.value[1] == 'n')
+                        hintWord = "'enum'";
+                    break;
+                case 'f':
+                    hintWord = "'func'";
+                    break;
+                case 't':
+                    hintWord = "'type'";
+                    break;
+                case 'p':
+                    hintWord = "'pub'";
+                    break;
+                case 'r':
+                    hintWord = "'priv'";
+                    break;
+                case 'i':
+                    hintWord = "'import'";
+                    break;
+            }
 
-        if (node == nullptr) return false;
+            if (!hintWord.empty())
+                ErrorManager::QueueHint("Did you mean {}?", {hintWord});
+
+            ErrorManager::Report(ErrorCode::SYNTAX_ERROR, {currentToken.value.data()}, this, currentToken);
+            return false;
+        }
 
         ast.push_back(node);
     }
@@ -45,10 +82,13 @@ Token Parser::PeekToken() {
     return peekToken = lexer->PeekToken();
 }
 
-Parser *Parser::FromSource(const std::string &source) {
+Parser* Parser::FromSource(const std::string& source) {
     return new Parser(Lexer::FromSource(source));
 }
 
-Parser *Parser::FromFile(const std::string &path) {
-    return new Parser(Lexer::FromFile(path));
+Parser* Parser::FromFile(const std::string& path) {
+    auto lexer = Lexer::FromFile(path);
+    if (!lexer) return nullptr;
+
+    return new Parser(lexer);
 }

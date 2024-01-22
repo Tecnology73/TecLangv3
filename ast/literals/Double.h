@@ -9,7 +9,11 @@ public:
 
     double value;
 
-    llvm::Value *Accept(class Visitor *visitor) override {
-        return visitor->Visit(this);
+    void Accept(class Visitor* visitor) override {
+        visitor->Visit(this);
+    }
+
+    TypeVariant* getType() override {
+        return Compiler::getScopeManager().getType("double")->createVariant();
     }
 };

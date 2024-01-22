@@ -1,9 +1,9 @@
 #include "ScopeManager.h"
-#include <iostream>
+#include <llvm/IR/DerivedTypes.h>
 
-ScopeManager *ScopeManager::instance = nullptr;
+ScopeManager* ScopeManager::instance = nullptr;
 
-ScopeManager::ScopeManager(llvm::LLVMContext &context) : root(new RootScope("root")), current(root) {
+ScopeManager::ScopeManager(llvm::LLVMContext& context) : root(new RootScope("root")), current(root) {
     instance = this;
 
     addBuiltinType("bool", context);
@@ -15,30 +15,43 @@ ScopeManager::ScopeManager(llvm::LLVMContext &context) : root(new RootScope("roo
     addBuiltinType("i64", context);
     addBuiltinType("double", context);
     addBuiltinType("void", context);
+    addBuiltinType("null", context);
 }
 
-ScopeManager *ScopeManager::get() {
+ScopeManager* ScopeManager::get() {
     return instance;
 }
 
-void ScopeManager::leave(const std::string &name) {
+void ScopeManager::leave(const std::string& name) {
     if (current->name != name) {
-        std::cerr << "[Scope] Cannot leave scope '" << name << "' because current scope is '" << current->name << "'"
-                  << std::endl;
+        printError("Cannot leave scope '%s' because current scope is '%s'", name.c_str(), current->name.c_str());
         return;
     }
 
     if (current->parent != nullptr) {
-        std::cout << "[Scope] Leave: " << current->parent->name << " < " << current->name << std::endl;
+        // printDebug("[Scope] Leave: %s < %s", current->parent->name.c_str(), current->name.c_str());
         current = current->parent;
     }
 }
 
-void ScopeManager::addBuiltinType(const std::string &name, llvm::LLVMContext &context) {
-    auto type = new TypeDefinition(Token{
-        .type = Token::Type::Identifier,
-        .value = name
-    }, name);
+Scope* ScopeManager::GetParentScope(unsigned levels) const {
+    auto scope = current;
+    while (levels-- > 0 && scope->parent != nullptr)
+        scope = scope->parent;
+
+    return scope;
+}
+
+void ScopeManager::addBuiltinType(const std::string& name, llvm::LLVMContext& context) {
+    auto type = new TypeDefinition(
+        Token{
+            .type = Token::Type::Identifier,
+            .value = name
+        },
+        name
+    );
+    type->isDeclared = true;
+    type->isValueType = true;
 
     if (type->name == "bool")
         type->setLlvmType(llvm::Type::getInt1Ty(context));
@@ -62,84 +75,128 @@ void ScopeManager::addBuiltinType(const std::string &name, llvm::LLVMContext &co
 }
 
 /*
- * AddField
+ * Add
  */
 
-void ScopeManager::add(TypeDefinition *typeDef) const {
+void ScopeManager::add(TypeDefinition* typeDef) const {
     root->add(typeDef);
 }
 
-void ScopeManager::addCompiledType(TypeDefinition *typeDef) const {
+void ScopeManager::addCompiledType(TypeDefinition* typeDef) const {
     root->addCompiledType(typeDef);
 }
 
-void ScopeManager::add(Enum *anEnum) const {
+void ScopeManager::add(Enum* anEnum) const {
+    if (auto type = root->getType(anEnum->name)) {
+        if (type->isDeclared) {
+            printError("'%s' has already been declared!", anEnum->name.c_str());
+            exit(1);
+        }
+    }
+
     root->add(anEnum);
 }
 
-void ScopeManager::add(Function *function) const {
+void ScopeManager::add(Function* function) const {
     root->add(function);
 }
 
-void ScopeManager::add(VariableDeclaration *var) const {
+/*void ScopeManager::add(VariableDeclaration* var) const {
     if (current == root) {
         // TODO: Use the ErrorManager
-        std::cerr << "[Scope] Cannot AddField variable to root scope" << std::endl;
+        printError("[Scope] Cannot add variable to root scope!");
         return;
     }
 
     current->add(var);
+}*/
+
+void ScopeManager::Add(const VariableDeclaration* var) const {
+    if (current == root) {
+        // TODO: Use the ErrorManager
+        printError("[Scope] Cannot add variable to root scope!");
+        return;
+    }
+
+    current->Add(var);
+}
+
+void ScopeManager::Add(const std::string& name, const Node* node, const TypeVariant* narrowedType) const {
+    if (current == root) {
+        // TODO: Use the ErrorManager
+        printError("[Scope] Cannot add variable to root scope!");
+        return;
+    }
+
+    current->Add(name, node, narrowedType);
+}
+
+void ScopeManager::addTypeUse(TypeVariant* variant, const TypeBase* type) const {
+    root->addTypeUse(variant, type);
 }
 
 /*
  * Has
  */
 
-bool ScopeManager::hasType(const std::string &typeName) const {
+bool ScopeManager::hasType(const std::string& typeName) const {
     return root->hasType(typeName);
 }
 
-bool ScopeManager::hasEnum(const std::string &enumName) const {
+bool ScopeManager::hasEnum(const std::string& enumName) const {
     return root->hasEnum(enumName);
 }
 
-bool ScopeManager::hasFunction(const std::string &funcName) const {
+bool ScopeManager::hasFunction(const std::string& funcName) const {
     return root->hasFunction(funcName);
 }
 
-bool ScopeManager::hasVar(const std::string &varName) const {
+/*bool ScopeManager::hasVar(const std::string& varName) const {
     return current->hasVar(varName);
+}*/
+
+bool ScopeManager::HasVar(const std::string& name) const {
+    return current->HasVar(name);
 }
+
 
 /*
  * Get
  */
 
-TypeDefinition *ScopeManager::getType(const std::string &typeName) const {
-    return root->getType(typeName);
+TypeBase* ScopeManager::getType(const std::string& typeName, bool onlyDeclared) const {
+    return root->getType(typeName, onlyDeclared);
 }
 
-TypeDefinition *ScopeManager::getType(llvm::Type *llvmType) const {
+TypeDefinition* ScopeManager::getType(const llvm::Type* llvmType) const {
     return root->getType(llvmType);
 }
 
-Enum *ScopeManager::getEnum(const std::string &enumName) const {
-    return root->getEnum(enumName);
+Enum* ScopeManager::getEnum(const std::string& enumName, bool onlyDeclared) const {
+    return root->getEnum(enumName, onlyDeclared);
 }
 
-Function *ScopeManager::getFunction(const std::string &funcName) const {
+Function* ScopeManager::getFunction(const std::string& funcName) const {
     return root->getFunction(funcName);
 }
 
-VariableDeclaration *ScopeManager::getVar(const std::string &varName) const {
+/*VariableDeclaration* ScopeManager::getVar(const std::string& varName) const {
     return current->getVar(varName);
+}*/
+
+std::unordered_map<std::string, std::shared_ptr<Symbol>>& ScopeManager::GetVars() const {
+    return current->GetVars();
+}
+
+std::shared_ptr<Symbol> ScopeManager::GetVar(const std::string& name) const {
+    return current->GetVar(name);
 }
 
 /*
  * Codegen Context
  */
 
-void ScopeManager::pushContext(CodegenContext *context) {
+void ScopeManager::pushContext(Context* context) {
     if (!contextStack.empty())
         context->parent = contextStack.top();
 
@@ -155,6 +212,6 @@ bool ScopeManager::hasContext() const {
     return !contextStack.empty();
 }
 
-CodegenContext *ScopeManager::getContext() const {
+Context* ScopeManager::getContext() const {
     return contextStack.top();
 }

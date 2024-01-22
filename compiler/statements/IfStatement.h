@@ -2,18 +2,23 @@
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Function.h>
-#include <llvm/IR/Verifier.h>
 #include "../../ast/Statements.h"
 #include "../Compiler.h"
 
-llvm::Value *generateIfStatement(Visitor *v, IfStatement *node);
+void generateIfStatement(Visitor* v, IfStatement* node);
 
 namespace {
-    llvm::Value *generateElseStatement(Visitor *v, IfStatement *node) {
-        if (node->condition) return generateIfStatement(v, node);
+    void generateElseStatement(Visitor* v, IfStatement* node) {
+        if (node->condition) {
+            generateIfStatement(v, node);
+            return;
+        }
 
-        for (const auto &item: node->body)
+        for (const auto& item: node->body) {
             item->Accept(v);
+
+            if (VisitorResult result; !v->TryGetResult(result)) return;
+        }
 
         auto exitBlock = llvm::BasicBlock::Create(
             Compiler::getContext(),
@@ -23,16 +28,21 @@ namespace {
         Compiler::getBuilder().CreateBr(exitBlock);
         Compiler::getBuilder().SetInsertPoint(exitBlock);
 
-        return nullptr;
+        v->AddSuccess();
     }
 }
 
-llvm::Value *generateIfStatement(Visitor *v, IfStatement *node) {
-    llvm::Value *condition = nullptr;
+void generateIfStatement(Visitor* v, IfStatement* node) {
+    llvm::Value* condition = nullptr;
     if (node->condition) {
-        condition = Compiler::getBuilder().CreateICmpNE(
-            node->condition->Accept(v),
-            Compiler::getBuilder().getInt1(false),
+        node->condition->Accept(v);
+
+        VisitorResult result;
+        if (!v->TryGetResult(result)) return;
+
+        condition = Compiler::getBuilder().CreateICmpEQ(
+            result.value,
+            Compiler::getBuilder().getInt1(true),
             "@if.cond"
         );
     }
@@ -52,13 +62,19 @@ llvm::Value *generateIfStatement(Visitor *v, IfStatement *node) {
 
     // Then block
     Compiler::getBuilder().SetInsertPoint(thenBlock);
-    for (const auto &item: node->body)
+    for (const auto& item: node->body) {
         item->Accept(v);
+
+        if (VisitorResult result; !v->TryGetResult(result)) return;
+    }
 
     // Else block
     Compiler::getBuilder().SetInsertPoint(exitBlock);
-    if (node->elseStatement)
+    if (node->elseStatement) {
         generateElseStatement(v, node->elseStatement);
+
+        if (VisitorResult result; !v->TryGetResult(result)) return;
+    }
 
     // If there is no return statement in the then block, we need to create a branch to the exit block.
     if (!thenBlock->getTerminator()) {
@@ -69,5 +85,5 @@ llvm::Value *generateIfStatement(Visitor *v, IfStatement *node) {
         Compiler::getBuilder().SetInsertPoint(currentBlock);
     }
 
-    return nullptr;
+    v->AddSuccess();
 }

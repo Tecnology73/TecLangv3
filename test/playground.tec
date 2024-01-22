@@ -1,0 +1,5 @@
+// import Foo.*
+
+func main() i32 {
+    return 0
+}

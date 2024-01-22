@@ -3,10 +3,10 @@
 #include <llvm/IR/Value.h>
 #include "../../ast/topLevel/Function.h"
 
-llvm::Value *generateFunctionParameter(Visitor *v, FunctionParameter *param) {
+void generateFunctionParameter(Visitor *v, FunctionParameter *param) {
     param->alloc = param->function->llvmFunction->getArg(param->index);
 
-    Compiler::getScopeManager().add(param);
+    Compiler::getScopeManager().Add(param);
 
-    return param->alloc;
+    v->AddSuccess(param->alloc);
 }

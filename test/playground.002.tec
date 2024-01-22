@@ -1,0 +1,37 @@
+extern func printf() i8*
+extern func malloc() i8*
+
+enum AccountType {
+    Checking
+    Savings
+}
+
+type User {
+    id: i32 = 10
+}
+
+type Account {
+    user: User
+    type: AccountType
+    balance: i32
+}
+
+func math() i32 {
+    return 10
+}
+
+func main() {
+    account = new Account{
+//        user = new User{id = 10}
+        type = AccountType::Checking
+        balance = 100
+    }
+
+    printf("User ID: %d\n", account.user.id)
+    printf("Account Type: %d\n", account.type)
+    printf("Balance: %d\n", account.balance)
+
+    return math()
+//    return account.user.id
+//    return 10
+}

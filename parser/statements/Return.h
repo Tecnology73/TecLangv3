@@ -2,7 +2,6 @@
 
 #include "../../ast/Statements.h"
 #include "../Parser.h"
-#include "../literals/Integer.h"
 #include "../expressions/Expression.h"
 
 Return *parseReturn(Parser *parser) {
