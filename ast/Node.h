@@ -33,7 +33,8 @@ public:
 
 class ChainableNode : public Node {
 public:
-    using Node::Node;
+    ChainableNode(const Token& beginToken, const std::string& name) : Node(beginToken), name(name) {
+    }
 
     virtual TypeVariant* getFinalType() = 0;
 
@@ -48,7 +49,7 @@ public:
     }
 
 public:
-    std::string name;
+    const std::string& name;
     ChainableNode* prev = nullptr;
     ChainableNode* next = nullptr;
 

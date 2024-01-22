@@ -11,7 +11,7 @@ TypeVariant* TypeBase::createVariant() {
 }
 
 TypeReference* TypeBase::CreateReference() const {
-    return new TypeReference(token);
+    return new TypeReference(token, StringInternTable::Intern(name));
 }
 
 llvm::Type* TypeBase::getLlvmType() {

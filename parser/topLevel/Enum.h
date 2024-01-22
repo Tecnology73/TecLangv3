@@ -3,7 +3,7 @@
 #include "../../ast/TopLevel.h"
 #include "../Parser.h"
 #include "../expressions/Expression.h"
-#include "../../context/SymbolTable.h"
+#include "../../symbolTable/SymbolTable.h"
 #include "../expressions/TypeReference.h"
 
 namespace {
@@ -13,7 +13,10 @@ namespace {
             return nullptr;
         }
 
-        auto value = new EnumValue(parser->currentToken, parser->currentToken.value.data());
+        auto value = new EnumValue(
+            parser->currentToken,
+            StringInternTable::Intern(parser->currentToken.value)
+        );
         if (parser->NextToken().is(Token::Type::Assign)) {
             parser->NextToken(); // Consume '='
 
@@ -31,7 +34,10 @@ namespace {
             return nullptr;
         }
 
-        auto constructor = new EnumConstructor(parser->currentToken, parser->currentToken.value.data());
+        auto constructor = new EnumConstructor(
+            parser->currentToken,
+            StringInternTable::Intern(parser->currentToken.value)
+        );
         if (parser->NextToken().isNot(Token::Type::OpenParen)) {
             parser->PrintSyntaxError("(");
             return nullptr;
@@ -42,19 +48,27 @@ namespace {
         // v4(i32, i32, i32, i32)
         // v4(a: i32, b: i32, c: i32, d: i32)
         while (parser->currentToken.isNot(Token::Type::CloseParen)) {
-            auto argument = new EnumParameter(parser->currentToken);
             if (parser->PeekToken().is(Token::Type::Colon)) {
-                // ID: TypeName
-                argument->name = parser->currentToken.value;
-                parser->NextToken(); // Consume ':'
+                // id: Type
+                auto param = new EnumParameter(
+                    parser->currentToken,
+                    StringInternTable::Intern(parser->currentToken.value)
+                );
 
-                argument->type = parseTypeReference(parser);
+                parser->NextToken(); // Consume identifier
+
+                if (parser->NextToken().isNot(Token::Type::Identifier)) {
+                    parser->PrintSyntaxError("type");
+                    return nullptr;
+                }
+
+                param->type = parseTypeReference(parser);
+                constructor->parameters.push_back(param);
             } else {
-                // TypeName
-                argument->type = parseTypeReference(parser);
+                // Type
+                auto param = new EnumParameter(parser->currentToken);
+                param->type = parseTypeReference(parser);
             }
-
-            constructor->parameters.push_back(argument);
 
             if (parser->NextToken().is(Token::Type::Comma))
                 parser->NextToken(); // Consume ','
@@ -76,7 +90,10 @@ Enum* parseEnum(Parser* parser) {
         return nullptr;
     }
 
-    auto anEnum = Enum::Create(parser->currentToken, parser->NextToken().value.data());
+    auto anEnum = Enum::Create(
+        parser->currentToken,
+        StringInternTable::Intern(parser->NextToken().value)
+    );
     SymbolTable::GetInstance()->Add(anEnum);
     if (parser->NextToken().isNot(Token::Type::OpenCurly)) {
         parser->PrintSyntaxError("{");

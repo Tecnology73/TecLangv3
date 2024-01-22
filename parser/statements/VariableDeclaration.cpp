@@ -10,7 +10,10 @@ VariableDeclaration* parseVariableDeclaration(Parser* parser) {
         return nullptr;
     }
 
-    auto node = new VariableDeclaration(parser->currentToken);
+    auto node = new VariableDeclaration(
+        parser->currentToken,
+        StringInternTable::Intern(parser->currentToken.value)
+    );
     if (parser->PeekToken().is(Token::Type::Colon)) {
         parser->NextToken(); // Consume ':'
         if (parser->NextToken().isNot(Token::Type::Identifier, Token::Type::Type)) {

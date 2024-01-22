@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stack>
 #include <string>
 #include <vector>
 #include "Token.h"
@@ -16,7 +17,7 @@ public:
         return sourcePath;
     }
 
-    Token GetNextToken();
+    Token GetNextToken(bool useStack = true);
 
     Token PeekToken();
 
@@ -24,7 +25,11 @@ public:
 
     size_t CountLines() const;
 
-    std::vector<std::string> GetSurroundingCode(Position startPos, Position endPos, long& topHalfIndex);
+    std::vector<std::string> GetSurroundingCode(
+        const Position& startPos,
+        const Position& endPos,
+        long& topHalfIndex
+    );
 
     static Lexer* FromSource(const std::string& source);
 
@@ -34,6 +39,8 @@ private:
     inline char consumeChar();
 
     inline char peekChar(int offset = 1) const;
+
+    void consumeUntilLine(long line);
 
     Token parseIdentifier();
 
@@ -47,11 +54,11 @@ private:
 
     void parseBlockComment();
 
-    inline Token makeToken(Token::Type type, std::string_view value, Position pos) const;
+    inline Token makeToken(Token::Type type, std::string_view value, const Position& pos) const;
 
-    inline Token makeToken(Token::Type type, double value, Position pos) const;
+    inline Token makeToken(Token::Type type, double value, const Position& pos) const;
 
-    inline Token makeToken(Token::Type type, int value, Position pos) const;
+    inline Token makeToken(Token::Type type, int value, const Position& pos) const;
 
 public:
     Position position = {0, 0, 0};
@@ -59,6 +66,12 @@ public:
 private:
     std::string sourcePath = "inline_source_file";
     std::string source;
-    std::vector<std::string> lines;
     long sourceLength;
+
+    // Buffer for tokens parsed during `consumeUntilLine`.
+    // This will be returned by `GetNextToken` until it's empty.
+    std::stack<Token> tokens;
+
+    std::vector<std::pair<long, long>> lines;
+    long currentLineStartIndex = 0;
 };

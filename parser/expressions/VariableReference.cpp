@@ -2,7 +2,7 @@
 #include "FunctionCall.h"
 #include "StaticRef.h"
 
-ChainableNode *parseChainable(Parser *parser) {
+ChainableNode* parseChainable(Parser* parser) {
     switch (parser->PeekToken().type) {
         case Token::Type::OpenParen:
             return parseFunctionCall(parser);
@@ -13,14 +13,16 @@ ChainableNode *parseChainable(Parser *parser) {
     }
 }
 
-VariableReference *parseVariableReference(Parser *parser) {
+VariableReference* parseVariableReference(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::Identifier, Token::Type::Type)) {
         parser->PrintSyntaxError("identifier");
         return nullptr;
     }
 
-    auto node = new VariableReference(parser->currentToken);
-    node->name = parser->currentToken.value;
+    auto node = new VariableReference(
+        parser->currentToken,
+        StringInternTable::Intern(parser->currentToken.value)
+    );
 
     // Parse the next varRef/funcCall (e.g. this.x or this.x());
     if (parser->NextToken().is(Token::Type::Period)) {

@@ -14,7 +14,7 @@ TypeVariant* TypeVariant::Clone() const {
 }
 
 TypeReference* TypeVariant::CreateReference() const {
-    auto ref = new TypeReference(type->token);
+    auto ref = new TypeReference(type->token, StringInternTable::Intern(type->name));
     ref->flags = flags;
 
     return ref;

@@ -8,9 +8,11 @@ class VariableDeclaration : public Node {
 public:
     using Node::Node;
 
-    explicit VariableDeclaration(const Token& beginToken, Node* expression = nullptr);
-
-    VariableDeclaration(const Token& beginToken, const std::string& name, Node* expression = nullptr);
+    VariableDeclaration(
+        const Token& beginToken,
+        const std::string& name,
+        Node* expression = nullptr
+    );
 
     VariableDeclaration(
         const Token& beginToken,
@@ -26,7 +28,7 @@ public:
     // TypeVariant* GetCompiledType(Visitor* visitor);
 
 public:
-    std::string const name;
+    const std::string& name;
     TypeReference* type = nullptr;
     Node* expression = nullptr;
 

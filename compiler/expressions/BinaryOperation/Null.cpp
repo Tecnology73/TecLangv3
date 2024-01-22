@@ -17,6 +17,10 @@ llvm::Value* BinaryOperation_Null::generateEqual(Visitor* v, const BinaryOperati
     auto rhs = BinaryOperation_Common::generateValue(v, node, node->rhs);
     if (!rhs) return nullptr;
 
+    auto commonType = TypeCoercion::getCommonType(lhs->getType(), rhs->getType());
+    lhs = TypeCoercion::coerce(lhs, commonType);
+    rhs = TypeCoercion::coerce(rhs, commonType);
+
     return BinaryOperation_Value::generateEqual(lhs, rhs);
 }
 

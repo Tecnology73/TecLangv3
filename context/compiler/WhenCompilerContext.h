@@ -2,6 +2,7 @@
 
 #include <llvm/IR/BasicBlock.h>
 #include "../Context.h"
+#include "../../ast/expressions/When.h"
 
 class WhenCompilerContext : public Context {
 public:

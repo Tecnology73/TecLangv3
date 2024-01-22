@@ -1,7 +1,7 @@
 #include "TypeDefinition.h"
 #include "../../compiler/Compiler.h"
 #include "../../compiler/TypeCoercion.h"
-#include "../../context/SymbolTable.h"
+#include "../../symbolTable/SymbolTable.h"
 
 llvm::Value* TypeDefinition::getDefaultValue() const {
     if (name == "i8")
@@ -65,7 +65,7 @@ TypeVariant* TypeDefinition::CreateTemporary(const Token& token) {
 }*/
 
 TypeDefinition* TypeDefinition::Create(const Token& token) {
-    auto symbol = SymbolTable::GetInstance()->Get(token.value.data());
+    auto symbol = SymbolTable::GetInstance()->Get(StringInternTable::Intern(token.value));
     if (symbol.has_value()) {
         if (symbol->type != SymbolType::Type)
             return nullptr;
@@ -76,7 +76,10 @@ TypeDefinition* TypeDefinition::Create(const Token& token) {
         return type;
     }
 
-    auto type = new TypeDefinition(token, token.value.data());
+    auto type = new TypeDefinition(
+        token,
+        StringInternTable::Intern(token.value)
+    );
     type->isDeclared = true;
 
     SymbolTable::GetInstance()->Add(type);
@@ -85,12 +88,8 @@ TypeDefinition* TypeDefinition::Create(const Token& token) {
 }
 
 TypeBase* TypeDefinition::CreateUndeclared(const Token& token) {
-    auto symbol = SymbolTable::GetInstance()->Get(token.value.data());
+    auto symbol = SymbolTable::GetInstance()->Get(StringInternTable::Intern(token.value));
     if (symbol.has_value()) {
-        // If the current symbol is a function, we can't use it as a type.
-        if (symbol->type == SymbolType::Function)
-            return nullptr;
-
         if (symbol->type == SymbolType::Enum)
             return std::get<Enum *>(symbol->value);
 
@@ -98,7 +97,10 @@ TypeBase* TypeDefinition::CreateUndeclared(const Token& token) {
     }
 
     // Create a new type.
-    auto type = new TypeDefinition(token, token.value.data());
+    auto type = new TypeDefinition(
+        token,
+        StringInternTable::Intern(token.value)
+    );
     // Don't mark it as declared.
 
     SymbolTable::GetInstance()->Add(type);

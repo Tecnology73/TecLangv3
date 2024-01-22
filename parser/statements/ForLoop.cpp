@@ -46,11 +46,12 @@ ForLoop* parseForLoop(Parser* parser) {
 
     // If no identifier was specified, create one.
     if (!identifier) {
-        identifier = new VariableDeclaration(loop->token, "it");
-        identifier->type = TypeReference::Infer();
+        identifier = new VariableDeclaration(loop->token, StringInternTable::Intern("it"));
+        // identifier->type = TypeReference::Infer();
+        identifier->type = std::get<TypeDefinition*>(SymbolTable::GetInstance()->Get("i32")->value)->CreateReference();
         // We default to zero here.
         // We'll set this to the actual start expression when we generate the for loop.
-        identifier->expression = new Integer(loop->token);
+        identifier->expression = new Integer(loop->token, 0);
     }
     loop->identifier = identifier;
 

@@ -7,14 +7,17 @@
 // Used for `new T { field1 = value1, field2 = value2, ... }`
 class ConstructorField : public Node {
 public:
-    ConstructorField(Token beginToken, Node* value) : Node(std::move(beginToken)), name(token.value), value(value) {
+    ConstructorField(const Token& beginToken, const std::string& name, Node* value)
+        : Node(beginToken),
+          name(name),
+          value(value) {
     }
 
     void Accept(Visitor* visitor) override {
     }
 
 public:
-    std::string const name;
+    const std::string& name;
     Node* const value;
 };
 
@@ -30,9 +33,7 @@ public:
 
     void AddArgument(Node* arg);
 
-    void AddField(Token token, Node* value);
-
-    static ConstructorCall* Create(const Token& token);
+    void AddField(const Token& token, Node* value);
 
 public:
     TypeReference* type;

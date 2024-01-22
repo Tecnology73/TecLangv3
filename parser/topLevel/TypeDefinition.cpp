@@ -1,7 +1,7 @@
 #include "TypeDefinition.h"
 
 #include "../../compiler/Compiler.h"
-#include "../../context/SymbolTable.h"
+#include "../../symbolTable/SymbolTable.h"
 #include "../../ast/expressions/TypeReference.h"
 #include "../expressions/Expression.h"
 #include "../expressions/TypeReference.h"
@@ -21,7 +21,10 @@ namespace {
             return nullptr;
         }
 
-        auto field = new TypeField(parser->currentToken);
+        auto field = new TypeField(
+            parser->currentToken,
+            StringInternTable::Intern(parser->currentToken.value)
+        );
         if (isPublic) field->flags.Set(TypeFlag::PUBLIC);
         else if (isPrivate) field->flags.Set(TypeFlag::PRIVATE);
 

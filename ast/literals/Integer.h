@@ -2,7 +2,8 @@
 
 #include "../Node.h"
 #include "../Visitor.h"
-#include "../../compiler/Compiler.h"
+#include "../topLevel/TypeDefinition.h"
+#include "../../symbolTable/SymbolTable.h"
 
 class Integer : public Literal {
 public:
@@ -21,9 +22,11 @@ public:
 
     TypeVariant* getType() override {
         if (numBits == 1)
-            return Compiler::getScopeManager().getType("i8")->createVariant();
+            return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("i8")->value)->createVariant();
 
-        return Compiler::getScopeManager().getType("i" + std::to_string(numBits))->createVariant();
+        return std::get<TypeDefinition *>(
+            SymbolTable::GetInstance()->Get("i" + std::to_string(numBits))->value
+        )->createVariant();
     }
 
 private:

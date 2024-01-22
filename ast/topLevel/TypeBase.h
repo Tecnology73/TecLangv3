@@ -6,7 +6,6 @@
 #include "../../misc/BitFlag.h"
 
 class Function;
-
 class TypeField;
 
 enum class TypeFlag : int {
@@ -17,9 +16,7 @@ enum class TypeFlag : int {
 
 class TypeBase : public Node {
 public:
-    TypeBase(const Token& token, std::string name)
-        : Node(token),
-          name(std::move(name)) {
+    TypeBase(const Token& token, const std::string& name) : Node(token), name(name) {
     }
 
     virtual llvm::Value* getDefaultValue() const = 0;
@@ -51,14 +48,14 @@ public:
     ) const;
 
 public:
-    std::string const name;
+    const std::string& name;
     BitFlag<TypeFlag> flags;
     bool isDeclared = false;
 
     // Because we allow overloading, we need to store an array of functions.
-    std::unordered_map<std::string, std::vector<Function *>> functions;
-    std::unordered_map<std::string, TypeField *> fields;
-    std::vector<std::string> fieldOrder;
+    std::unordered_map<std::string_view, std::vector<Function *>> functions;
+    std::unordered_map<std::string_view, TypeField *> fields;
+    std::vector<std::string_view> fieldOrder;
 
     llvm::Type* llvmType = nullptr;
     bool isValueType = false;
@@ -66,20 +63,13 @@ public:
 
 class TypeField : public Node {
 public:
-    explicit TypeField(const Token& token)
-        : Node(token),
-          name(token.value) {
-    }
-
-    TypeField(const Token& token, const std::string& name)
-        : Node(token),
-          name(name) {
+    TypeField(const Token& token, const std::string& name) : Node(token), name(name) {
     }
 
     void Accept(class Visitor* visitor) override;
 
 public:
-    std::string const name;
+    const std::string& name;
     BitFlag<TypeFlag> flags;
 
     // class TypeVariant* type = nullptr; // Empty if we need to infer the type.

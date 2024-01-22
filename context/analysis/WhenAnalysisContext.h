@@ -2,6 +2,7 @@
 
 #include "ReturnAnalysisContext.h"
 #include "../Context.h"
+#include "../../ast/expressions/When.h"
 
 class WhenAnalysisContext : public Context {
 public:

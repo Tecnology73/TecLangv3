@@ -43,11 +43,14 @@ class EnumParameter : public Node {
 public:
     using Node::Node;
 
+    EnumParameter(const Token& token, const std::string& name) : Node(token), name(&name) {
+    }
+
     void Accept(Visitor* visitor) override {
         visitor->Visit(this);
     }
 
 public:
-    std::string name; // This is optional
-    TypeReference* type;
+    const std::string* name = nullptr; // This is optional
+    TypeReference* type = nullptr;
 };

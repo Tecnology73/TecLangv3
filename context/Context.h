@@ -18,6 +18,11 @@ public:
     }
 
     virtual void ReplaceCurrentNode(Node* node) {
+        if (parent) {
+            parent->ReplaceCurrentNode(node);
+            return;
+        }
+
         visitor->SetAstNode(visitor->GetAstLoopIndex(), node);
         visitor->DecAstLoop();
     }

@@ -7,7 +7,10 @@ StaticRef* parseStaticRef(Parser* parser) {
         return nullptr;
     }
 
-    auto ref = new StaticRef(parser->currentToken);
+    auto ref = new StaticRef(
+        parser->currentToken,
+        StringInternTable::Intern(parser->currentToken.value)
+    );
     if (parser->NextToken().is(Token::Type::ColonColon)) {
         parser->NextToken(); // Consume '::'
 

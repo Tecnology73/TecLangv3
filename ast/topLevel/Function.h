@@ -12,17 +12,17 @@ class Function : public Node {
 public:
     using Node::Node;
 
-    explicit Function(const std::string_view name) : Node(Token{}), name(name), isExternal(true) {
+    explicit Function(const std::string& name) : Node(Token{}), name(name), isExternal(true) {
     }
 
-    Function(const Token& beginToken, const std::string_view name) : Node(beginToken), name(name) {
+    Function(const Token& beginToken, const std::string& name) : Node(beginToken), name(name) {
     }
 
     void Accept(Visitor* visitor) override {
         visitor->Visit(this);
     }
 
-    bool AddParameter(const Token& token, std::string paramName, TypeReference* type);
+    bool AddParameter(const Token& token, const std::string& paramName, TypeReference* type);
 
     FunctionParameter* GetParameter(const std::string& parameterName) const;
 
@@ -31,9 +31,9 @@ public:
     int GetParameterIndex(const std::string& parameterName);
 
 public:
-    std::string_view const name;
-    std::unordered_map<std::string, FunctionParameter *> parameters;
-    std::vector<std::string> parameterOrder;
+    const std::string& name;
+    std::unordered_map<std::string_view, FunctionParameter *> parameters;
+    std::vector<std::string_view> parameterOrder;
     std::vector<Node *> body;
     TypeReference* returnType = nullptr;
     TypeBase* ownerType = nullptr;

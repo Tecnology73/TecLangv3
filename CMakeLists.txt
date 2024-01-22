@@ -27,8 +27,21 @@ file(GLOB_RECURSE LEXER_SOURCES LIST_DIRECTORIES true lexer/*.h lexer/*.cpp)
 file(GLOB_RECURSE PARSER_SOURCES LIST_DIRECTORIES true parser/*.h parser/*.cpp)
 file(GLOB_RECURSE ANALYSIS_SOURCES LIST_DIRECTORIES true analysis/*.h analysis/*.cpp)
 file(GLOB_RECURSE CONTEXT_SOURCES LIST_DIRECTORIES true context/*.h context/*.cpp)
+file(GLOB_RECURSE SYMBOL_TABLE_SOURCES LIST_DIRECTORIES true symbolTable/*.h symbolTable/*.cpp)
 
-add_executable(${BINARY}_run main.cpp Console.cpp App.cpp ${AST_SOURCES} ${COMPILER_SOURCES} ${LEXER_SOURCES} ${PARSER_SOURCES} ${ANALYSIS_SOURCES} ${CONTEXT_SOURCES})
+add_executable(
+        ${BINARY}_run
+        main.cpp
+        Console.cpp
+        App.cpp
+        ${AST_SOURCES}
+        ${COMPILER_SOURCES}
+        ${LEXER_SOURCES}
+        ${PARSER_SOURCES}
+        ${ANALYSIS_SOURCES}
+        ${CONTEXT_SOURCES}
+        ${SYMBOL_TABLE_SOURCES}
+)
 #add_library(${BINARY}_lib Console.cpp ${AST_SOURCES} ${COMPILER_SOURCES} ${LEXER_SOURCES} ${PARSER_SOURCES} ${ANALYSIS_SOURCES} ${CONTEXT_SOURCES})
 #add_executable(${BINARY}_run main_network.cpp)
 #add_executable(${BINARY}_run main_log.cpp)

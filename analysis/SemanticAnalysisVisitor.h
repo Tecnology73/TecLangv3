@@ -7,8 +7,10 @@
 #include "topLevel/Function.h"
 //
 #include "expressions/When.h"
+#include "expressions/WhenCondition.h"
 #include "expressions/BinaryOperation.h"
 //
+#include "../symbolTable/SymbolTable.h"
 #include "statements/IfStatement.h"
 #include "statements/Return.h"
 
@@ -73,17 +75,23 @@ public:
 
             if (!node->type)
                 node->type = result.type->CreateReference();
-        } else if (!node->type->flags.Has(TypeFlag::OPTIONAL) && !node->type->ResolveType()->type->isValueType) {
-            ReportError(
-                ErrorCode::VALUE_CANNOT_BE_NULL,
-                {
-                    node->name,
-                    node->type->name,
-                },
-                node
-            );
+        } else if (!node->type->flags.Has(TypeFlag::OPTIONAL)) {
+            auto resolvedType = node->type->ResolveType();
+            if (!resolvedType) {
+                ReportError(ErrorCode::TYPE_UNKNOWN, {node->type->name}, node->type);
+                return;
+            }
 
-            // This is not a syntax error so we can continue.
+            if (!resolvedType->type->isValueType)
+                // This is not a syntax error so we can continue.
+                ReportError(
+                    ErrorCode::VALUE_CANNOT_BE_NULL,
+                    {
+                        node->name,
+                        node->type->name,
+                    },
+                    node
+                );
         }
 
         Compiler::getScopeManager().Add(node);
@@ -95,6 +103,27 @@ public:
     }
 
     void Visit(class ForLoop* node) override {
+        node->value->Accept(this);
+        
+        if (node->step) {
+            node->step->Accept(this);
+
+            if (VisitorResult result; !TryGetResult(result)) return;
+        }
+
+        if (node->identifier) {
+            node->identifier->Accept(this);
+
+            if (VisitorResult result; !TryGetResult(result)) return;
+        }
+
+        for (const auto& item : node->body) {
+            item->Accept(this);
+
+            if (VisitorResult result; !TryGetResult(result)) return;
+        }
+
+        AddSuccess();
     }
 
     void Visit(class Continue* node) override {
@@ -108,14 +137,30 @@ public:
      */
 
     void Visit(class ConstructorCall* node) override {
-        AddSuccess(node->type->ResolveType());
+        auto type = node->type->ResolveType();
+        if (!type) {
+            ReportError(ErrorCode::TYPE_UNKNOWN, {node->type->name}, node->type);
+            return;
+        }
+
+        AddSuccess(type);
     }
 
     void Visit(class FunctionCall* node) override {
+        std::vector<TypeReference *> paramTypes(node->arguments.size());
+        unsigned i = 0;
         for (const auto& argument: node->arguments) {
             argument->Accept(this);
 
-            if (VisitorResult result; !TryGetResult(result)) return;
+            VisitorResult result;
+            if (!TryGetResult(result)) return;
+
+            paramTypes[i++] = new TypeReference(result.type->type->token, result.type->type->name);
+        }
+
+        if (!SymbolTable::GetInstance()->LookupFunction(node->name, paramTypes)) {
+            ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
+            return;
         }
 
         AddSuccess(node->getFinalType());
@@ -186,24 +231,7 @@ public:
     }
 
     void Visit(class WhenCondition* node) override {
-        // Not present for the `else` case.
-        if (node->condition) {
-            node->condition->Accept(this);
-            if (VisitorResult result; !TryGetResult(result)) return;
-        }
-
-        for (const auto& item: node->body) {
-            item->Accept(this);
-
-            VisitorResult result;
-            if (!TryGetResult(result)) return;
-
-            if (!node->implicitReturn) continue;
-
-            Compiler::getScopeManager().getContext()->handleReturn(item, result.type);
-        }
-
-        AddSuccess();
+        WhenConditionAnalyzer(this, node).Analyze();
     }
 
     /*

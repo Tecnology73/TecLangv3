@@ -18,7 +18,16 @@ bool parseFunctionParameter(Parser* parser, Function* function) {
         return false;
     }
 
-    function->AddParameter(beginToken, beginToken.value.data(), new TypeReference(parser->currentToken));
+    // TODO: Add default value support.
+    // TODO: Infer type from default value.
+    function->AddParameter(
+        beginToken,
+        StringInternTable::Intern(beginToken.value),
+        new TypeReference(
+            parser->currentToken,
+            StringInternTable::Intern(parser->currentToken.value)
+        )
+    );
     parser->NextToken(); // Consume the type name.
     return true;
 }

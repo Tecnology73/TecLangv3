@@ -2,7 +2,8 @@
 
 #include "../Node.h"
 #include "../Visitor.h"
-#include "../../compiler/Compiler.h"
+#include "../topLevel/TypeDefinition.h"
+#include "../../symbolTable/SymbolTable.h"
 
 class Boolean : public Literal {
 public:
@@ -15,6 +16,6 @@ public:
     }
 
     TypeVariant* getType() override {
-        return Compiler::getScopeManager().getType("bool")->createVariant();
+        return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("bool")->value)->createVariant();
     }
 };

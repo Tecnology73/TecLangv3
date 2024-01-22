@@ -19,7 +19,10 @@ SymbolTable::SymbolTable(const std::string& package) : package(package) {
 }
 
 void SymbolTable::addBuiltinType(const std::string& name) {
-    auto type = new TypeDefinition(Token{}, name);
+    auto type = new TypeDefinition(
+        Token{},
+        StringInternTable::Intern(name)
+    );
     type->isDeclared = true;
     type->isValueType = true;
 
@@ -59,10 +62,11 @@ bool SymbolTable::Add(Enum* type) {
 }
 
 bool SymbolTable::Add(Function* function) {
-    if (Has(function->name))
-        return false;
+    auto it = functions.find(function->name);
+    if (it == functions.end())
+        it = functions.emplace(function->name, std::vector<Function *>()).first;
 
-    symbols.emplace(function->name, SymbolN(function));
+    it->second.emplace_back(function);
     return true;
 }
 
@@ -92,4 +96,37 @@ std::optional<SymbolN> SymbolTable::Get(const std::string& name, const SymbolTyp
         return std::nullopt;
 
     return it->second;
+}
+
+const std::vector<Function *>& SymbolTable::LookupFunction(const std::string& name) const {
+    auto it = functions.find(name);
+    if (it == functions.end())
+        return {};
+
+    return it->second;
+}
+
+Function* SymbolTable::LookupFunction(const std::string& name, const std::vector<TypeReference *>& args) const {
+    auto it = functions.find(name);
+    if (it == functions.end())
+        return nullptr;
+
+    for (const auto& function: it->second) {
+        if (function->parameters.size() != args.size())
+            continue;
+
+        bool match = true;
+        unsigned i = 0;
+        for (const auto& param: function->parameters | std::views::values) {
+            if (param->type->name != args[i++]->name) {
+                match = false;
+                break;
+            }
+        }
+
+        if (match)
+            return function;
+    }
+
+    return nullptr;
 }

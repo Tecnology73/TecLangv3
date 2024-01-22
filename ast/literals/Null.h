@@ -2,7 +2,8 @@
 
 #include "../Node.h"
 #include "../Visitor.h"
-#include "../../compiler/Compiler.h"
+#include "../topLevel/TypeDefinition.h"
+#include "../../symbolTable/SymbolTable.h"
 
 class Null : public Literal {
 public:
@@ -13,6 +14,6 @@ public:
     }
 
     TypeVariant* getType() override {
-        return Compiler::getScopeManager().getType("null")->createVariant();
+        return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("null")->value)->createVariant();
     }
 };

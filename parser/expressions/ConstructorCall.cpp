@@ -105,7 +105,10 @@ ConstructorCall* parseConstructorCall(Parser* parser) {
         return nullptr;
     }
 
-    call->type = new TypeReference(parser->currentToken);
+    call->type = new TypeReference(
+        parser->currentToken,
+        StringInternTable::Intern(parser->currentToken.value)
+    );
     parser->NextToken(); // Consume identifier
 
     if (parser->currentToken.is(Token::Type::OpenParen)) {

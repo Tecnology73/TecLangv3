@@ -14,7 +14,7 @@ TypeReference* parseTypeReference(Parser* parser) {
         parser->NextToken(); // Consume '*'
     }
 
-    auto ref = new TypeReference(name);
+    auto ref = new TypeReference(name, StringInternTable::Intern(name.value));
     if (parser->currentToken.is(Token::Type::Question)) {
         ref->flags.Set(TypeFlag::OPTIONAL);
         parser->NextToken(); // Consume '?'

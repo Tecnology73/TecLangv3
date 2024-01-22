@@ -16,20 +16,25 @@ IfStatement* parseElseStatement(Parser* parser) {
         ifStatement->token = elseStatement->token;
 
         delete elseStatement;
-        elseStatement = ifStatement;
-    } else if (parser->currentToken.isNot(Token::Type::OpenCurly)) {
-        parser->PrintSyntaxError("{");
-        return nullptr;
-    } else {
-        parser->NextToken();
-        while (parser->currentToken.isNot(Token::Type::CloseCurly)) {
-            auto statement = parseExpression(parser);
-            if (statement == nullptr)
-                return nullptr;
+        return elseStatement = ifStatement;
+    }
 
-            elseStatement->body.push_back(statement);
-        }
+    auto hasBlock = parser->currentToken.is(Token::Type::OpenCurly);
+    if (hasBlock)
+        parser->NextToken(); // Consume '{'
 
+    while (parser->currentToken.isNot(Token::Type::CloseCurly)) {
+        auto statement = parseExpression(parser);
+        if (statement == nullptr)
+            return nullptr;
+
+        elseStatement->body.push_back(statement);
+
+        if (!hasBlock)
+            break;
+    }
+
+    if (hasBlock) {
         if (parser->currentToken.isNot(Token::Type::CloseCurly)) {
             parser->PrintSyntaxError("}");
             return nullptr;
@@ -55,11 +60,6 @@ IfStatement* parseIfStatement(Parser* parser) {
         return nullptr;
 
     auto hasBlock = parser->currentToken.is(Token::Type::OpenCurly);
-    /*if (parser->currentToken.isNot(Token::Type::OpenCurly)) {
-        parser->PrintSyntaxError("{");
-        return nullptr;
-    }*/
-
     if (hasBlock)
         parser->NextToken(); // Consume '{'
 

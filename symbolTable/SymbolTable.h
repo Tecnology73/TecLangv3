@@ -3,46 +3,12 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <variant>
+#include "SymbolN.h"
+#include "../ast/expressions/TypeReference.h"
 
-class Function;
-class Enum;
 class TypeDefinition;
-
-enum class SymbolType : uint8_t {
-    Unknown = 0,
-    Type = 1 << 0,
-    Enum = 1 << 1,
-    Function = 1 << 2,
-};
-
-inline SymbolType operator|(SymbolType lhs, SymbolType rhs) {
-    return static_cast<SymbolType>(
-        static_cast<std::underlying_type_t<SymbolType>>(lhs) |
-        static_cast<std::underlying_type_t<SymbolType>>(rhs)
-    );
-}
-
-inline SymbolType operator&(SymbolType lhs, SymbolType rhs) {
-    return static_cast<SymbolType>(
-        static_cast<std::underlying_type_t<SymbolType>>(lhs) &
-        static_cast<std::underlying_type_t<SymbolType>>(rhs)
-    );
-}
-
-struct SymbolN {
-    explicit SymbolN(TypeDefinition* value) : type(SymbolType::Type), value(value) {
-    }
-
-    explicit SymbolN(Enum* value) : type(SymbolType::Enum), value(value) {
-    }
-
-    explicit SymbolN(Function* value) : type(SymbolType::Function), value(value) {
-    }
-
-    SymbolType type;
-    std::variant<TypeDefinition *, Enum *, Function *> value;
-};
+class Enum;
+class Function;
 
 class SymbolTable {
 public:
@@ -66,6 +32,10 @@ public:
 
     std::optional<SymbolN> Get(const std::string& name, const SymbolType allowedTypes) const;
 
+    const std::vector<Function *>& LookupFunction(const std::string& name) const;
+
+    Function* LookupFunction(const std::string& name, const std::vector<TypeReference *>& args) const;
+
 private:
     explicit SymbolTable();
 
@@ -79,5 +49,6 @@ private:
     std::string const package = "";
 
     std::unordered_map<std::string, SymbolN> symbols = {};
+    std::unordered_map<std::string_view, std::vector<Function *>> functions = {};
     std::unordered_map<std::string, SymbolTable *> packages = {};
 };

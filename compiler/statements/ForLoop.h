@@ -4,6 +4,7 @@
 #include <llvm/IR/Function.h>
 #include "../../ast/Statements.h"
 #include "../Compiler.h"
+#include "../../symbolTable/SymbolTable.h"
 #include "../../context/compiler/ForLoopCompilerContext.h"
 
 void generateForLoop(Visitor* v, ForLoop* node) {
@@ -35,9 +36,9 @@ void generateForLoop(Visitor* v, ForLoop* node) {
     auto cond = static_cast<BinaryOperation *>(node->value);
 
     // iterator
-    auto it = new VariableDeclaration(node->token, "it");
+    auto it = node->identifier = new VariableDeclaration(node->token, StringInternTable::Intern("it"));
     // it->type = inferType(v, cond->lhs);
-    it->type = Compiler::getScopeManager().getType("i32")->createVariant()->CreateReference();
+    it->type = std::get<TypeDefinition*>(SymbolTable::GetInstance()->Get("i32")->value)->createVariant()->CreateReference();
 
     auto keyPhi = Compiler::getBuilder().CreatePHI(it->type->ResolveType()->type->llvmType, 2, node->identifier->name);
     it->alloc = keyPhi;
@@ -72,8 +73,11 @@ void generateForLoop(Visitor* v, ForLoop* node) {
     // Body
     //
     Compiler::getBuilder().SetInsertPoint(loopBody);
-    for (const auto& item: node->body)
+    for (const auto& item: node->body) {
         item->Accept(v);
+
+        if (VisitorResult result; !v->TryGetResult(result)) return;
+    }
 
     //
     // Tail - Increment iterator & jump back to head

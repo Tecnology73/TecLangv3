@@ -2,11 +2,6 @@
 #include "../../compiler/Compiler.h"
 #include "../../compiler/statements/TypeDefinition.h"
 
-VariableDeclaration::VariableDeclaration(const Token& beginToken, Node* expression) : Node(beginToken),
-    name(token.value),
-    expression(expression) {
-}
-
 VariableDeclaration::VariableDeclaration(
     const Token& beginToken,
     const std::string& name,

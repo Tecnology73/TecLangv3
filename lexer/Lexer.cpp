@@ -60,15 +60,16 @@ const auto punctuationTrie = new PunctuationTrie(
 Lexer::Lexer(const std::string& source) {
     this->source = source;
     sourceLength = static_cast<long>(this->source.length());
-
-    // Split the source into lines.
-    std::stringstream ss(source);
-    std::string line;
-    while (std::getline(ss, line, '\n'))
-        lines.push_back(line);
 }
 
-Token Lexer::GetNextToken() {
+Token Lexer::GetNextToken(const bool useStack) {
+    if (useStack && !tokens.empty()) {
+        auto token = tokens.top();
+        tokens.pop();
+
+        return token;
+    }
+
     while (position.index < this->sourceLength) {
         char c = peekChar(0);
         if (c == EOF) break;
@@ -121,34 +122,56 @@ Token Lexer::PeekToken() {
 }
 
 bool Lexer::IsAtEnd() const {
-    return position.index >= (long) this->sourceLength;
+    return position.index >= static_cast<long>(this->sourceLength);
 }
 
 size_t Lexer::CountLines() const {
     return lines.size();
 }
 
-std::vector<std::string> Lexer::GetSurroundingCode(Position startPos, Position endPos, long& topHalfIndex) {
+std::vector<std::string> Lexer::GetSurroundingCode(
+    const Position& startPos,
+    const Position& endPos,
+    long& topHalfIndex
+) {
     constexpr int NUM_LINES = 2; // How many extra lines to get before/after the provided positions.
+    // Ensure we have all the lines we need.
+    consumeUntilLine(endPos.line + 1 + NUM_LINES);
+
     long startLine = std::max(0l, startPos.line - NUM_LINES);
-    long endLine = std::min((long) lines.size(), endPos.line + 1 + NUM_LINES);
+    long endLine = std::min(static_cast<long>(lines.size()), endPos.line + 1 + NUM_LINES);
 
     topHalfIndex = startPos.line - startLine;
 
-    auto startIt = lines.begin() + startLine;
-    auto endIt = lines.begin() + endLine;
+    std::vector<std::string> code(endLine - startLine);
+    for (int i = startLine; i < endLine; i++) {
+        auto [start, end] = lines[i];
 
-    std::vector<std::string> code(startIt, endIt);
+        code[i - startLine] = std::string(source.data() + start, std::max(0l, end - start - 1));
+    }
+
     return code;
 }
 
 char Lexer::consumeChar() {
-    if (position.index >= this->sourceLength) return EOF;
+    if (position.index >= this->sourceLength) {
+        // Make sure to insert the last line if it's not already there.
+        if (currentLineStartIndex < this->sourceLength) {
+            lines.emplace_back(currentLineStartIndex, position.index - 1);
+            currentLineStartIndex = this->sourceLength;
+        }
+
+        return EOF;
+    }
 
     char c = source[position.index++];
     if (c == '\n') {
+        if (position.line > lines.size())
+            lines.emplace_back(currentLineStartIndex, position.index);
+
         position.line++;
         position.column = 0;
+        currentLineStartIndex = position.index;
     } else {
         position.column++;
     }
@@ -156,9 +179,18 @@ char Lexer::consumeChar() {
     return c;
 }
 
-char Lexer::peekChar(int offset) const {
+char Lexer::peekChar(const int offset) const {
     if (position.index + offset >= this->sourceLength) return EOF;
     return source[position.index + offset];
+}
+
+void Lexer::consumeUntilLine(long line) {
+    while (lines.size() < line) {
+        auto token = GetNextToken(false);
+        if (token.type == Token::Type::EndOfFile) return;
+
+        tokens.push(token);
+    }
 }
 
 Token Lexer::parseIdentifier() {
@@ -170,8 +202,7 @@ Token Lexer::parseIdentifier() {
 
     auto identifier = std::string_view(source.data() + start.index, position.index - start.index);
     auto type = Token::Type::Identifier;
-    auto keyword = Perfect_Hash::in_word_set(identifier);
-    if (keyword != nullptr)
+    if (auto keyword = Perfect_Hash::in_word_set(identifier); keyword != nullptr)
         type = keyword->type;
 
     return makeToken(type, identifier, start);
@@ -242,6 +273,7 @@ Token Lexer::parseNumber() {
 
 Token Lexer::parseString() {
     auto start = position;
+    consumeChar(); // Consume '"'
 
     while (true) {
         char c = peekChar(0);
@@ -287,28 +319,33 @@ void Lexer::parseLineComment() {
 }
 
 void Lexer::parseBlockComment() {
+    unsigned depth = 0;
     char c;
     while (c = peekChar(0), c != EOF) {
         consumeChar();
 
+        if (c == '/' && peekChar(0) == '*')
+            depth++;
+
         if (c == '*' && peekChar(0) == '/') {
             consumeChar();
-            break;
+            if (--depth == 0)
+                break;
         }
     }
 }
 
-Token Lexer::makeToken(Token::Type type, std::string_view value, Position pos) const {
+Token Lexer::makeToken(const Token::Type type, const std::string_view value, const Position& pos) const {
     Token token;
     token.type = type;
     token.position = pos;
-    token.position.length = position.index - pos.index;
+    token.position.length = value.size();
     token.value = value;
 
     return token;
 }
 
-Token Lexer::makeToken(Token::Type type, int value, Position pos) const {
+Token Lexer::makeToken(const Token::Type type, const int value, const Position& pos) const {
     Token token;
     token.type = type;
     token.position = pos;
@@ -318,7 +355,7 @@ Token Lexer::makeToken(Token::Type type, int value, Position pos) const {
     return token;
 }
 
-Token Lexer::makeToken(Token::Type type, double value, Position pos) const {
+Token Lexer::makeToken(const Token::Type type, const double value, const Position& pos) const {
     Token token;
     token.type = type;
     token.position = pos;

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../Context.h"
+#include "../../ast/statements/IfStatement.h"
+#include "../../compiler/Compiler.h"
 
 class IfStatementAnalysisContext : public Context {
 public:

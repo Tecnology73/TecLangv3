@@ -73,7 +73,7 @@ namespace {
     }
 
     // Order taken from here: https://en.cppreference.com/w/cpp/language/operator_precedence
-    int getPrecedence(Token::Type type) {
+    int getPrecedence(const Token::Type& type) {
         switch (type) {
             case Token::Type::Comma:
                 return 0;

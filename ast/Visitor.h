@@ -5,9 +5,9 @@
 #include "topLevel/TypeVariant.h"
 
 struct VisitorResult {
-    bool success;
-    llvm::Value* value;
-    TypeVariant* type;
+    bool success = false;
+    llvm::Value* value = nullptr;
+    TypeVariant* type = nullptr;
     ErrorCode errorCode = ErrorCode::UNKNOWN_ERROR;
 };
 

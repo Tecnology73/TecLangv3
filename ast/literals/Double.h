@@ -2,6 +2,8 @@
 
 #include "../Node.h"
 #include "../Visitor.h"
+#include "../topLevel/TypeDefinition.h"
+#include "../../symbolTable/SymbolTable.h"
 
 class Double : public Literal {
 public:
@@ -14,6 +16,6 @@ public:
     }
 
     TypeVariant* getType() override {
-        return Compiler::getScopeManager().getType("double")->createVariant();
+        return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("double")->value)->createVariant();
     }
 };

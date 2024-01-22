@@ -9,7 +9,7 @@
 #include "debug/PrettyPrintVisitor.h"
 #include "analysis/SemanticAnalysisVisitor.h"
 #include "compiler/CodegenVisitor.h"
-#include "context/SymbolTable.h"
+#include "symbolTable/SymbolTable.h"
 
 int main(int argc, char* argv[]) {
     MEASURE("Total");
@@ -21,8 +21,7 @@ int main(int argc, char* argv[]) {
     // Parser
     //
 
-    Parser* parser;
-    {
+    Parser* parser; {
         MEASURE("Parser");
 
         if (!args.eval.empty())
@@ -39,7 +38,12 @@ int main(int argc, char* argv[]) {
     auto totalLines = parser->lexer->CountLines();
     auto duration = timer.duration();
     auto linesPerSec = totalLines / (duration / 1000);
-    std::cout << "Parsed " << totalLines << " lines in " << timer.duration() << "ms (" << linesPerSec << " lines/sec)" << std::endl;
+    std::cout << "Parsed " << totalLines
+        << " lines in " << timer.duration()
+        << "ms (" << linesPerSec << " lines/sec)"
+        << std::endl;
+
+    // return 0;
 
     auto s = SymbolTable::GetInstance();
 

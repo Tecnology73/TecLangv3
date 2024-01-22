@@ -6,7 +6,8 @@
 #include "TypeReference.h"
 #include "../statements/FunctionParameter.h"
 #include "../../compiler/Compiler.h"
-#include "../../context/SymbolTable.h"
+#include "../../symbolTable/SymbolTable.h"
+#include "../../ast/StringInternTable.h"
 
 Function* parseFunction(Parser* parser) {
     auto isExternal = parser->currentToken.is(Token::Type::Extern);
@@ -32,18 +33,22 @@ Function* parseFunction(Parser* parser) {
         // if (parser->currentToken.isNot(Token::Type::GreaterThan)) {
         ownerType = TypeDefinition::CreateUndeclared(parser->currentToken);
         if (parser->NextToken().isNot(Token::Type::GreaterThan)) {
-            parser->PrintSyntaxError(">");
+            parser->PrintSyntaxError("'>'");
             return nullptr;
         }
     }
 
     // Peek so we can reference the token where the statement starts.
     if (parser->PeekToken().isNot(Token::Type::Identifier)) {
-        parser->PrintSyntaxError("statement name");
+        parser->NextToken(); // Consume 'func'
+        parser->PrintSyntaxError("function name");
         return nullptr;
     }
 
-    auto function = new Function(parser->currentToken, parser->NextToken().value);
+    auto function = new Function(
+        parser->currentToken,
+        StringInternTable::Intern(parser->NextToken().value)
+    );
     function->ownerType = ownerType;
     function->isExternal = isExternal;
 
@@ -53,12 +58,16 @@ Function* parseFunction(Parser* parser) {
         // "this" is always the first parameter.
         // Constructors have "this" malloc'd.
         if (function->name != "construct")
-            function->AddParameter(parser->currentToken, "this", ownerType->CreateReference());
+            function->AddParameter(
+                parser->currentToken,
+                StringInternTable::Intern("this"),
+                ownerType->CreateReference()
+            );
     } else
         SymbolTable::GetInstance()->Add(function);
 
     if (parser->NextToken().isNot(Token::Type::OpenParen)) {
-        parser->PrintSyntaxError("(");
+        parser->PrintSyntaxError("'('");
         return nullptr;
     }
 
@@ -71,13 +80,13 @@ Function* parseFunction(Parser* parser) {
         if (parser->currentToken.is(Token::Type::Comma)) {
             parser->NextToken(); // Consume ','
         } else if (parser->currentToken.isNot(Token::Type::CloseParen)) {
-            parser->PrintSyntaxError(", or )");
+            parser->PrintSyntaxError("',' or ')'");
             return nullptr;
         }
     }
 
     if (parser->currentToken.isNot(Token::Type::CloseParen)) {
-        parser->PrintSyntaxError(")");
+        parser->PrintSyntaxError("')'");
         return nullptr;
     }
 
@@ -91,7 +100,7 @@ Function* parseFunction(Parser* parser) {
             function->returnType = function->ownerType->CreateReference();
 
         if (parser->currentToken.isNot(Token::Type::OpenCurly)) {
-            parser->PrintSyntaxError("{'");
+            parser->PrintSyntaxError("return type or '{'");
             return nullptr;
         }
 
@@ -106,7 +115,7 @@ Function* parseFunction(Parser* parser) {
 
     if (!isExternal) {
         if (parser->currentToken.isNot(Token::Type::CloseCurly)) {
-            parser->PrintSyntaxError("}");
+            parser->PrintSyntaxError("'}'");
             return nullptr;
         }
 

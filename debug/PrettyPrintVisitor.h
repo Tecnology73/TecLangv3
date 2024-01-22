@@ -54,7 +54,7 @@ public:
         else if (flags.Has(TypeFlag::PRIVATE)) Print("Access: Private\n");
         else Print("Access: Inherit\n");
 
-        Print("Optional: %s\n", flags.Has(TypeFlag::OPTIONAL) ? "true" : "false");
+        Print("Optional: %s\n", flags.Has(TypeFlag::OPTIONAL) ? "Yes" : "No");
 
         indent -= 2;
     }
@@ -138,7 +138,7 @@ public:
     }
 
     void Visit(EnumParameter* node) override {
-        Print("%s: %s\n", node->name.c_str(), node->type->name.c_str());
+        Print("%s: %s\n", node->name, node->type->name.c_str());
     }
 
     void Visit(Function* node) override {
@@ -146,6 +146,7 @@ public:
         indent += 2;
 
         Print("Return type: %s\n", FormatTypeRef(node->returnType).c_str());
+        Print("Is External: %s\n", node->isExternal ? "Yes" : "No");
 
         Print("Parameters: %d\n", node->parameters.size());
         indent += 2;

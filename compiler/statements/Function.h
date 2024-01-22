@@ -42,7 +42,7 @@ void generateFunction(Visitor* v, Function* func) {
     llvm::Function* function = func->llvmFunction = llvm::Function::Create(
                                    funcType,
                                    linkage,
-                                   funcName,
+                                   funcName.data(),
                                    Compiler::getModule()
                                );
 

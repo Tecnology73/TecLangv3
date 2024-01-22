@@ -244,19 +244,6 @@ void BinaryOperation_Value::generate(Visitor* v, const BinaryOperation* node) {
         case Token::Type::PlusPlus:
             value = generatePlusEqual(lhs, rhs);
             break;
-        /*case Token::Type::MinusEqual:
-        case Token::Type::MinusMinus:
-            break;
-        case Token::Type::MultiplyEqual:
-            break;
-        case Token::Type::DivideEqual:
-            break;
-        case Token::Type::PercentEqual:
-            break;
-        case Token::Type::AmpersandEqual:
-            break;
-        case Token::Type::PipeEqual:
-            break;*/
         default:
             v->ReportError(ErrorCode::BINARY_OP_UNKNOWN, {std::to_string(static_cast<int>(node->op))}, node);
             return;

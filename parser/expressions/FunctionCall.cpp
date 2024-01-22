@@ -1,14 +1,16 @@
 #include "FunctionCall.h"
 #include "Expression.h"
 
-FunctionCall *parseFunctionCall(Parser *parser) {
+FunctionCall* parseFunctionCall(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {
         parser->PrintSyntaxError("identifier");
         return nullptr;
     }
 
-    auto node = new FunctionCall(parser->currentToken);
-    node->name = parser->currentToken.value;
+    auto node = new FunctionCall(
+        parser->currentToken,
+        StringInternTable::Intern(parser->currentToken.value)
+    );
 
     if (parser->NextToken().isNot(Token::Type::OpenParen)) {
         parser->PrintSyntaxError("(");
@@ -28,7 +30,7 @@ FunctionCall *parseFunctionCall(Parser *parser) {
         if (parser->currentToken.is(Token::Type::Comma)) {
             parser->NextToken(); // Consume ','
         } else if (parser->currentToken.isNot(Token::Type::CloseParen)) {
-            parser->PrintSyntaxError(",  or )");
+            parser->PrintSyntaxError(", or )");
             return nullptr;
         }
     }

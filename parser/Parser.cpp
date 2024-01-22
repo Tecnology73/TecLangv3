@@ -9,12 +9,9 @@ Parser::Parser(Lexer* lexer) {
 }
 
 bool Parser::Parse() {
-    int nodes = 0;
     NextToken();
     while (!lexer->IsAtEnd()) {
         if (currentToken.is(Token::Type::EndOfFile)) break;
-
-        // std::cout << "Nodes: " << ++nodes << "\n";
 
         Node* node = nullptr;
         if (currentToken.is(Token::Type::Function, Token::Type::Extern)) {
@@ -60,9 +57,11 @@ bool Parser::Parse() {
             if (!hintWord.empty())
                 ErrorManager::QueueHint("Did you mean {}?", {hintWord});
 
-            ErrorManager::Report(ErrorCode::SYNTAX_ERROR, {currentToken.value.data()}, this, currentToken);
+            ErrorManager::Report(ErrorCode::SYNTAX_ERROR, {std::string(currentToken.value)}, this, currentToken);
             return false;
         }
+
+        if (!node) return false;
 
         ast.push_back(node);
     }

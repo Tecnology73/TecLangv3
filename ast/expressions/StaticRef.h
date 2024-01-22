@@ -7,10 +7,6 @@ class StaticRef : public ChainableNode {
 public:
     using ChainableNode::ChainableNode;
 
-    explicit StaticRef(const Token& beginToken) : ChainableNode(beginToken) {
-        name = beginToken.value;
-    }
-
     void Accept(Visitor* visitor) override {
         visitor->Visit(this);
     }

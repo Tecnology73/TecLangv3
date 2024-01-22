@@ -3,20 +3,16 @@
 #include "../Node.h"
 #include "../Visitor.h"
 #include "../../misc/BitFlag.h"
+#include "../StringInternTable.h"
 
 class TypeReference : public Node {
 public:
-    explicit TypeReference(const Token& token) : Node(token), name(token.value) {
-    }
-
-    explicit TypeReference(TypeBase* type) : Node(type->token), name(type->name) {
-        resolved = true;
-        variant = type->createVariant();
+    explicit TypeReference(const Token& token, const std::string& name) : Node(token), name(name) {
     }
 
     static TypeReference* Infer() {
         if (!infer)
-            infer = new TypeReference(Token{.type = Token::Type::Type, .value = "infer"});
+            infer = new TypeReference(Token{.type = Token::Type::Type}, StringInternTable::Intern("infer"));
 
         return infer;
     }
@@ -28,7 +24,7 @@ public:
     TypeVariant* ResolveType();
 
 public:
-    std::string const name;
+    const std::string& name;
     BitFlag<TypeFlag> flags;
 
 private:

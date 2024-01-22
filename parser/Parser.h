@@ -17,7 +17,16 @@ public:
     Token PeekToken();
 
     void PrintSyntaxError(const std::string& args) const {
-        ErrorManager::Report(ErrorCode::SYNTAX_UNEXPECTED_TOKEN, {currentToken.value.data(), args}, this, currentToken);
+        auto value = std::string(currentToken.value);
+        if (currentToken.is(Token::Type::Integer, Token::Type::Double))
+            value = std::to_string(currentToken.intValue);
+
+        ErrorManager::Report(
+            ErrorCode::SYNTAX_UNEXPECTED_TOKEN,
+            {value, args},
+            this,
+            currentToken
+        );
     }
 
     void PrintError(

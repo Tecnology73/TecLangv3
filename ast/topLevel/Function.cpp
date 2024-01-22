@@ -1,7 +1,7 @@
 #include "Function.h"
 #include "../../compiler/Compiler.h"
 
-bool Function::AddParameter(const Token& token, std::string paramName, TypeReference* type) {
+bool Function::AddParameter(const Token& token, const std::string& paramName, TypeReference* type) {
     if (parameters.contains(paramName))
         return false;
 

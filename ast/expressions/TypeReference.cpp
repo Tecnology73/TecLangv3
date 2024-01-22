@@ -1,6 +1,6 @@
 #include "TypeReference.h"
 #include "../../compiler/Compiler.h"
-#include "../../context/SymbolTable.h"
+#include "../../symbolTable/SymbolTable.h"
 
 TypeVariant* TypeReference::ResolveType() {
     if (resolved)

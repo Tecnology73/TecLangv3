@@ -3,6 +3,13 @@
 ## Syntax
 
 ```teclang
+// Import package.
+import Foo.*
+// Alias a package.
+import Foo.Bar.* as BarPackage
+// Import a single file from a package.
+import Foo.Bar.baz
+
 // Type declaration.
 // By default, everything is private.
 // The fields inherit the access modifier of the type.
@@ -23,14 +30,7 @@ func<User> getAge() {
     return this.age
 }
 
-// Enum values start at 0 by default.
-// If a value is specified, the next value will be incremented by 1.
-enum Color {
-    Red   // 0
-    Green = 2
-    Blue  // 3
-}
-
+// Types/Enums/Functions can be referenced before they're declared.
 // Enums can also have functions like types.
 func<Color> toString() {
     return when this {
@@ -40,6 +40,14 @@ func<Color> toString() {
     }
 }
 
+// Enum values start at 0 by default.
+// If a value is specified, the next value will be incremented by 1.
+enum Color {
+    Red   // 0
+    Green = 2
+    Blue  // 3
+}
+
 /*
  * Main app logic
  */
@@ -47,38 +55,37 @@ func main() i32 {
     // Iterate over a range of numbers.
     // Step/As can be in either order and are both optional.
     // If step is excluded, it defaults to 1.
-    // If as is excluded, it default to 'it'.
+    // If as is excluded, it defaults to 'it'.
     for 0..10 as num step 1 {
-        // The iterator is named 'it' by default.
         printf("i = %d", num)
-    
+
         if (num % 2 == 0) {
             pritf("it is even")
         } else {
             pritf("it is odd")
         }
     }
-    
+
     // Create a new user.
     user = new User()
     // user.age = 42 // Error: `age` is marked as private.
     user.favoriteColor = Color::Red
-    
+
     // Parentheses & braces are optional.
     if user.getAge() < 21
         return -1
     else
         printf("Age check passed.")
-    
+
     // Call custom constructor.
     userB = new User(Color::Green)
-    
+
     // Call assignment constructor.
     userC = new User {
         age = 42 // Valid assignment because it's inside the constructor call.
         favoriteColor = Color::Blue
     }
-    
+
     // "switch" like functionality. Simpler than a chain of if/else statements.
     return when user.favoriteColor {
         Color.Red -> 0
@@ -103,16 +110,16 @@ func main2() {
     loopback[1] // 0
     loopback[2] // 0
     loopback[3] // 1
-    
+
     google = Ipaddress.v6("::")
     google[0] // "::"
-    
+
     when loopback {
         IpAddress.v4 -> {
             it[0] // 127
             it[3] // 1
         }
-        
+
         IpAddress.v6 -> {
             it[0] // "::"
             it[1] // Error
