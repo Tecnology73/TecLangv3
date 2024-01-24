@@ -1,6 +1,7 @@
 #include "Function.h"
 #include "../../compiler/Compiler.h"
 #include "../../compiler/TypeCoercion.h"
+#include "../../symbolTable/SymbolTable.h"
 
 void FunctionAnalyzer::Analyze() {
     if (node->isExternal) {
@@ -14,7 +15,10 @@ void FunctionAnalyzer::Analyze() {
     }
 
     // Create a context
-    auto context = Compiler::getScopeManager().enter(std::string(node->name), new FunctionAnalysisContext(visitor, node));
+    auto context = Compiler::getScopeManager().enter(
+        std::string(node->name),
+        new FunctionAnalysisContext(visitor, node)
+    );
 
     // Visit all the parameters
     for (const auto& param: node->parameters | std::views::values) {
@@ -36,17 +40,21 @@ void FunctionAnalyzer::Analyze() {
         }
     }
 
-    inferReturnTypes(context);
+    if (!inferReturnTypes(context))
+        return;
 
     // Cleanup
     Compiler::getScopeManager().popContext();
     Compiler::getScopeManager().leave(std::string(node->name));
 
     // Register the function
-    Compiler::getScopeManager().add(node);
+    if (!node->ownerType)
+        Compiler::getScopeManager().add(node);
+
+    visitor->AddSuccess(node->returnType->ResolveType());
 }
 
-void FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) {
+bool FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) {
     // Collect all of the return types seen
     std::set<const TypeVariant *> returnTypes;
     for (const auto& key: context->returnStatements | std::views::keys)
@@ -59,12 +67,20 @@ void FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) 
         // If there are no return statements and a return type hasn't been specified,
         // it should be safe to assume that the return type is void.
         if (!node->returnType)
-            node->returnType = Compiler::getScopeManager().getType("void")->createVariant()->CreateReference();
+            node->returnType = std::get<TypeDefinition *>(
+                SymbolTable::GetInstance()->Get("void")->value
+            )->CreateReference();
     } else if (returnTypes.size() != 1) {
         visitor->ReportError(ErrorCode::FUNCTION_MULTIPLE_RETURN_TYPES, {std::string(node->name)}, node);
+        return false;
     } else if (!node->returnType) {
         node->returnType = (*returnTypes.begin())->CreateReference();
     }
+
+    if (node->returnType->name == "void" && context->returnStatements.empty())
+        node->body.push_back(new Return(Token{}));
+
+    return true;
 }
 
 /// <summary>

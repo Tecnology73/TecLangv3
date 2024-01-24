@@ -1,4 +1,6 @@
 #include "BinaryOperation.h"
+
+#include "../../ast/expressions/FunctionCall.h"
 #include "../../compiler/Compiler.h"
 #include "../../compiler/TypeCoercion.h"
 #include "../../ast/expressions/VarReference.h"
@@ -61,6 +63,12 @@ void BinaryOperationAnalyzer::analyzeAssign() {
     VisitorResult lhsResult;
     chainNode->Accept(visitor);
     if (!visitor->TryGetResult(lhsResult)) return;
+
+    // TODO: Support other types (like arrays) that proxy to their internal data.
+    // If the right-most node (of LHS) is a string, we do not want to load it.
+    // We have special `T_assign` functions that take in the struct as the first argument.
+    if (chainNode->getFinalType()->type->name == "string")
+        chainNode->loadInternalData = false;
 
     VisitorResult rhsResult;
     node->rhs->Accept(visitor);

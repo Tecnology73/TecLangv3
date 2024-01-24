@@ -143,13 +143,20 @@ public:
     }
 
     void Visit(String* node) override {
-        AddSuccess(Compiler::getBuilder().CreateGlobalStringPtr(node->value));
+        auto zero = Compiler::getBuilder().getInt32(0);
+        node->llvmValue = Compiler::getBuilder().CreateGlobalString(node->value);
+
+        auto value = Compiler::getBuilder().CreateInBoundsGEP(
+            node->llvmValue->getValueType(),
+            node->llvmValue,
+            {zero, zero}
+        );
+
+        AddSuccess(value, node->getType());
     }
 
     void Visit(Null* node) override {
-        // We need to know the type of the null value to generate it.
-        // This means we can't exactly generate it here.
-        AddFailure();
+        AddSuccess(llvm::ConstantPointerNull::get(Compiler::getBuilder().getPtrTy()));
     }
 };
 

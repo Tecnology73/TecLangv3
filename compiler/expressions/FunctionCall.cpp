@@ -1,7 +1,9 @@
 #include "FunctionCall.h"
 #include "../Compiler.h"
 #include "VariableReference.h"
+#include "../TypeCoercion.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
+#include "../../ast/literals/String.h"
 
 void generateTypeFunctionCall(
     Visitor* v,
@@ -30,6 +32,17 @@ void generateTypeFunctionCall(
         VisitorResult result;
         if (!v->TryGetResult(result)) return;
 
+        // String literals are stored as a global.
+        // Inside a function, we normally load the value if it's a pointer (which it is in the case of a string).
+        // This is a bit of a hack to get around that.
+        if (dynamic_cast<String *>(argument)) {
+            auto tmp = Compiler::getBuilder().CreateAlloca(result.value->getType());
+            Compiler::getBuilder().CreateStore(result.value, tmp);
+
+            arguments.push_back(tmp);
+            continue;
+        }
+
         arguments.push_back(result.value);
     }
 
@@ -48,7 +61,7 @@ void generateTypeFunctionCall(
             return;
         }
 
-        getValueFromType(v, func->returnType->ResolveType()->type, var->next, value);
+        getValueFromType(v, func->returnType->ResolveType()->type, var->next, var, value);
         return;
     }
 
@@ -59,27 +72,27 @@ void tryGenerateWithThisPrefix(Visitor* v, FunctionCall* node) {
     // This allows for accessing fields of the current type without prefixing it with 'this.'
     auto context = Compiler::getScopeManager().findContext<FunctionCompilerContext>();
     if (!context) {
-        v->AddFailure();
+        v->ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
         return;
     }
 
     auto currentFunction = context->function;
     if (!currentFunction->ownerType || currentFunction->ownerType->isValueType) {
-        v->AddFailure();
+        v->ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
         return;
     }
 
     // Check if the "this" parameter exists.
     auto param = currentFunction->GetParameter("this");
     if (!param) {
-        v->AddFailure();
+        v->ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
         return;
     }
 
     // Make sure the statement exists on the type.
     auto function = currentFunction->ownerType->GetFunction(node->name);
     if (!function) {
-        v->AddFailure();
+        v->ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
         return;
     }
 
@@ -91,17 +104,6 @@ void generateFunctionCall(Visitor* v, FunctionCall* node) {
     if (!function) {
         tryGenerateWithThisPrefix(v, node);
         return;
-
-        // See if the variable exists if we prefix it with 'this.'
-        /*auto thisValue = tryGenerateWithThisPrefix(v, node);
-        if (!thisValue) {
-            v->ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
-            v->AddFailure();
-            return;
-        }
-
-        v->AddSuccess(thisValue);
-        return;*/
     }
 
     // Generate parameters
@@ -112,12 +114,17 @@ void generateFunctionCall(Visitor* v, FunctionCall* node) {
         VisitorResult result;
         if (!v->TryGetResult(result)) return;
 
+        auto arg = function->GetParameter(arguments.size());
         if (result.value->getType()->isPointerTy() && dynamic_cast<VariableReference *>(argument)) {
             // VariableReference does not load the right-most node.
-            result.value = Compiler::getBuilder().CreateLoad(result.value->getType(), result.value);
+            result.value = Compiler::getBuilder().CreateLoad(result.type->type->getLlvmType(), result.value);
         }
 
-        arguments.push_back(result.value);
+        auto value = TypeCoercion::coerce(
+            result.value,
+            arg->type->ResolveType()->type->getLlvmType()
+        );
+        arguments.push_back(value);
     }
 
     auto value = Compiler::getBuilder().CreateCall(
@@ -133,5 +140,5 @@ void generateFunctionCall(Visitor* v, FunctionCall* node) {
         return;
     }
 
-    getValueFromType(v, function->returnType->ResolveType()->type, node->next, value);
+    getValueFromType(v, function->returnType->ResolveType()->type, node->next, node, value);
 }

@@ -31,6 +31,16 @@ public:
             ReportError(ErrorCode::TYPE_UNKNOWN, {node->name}, node);
             return;
         }
+
+        for (const auto& functions: node->functions | std::views::values) {
+            for (const auto& function: functions) {
+                function->Accept(this);
+
+                if (VisitorResult result; !TryGetResult(result)) return;
+            }
+        }
+
+        AddSuccess();
     }
 
     void Visit(class Enum* node) override {
@@ -51,6 +61,13 @@ public:
     }
 
     void Visit(class FunctionParameter* node) override {
+        if (!node->type->ResolveType()) {
+            ReportError(ErrorCode::TYPE_UNKNOWN, {node->type->name}, node->type);
+            return;
+        }
+
+        Compiler::getScopeManager().Add(node);
+        AddSuccess();
     }
 
     /*
@@ -104,7 +121,7 @@ public:
 
     void Visit(class ForLoop* node) override {
         node->value->Accept(this);
-        
+
         if (node->step) {
             node->step->Accept(this);
 
@@ -117,7 +134,7 @@ public:
             if (VisitorResult result; !TryGetResult(result)) return;
         }
 
-        for (const auto& item : node->body) {
+        for (const auto& item: node->body) {
             item->Accept(this);
 
             if (VisitorResult result; !TryGetResult(result)) return;
@@ -143,6 +160,9 @@ public:
             return;
         }
 
+        // Visit(dynamic_cast<TypeDefinition *>(type->type));
+        // if (VisitorResult result; !TryGetResult(result)) return;
+
         AddSuccess(type);
     }
 
@@ -159,8 +179,24 @@ public:
         }
 
         if (!SymbolTable::GetInstance()->LookupFunction(node->name, paramTypes)) {
-            ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
-            return;
+            auto context = dynamic_cast<FunctionAnalysisContext *>(Compiler::getScopeManager().getContext());
+            if (!context) {
+                ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
+                return;
+            }
+
+            if (!context->function->ownerType) {
+                ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
+                return;
+            }
+
+            auto func = context->function->ownerType->GetFunction(node->name);
+            if (!func) {
+                ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
+                return;
+            }
+
+            // TODO: Validate parameters.
         }
 
         AddSuccess(node->getFinalType());
@@ -193,6 +229,12 @@ public:
         while (current) {
             auto field = symbol->GetField(current->name);
             if (!field) {
+                // FIXME: Temporary
+                if (auto func = symbol->narrowedType->type->GetFunction(current->name)) {
+                    AddSuccess(func->returnType->ResolveType());
+                    return;
+                }
+
                 ReportError(ErrorCode::TYPE_UNKNOWN_FIELD, {current->name, symbol->narrowedType->type->name}, current);
                 return;
             }
@@ -202,6 +244,11 @@ public:
                 ReportError(ErrorCode::VALUE_POSSIBLY_NULL, {}, current);
                 return;
             }
+
+            // TODO: Support other types (like arrays) that proxy to their internal data.
+            // Any string that is a part of a chain should load its internal data field.
+            if (field->narrowedType->type->name == "string" && current->next)
+                current->loadInternalData = true;
 
             current = current->next;
             symbol = field;

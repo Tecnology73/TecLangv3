@@ -166,7 +166,7 @@ char Lexer::consumeChar() {
 
     char c = source[position.index++];
     if (c == '\n') {
-        if (position.line > lines.size())
+        if (position.line >= lines.size())
             lines.emplace_back(currentLineStartIndex, position.index);
 
         position.line++;

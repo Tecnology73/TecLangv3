@@ -14,6 +14,6 @@ public:
     }
 
     TypeVariant* getType() override {
-        return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("null")->value)->createVariant();
+        return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("ptr")->value)->createVariant();
     }
 };

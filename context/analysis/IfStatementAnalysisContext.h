@@ -9,6 +9,18 @@ public:
     explicit IfStatementAnalysisContext(Visitor* visitor, IfStatement* node) : Context(visitor), ifStatement(node) {
     }
 
+    Node* GetNextNode() {
+        if (astLoopIndex >= ifStatement->body.size()) return nullptr;
+        return ifStatement->body[astLoopIndex++];
+    }
+
+    void ReplaceCurrentNode(Node* node) override {
+        // -1 because we increment when we get the next node.
+        auto oldNode = ifStatement->body[--astLoopIndex];
+        ifStatement->body[astLoopIndex] = node;
+        delete oldNode;
+    }
+
     void handleReturn(const Node* node, const TypeVariant* type) override {
         hasReturned = true;
         parent->handleReturn(node, type);
@@ -39,4 +51,6 @@ public:
 public:
     IfStatement* const ifStatement;
     bool hasReturned = false;
+
+    unsigned astLoopIndex = 0;
 };

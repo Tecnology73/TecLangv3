@@ -2,16 +2,27 @@
 #include "../Compiler.h"
 #include "FunctionCall.h"
 #include "../topLevel/Enum.h"
+#include "../../ast/literals/String.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
 
 void getValueFromType(
     Visitor* v,
-    const TypeBase* parentType,
+    TypeBase* parentType,
     const ChainableNode* var,
+    const ChainableNode* prevVar,
     llvm::Value* value
 ) {
     if (!var) {
-        v->AddSuccess(value);
+        if (prevVar && prevVar->loadInternalData) {
+            value = Compiler::getBuilder().CreateStructGEP(
+                parentType->llvmType,
+                value,
+                parentType->GetFieldIndex("data"),
+                "data"
+            );
+        }
+
+        v->AddSuccess(value, parentType->createVariant());
         return;
     }
 
@@ -35,7 +46,7 @@ void getValueFromType(
             return;
         }
 
-        getValueFromType(v, fieldType->ResolveType()->type, var->next, value);
+        getValueFromType(v, fieldType->ResolveType()->type, var->next, var, value);
         return;
     }
 
@@ -70,7 +81,7 @@ void tryGenerateWithThisPrefix(Visitor* v, const VariableReference* var) {
         return;
     }
 
-    getValueFromType(v, currentFunction->ownerType, var, param->alloc);
+    getValueFromType(v, currentFunction->ownerType, var, nullptr, param->alloc);
 }
 
 void generateVariableReference(Visitor* v, VariableReference* var) {
@@ -93,15 +104,16 @@ void generateVariableReference(Visitor* v, VariableReference* var) {
     }
 
     // If the variable is a constant, just return the expression.
-    if (variable->type->ResolveType()->type->isValueType) {
-        v->AddSuccess(value);
+    auto varType = variable->type->ResolveType();
+    if (varType->type->isValueType) {
+        v->AddSuccess(value, varType);
         return;
     }
 
     if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
-        generateTypeFunctionCall(v, variable->type->ResolveType()->type, function, value);
+        generateTypeFunctionCall(v, varType->type, function, value);
         return;
     }
 
-    getValueFromType(v, variable->type->ResolveType()->type, var->next, value);
+    getValueFromType(v, varType->type, var->next, var, value);
 }

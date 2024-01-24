@@ -1,8 +1,10 @@
 #include "Parser.h"
 #include <format>
+#include "../App.h"
 #include "expressions/Function.h"
 #include "topLevel/TypeDefinition.h"
 #include "topLevel/Enum.h"
+#include "topLevel/ExternFunction.h"
 
 Parser::Parser(Lexer* lexer) {
     this->lexer = lexer;
@@ -14,7 +16,7 @@ bool Parser::Parse() {
         if (currentToken.is(Token::Type::EndOfFile)) break;
 
         Node* node = nullptr;
-        if (currentToken.is(Token::Type::Function, Token::Type::Extern)) {
+        if (currentToken.is(Token::Type::Function)) {
             auto fn = parseFunction(this);
             // Does commenting this out break anything?
             // Yes... It fucks up the entire flow of when types & their functions are generated.
@@ -25,6 +27,8 @@ bool Parser::Parse() {
             node = parseTypeDefinition(this);
         } else if (currentToken.is(Token::Type::Enum)) {
             node = parseEnum(this);
+        } else if (currentToken.is(Token::Type::Extern)) {
+            node = parseExternFunction(this);
         } else {
             // idk why I wrote this... Because why not I guess?
             std::string hintWord;

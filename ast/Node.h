@@ -54,6 +54,9 @@ public:
     ChainableNode* next = nullptr;
 
     TypeVariant* ownerType = nullptr;
+    // If true, when we generate the load instructions, we will return the data from inside the struct.
+    // If false, we will return the struct itself.
+    bool loadInternalData = false;
 };
 
 class Literal : public Node {

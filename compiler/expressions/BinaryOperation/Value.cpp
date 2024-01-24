@@ -2,6 +2,7 @@
 #include "Common.h"
 #include "../../../compiler/Compiler.h"
 #include "../../../compiler/TypeCoercion.h"
+#include "../../../ast/literals/String.h"
 
 llvm::Value* BinaryOperation_Value::generateAdd(llvm::Value* lhs, llvm::Value* rhs) {
     if (lhs->getType()->isDoubleTy())
@@ -201,7 +202,10 @@ llvm::Value* BinaryOperation_Value::generatePlusEqual(llvm::Value* lhs, llvm::Va
 
 void BinaryOperation_Value::generate(Visitor* v, const BinaryOperation* node) {
     auto lhs = BinaryOperation_Common::generateValue(v, node, node->lhs);
+    if (VisitorResult lhsResult; !v->TryGetResult(lhsResult)) return;
+
     auto rhs = BinaryOperation_Common::generateValue(v, node, node->rhs);
+    if (VisitorResult rhsResult; !v->TryGetResult(rhsResult)) return;
 
     auto commonType = TypeCoercion::getCommonType(lhs->getType(), rhs->getType());
     lhs = TypeCoercion::coerce(lhs, commonType);

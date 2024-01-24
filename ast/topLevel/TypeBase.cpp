@@ -16,26 +16,24 @@ TypeReference* TypeBase::CreateReference() const {
 
 llvm::Type* TypeBase::getLlvmType() {
     if (!llvmType) {
+        if (name == "i8" || name == "u8")
+            return setLlvmType(Compiler::getBuilder().getInt8Ty());
+        if (name == "i16" || name == "u16")
+            return setLlvmType(Compiler::getBuilder().getInt16Ty());
+        if (name == "i32" || name == "u32")
+            return setLlvmType(Compiler::getBuilder().getInt32Ty());
+        if (name == "i64" || name == "u64")
+            return setLlvmType(Compiler::getBuilder().getInt64Ty());
+        if (name == "double")
+            return setLlvmType(Compiler::getBuilder().getDoubleTy());
         if (name == "bool")
-            return setLlvmType(llvm::Type::getInt1Ty(Compiler::getContext()));
-        else if (name == "i8")
-            return setLlvmType(llvm::Type::getInt8Ty(Compiler::getContext()));
-        else if (name == "i8*")
-            return setLlvmType(llvm::Type::getInt8PtrTy(Compiler::getContext()));
-        else if (name == "i16")
-            return setLlvmType(llvm::Type::getInt16Ty(Compiler::getContext()));
-        else if (name == "i32" || name == "int")
+            return setLlvmType(Compiler::getBuilder().getInt1Ty());
+        if (name == "void")
+            return setLlvmType(Compiler::getBuilder().getVoidTy());
+        if (name == "ptr")
+            return setLlvmType(Compiler::getBuilder().getPtrTy());
+        if (dynamic_cast<Enum *>(this))
             return setLlvmType(llvm::Type::getInt32Ty(Compiler::getContext()));
-        else if (name == "i64")
-            return setLlvmType(llvm::Type::getInt64Ty(Compiler::getContext()));
-        else if (name == "double")
-            return setLlvmType(llvm::Type::getDoubleTy(Compiler::getContext()));
-        else if (name == "void")
-            return setLlvmType(llvm::Type::getVoidTy(Compiler::getContext()));
-        else if (dynamic_cast<Enum *>(this))
-            return setLlvmType(llvm::Type::getInt32Ty(Compiler::getContext()));
-
-        // Compiler::getScopeManager().addCompiledType(this);
     }
 
     if (!isValueType)
@@ -46,7 +44,6 @@ llvm::Type* TypeBase::getLlvmType() {
 
 llvm::Type* TypeBase::setLlvmType(llvm::Type* type) {
     llvmType = type;
-    // Compiler::getScopeManager().addCompiledType(this);
 
     return type;
 }
@@ -58,11 +55,10 @@ void TypeBase::AddField(TypeField* field) {
 }
 
 void TypeBase::AddFunction(Function* function) {
-    auto name = std::string(function->name);
-    if (functions.find(name) == functions.end())
-        functions[name] = std::vector<Function *>();
+    if (!functions.contains(function->name))
+        functions[function->name] = std::vector<Function *>();
 
-    functions[name].push_back(function);
+    functions[function->name].push_back(function);
 }
 
 TypeField* TypeBase::GetField(const std::string& fieldName) const {
@@ -94,10 +90,11 @@ Function* TypeBase::FindFunction(
     const std::vector<llvm::Value *>& parameters,
     const std::vector<const TypeVariant *>& paramTypes
 ) const {
-    if (functions.find(funcName) == functions.end())
+    auto it = functions.find(funcName);
+    if (it == functions.end())
         return nullptr;
 
-    for (auto function: functions.at(funcName)) {
+    for (const auto& function: it->second) {
         if (function->parameters.size() != parameters.size()) continue;
 
         bool match = true;

@@ -24,7 +24,10 @@ llvm::Value* TypeCoercion::coerce(llvm::Value* value, llvm::Type* toType, bool f
     if (toType->isDoubleTy())
         return coerceToDouble(value, toType);
 
-    return nullptr;
+    // return nullptr;
+    // Will this break anything if we don't return nullptr?
+    // Technically, if nullptr is returned, shit would break anyways...
+    return value;
 }
 
 TypeBase* TypeCoercion::getCommonType(const TypeVariant* typeA, const TypeVariant* typeB) {
@@ -72,6 +75,11 @@ bool TypeCoercion::isTypeCompatible(const TypeBase* type, const TypeBase* otherT
         if (type->name == otherType->name) // Same type
             return true;
 
+        // Everything (that's not a value type) can be casted to a raw pointer.
+        if (otherType->name == "ptr") {
+            return true;
+        }
+
         // TODO: Check if type is a subtype of otherType
         return false;
     }
@@ -115,15 +123,22 @@ int TypeCoercion::getTypePriority(const llvm::Type* type) {
 int TypeCoercion::getTypePriority(const TypeBase* type) {
     if (type->name == "bool") return static_cast<int>(Priority::Boolean);
     if (type->name == "i8") return static_cast<int>(Priority::Int8);
+    if (type->name == "u8") return static_cast<int>(Priority::UInt8);
     if (type->name == "i16") return static_cast<int>(Priority::Int16);
+    if (type->name == "u16") return static_cast<int>(Priority::UInt16);
     if (type->name == "i32") return static_cast<int>(Priority::Int32);
+    if (type->name == "u32") return static_cast<int>(Priority::UInt32);
     if (type->name == "i64") return static_cast<int>(Priority::Int64);
+    if (type->name == "u64") return static_cast<int>(Priority::UInt64);
     if (type->name == "double") return static_cast<int>(Priority::Double);
 
     return static_cast<int>(Priority::None);
 }
 
 llvm::Value* TypeCoercion::coerceToInt(llvm::Value* value, llvm::Type* type) {
+    if (value->getType()->isDoubleTy())
+        return Compiler::getBuilder().CreateFPToSI(value, type);
+
     unsigned valueBitWidth = getBitWidth(value->getType());
     unsigned targetBitWidth = getBitWidth(type);
 
@@ -147,7 +162,7 @@ llvm::Value* TypeCoercion::coerceToDouble(llvm::Value* value, llvm::Type* type) 
     return nullptr;
 }
 
-unsigned TypeCoercion::getBitWidth(llvm::Type* type) {
+unsigned TypeCoercion::getBitWidth(const llvm::Type* type) {
     if (type->isIntegerTy())
         return type->getIntegerBitWidth();
 

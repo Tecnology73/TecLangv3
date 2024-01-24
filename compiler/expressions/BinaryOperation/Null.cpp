@@ -1,47 +1,64 @@
 #include "Null.h"
 #include "Common.h"
 #include "Value.h"
-#include "../../../ast/Literals/Null.h"
+#include "../../../ast/literals/Null.h"
+#include "../../../ast/literals/String.h"
 #include "../../Compiler.h"
 #include "../../TypeCoercion.h"
 
 llvm::Value* BinaryOperation_Null::generateEqual(Visitor* v, const BinaryOperation* node) {
     auto lhs = BinaryOperation_Common::generateValue(v, node, node->lhs);
-    if (!lhs) return nullptr;
+
+    VisitorResult lhsResult;
+    v->TryGetResult(lhsResult);
+    if (lhs == nullptr) return nullptr;
 
     // LHS == null
     if (dynamic_cast<Null *>(node->rhs))
         return Compiler::getBuilder().CreateIsNull(lhs);
 
     // LHS == RHS
-    auto rhs = BinaryOperation_Common::generateValue(v, node, node->rhs);
-    if (!rhs) return nullptr;
+    auto rhs = BinaryOperation_Common::generateValue(v, node, node->rhs, true);
 
-    auto commonType = TypeCoercion::getCommonType(lhs->getType(), rhs->getType());
-    lhs = TypeCoercion::coerce(lhs, commonType);
-    rhs = TypeCoercion::coerce(rhs, commonType);
+    VisitorResult rhsResult;
+    v->TryGetResult(rhsResult);
+    if (rhs == nullptr) return nullptr;
+
+    rhs = TypeCoercion::coerce(rhs, lhsResult.type->type->getLlvmType());
 
     return BinaryOperation_Value::generateEqual(lhs, rhs);
 }
 
 llvm::Value* BinaryOperation_Null::generateNotEqual(Visitor* v, const BinaryOperation* node) {
     auto lhs = BinaryOperation_Common::generateValue(v, node, node->lhs);
-    if (!lhs) return nullptr;
+
+    VisitorResult lhsResult;
+    v->TryGetResult(lhsResult);
+    if (lhs == nullptr) return nullptr;
 
     // LHS != null
     if (dynamic_cast<Null *>(node->rhs))
         return Compiler::getBuilder().CreateIsNotNull(lhs);
 
     // LHS != RHS
-    auto rhs = BinaryOperation_Common::generateValue(v, node, node->rhs);
-    if (!rhs) return nullptr;
+    auto rhs = BinaryOperation_Common::generateValue(v, node, node->rhs, true);
+
+    VisitorResult rhsResult;
+    v->TryGetResult(rhsResult);
+    if (rhs == nullptr) return nullptr;
+
+    rhs = TypeCoercion::coerce(rhs, lhsResult.type->type->getLlvmType());
 
     return BinaryOperation_Value::generateNotEqual(lhs, rhs);
 }
 
 llvm::Value* BinaryOperation_Null::generateAssign(Visitor* v, const BinaryOperation* node) {
     auto lhs = BinaryOperation_Common::generateValue(v, node, node->lhs);
-    if (lhs == nullptr) return nullptr;
+
+    VisitorResult lhsResult;
+    v->TryGetResult(lhsResult);
+    if (lhs == nullptr)
+        return nullptr;
 
     // LHS = null
     if (dynamic_cast<Null *>(node->rhs)) {
@@ -51,8 +68,29 @@ llvm::Value* BinaryOperation_Null::generateAssign(Visitor* v, const BinaryOperat
     }
 
     // LHS = RHS
-    auto rhs = BinaryOperation_Common::generateValue(v, node, node->rhs);
-    if (rhs == nullptr) return nullptr;
+    auto rhs = BinaryOperation_Common::generateValue(v, node, node->rhs, true);
+
+    VisitorResult rhsResult;
+    v->TryGetResult(rhsResult);
+    if (rhs == nullptr)
+        return nullptr;
+
+    rhs = TypeCoercion::coerce(rhs, lhsResult.type->type->getLlvmType());
+
+    if (lhsResult.type->type->name == "string") {
+        // String literals are stored as a global.
+        // Inside a function, we normally load the value if it's a pointer (which it is in the case of a string).
+        // This is a bit of a hack to get around that.
+        if (dynamic_cast<String *>(node->rhs)) {
+            rhs = Compiler::getBuilder().CreateAlloca(rhsResult.value->getType());
+            Compiler::getBuilder().CreateStore(rhsResult.value, rhs);
+        }
+
+        return Compiler::getBuilder().CreateCall(
+            lhsResult.type->type->GetFunction("assign")->llvmFunction,
+            {lhs, rhs}
+        );
+    }
 
     return BinaryOperation_Value::generateAssign(lhs, rhs);
 }

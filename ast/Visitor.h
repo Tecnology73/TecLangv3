@@ -73,13 +73,13 @@ public:
         return result;
     }
 
-    /*/// <summary>
+    /// <summary>
     /// This should only be used after the visitor has visited all nodes
     /// and we're trying to output any errors.
     /// </summary>
     std::stack<VisitorResult>& GetResults() {
         return results;
-    }*/
+    }
 
     template<unsigned int N>
     std::array<VisitorResult, N> GetResults() {
@@ -166,7 +166,7 @@ public:
 
     virtual void Visit(class BinaryOperation* node) = 0;
 
-    virtual void Visit(class TypeReference * node) = 0;
+    virtual void Visit(class TypeReference* node) = 0;
 
     virtual void Visit(class VariableReference* node) = 0;
 

@@ -12,6 +12,12 @@ void generateReturn(Visitor* v, Return* ret) {
         return;
     }
 
+    if (!ret->expression) {
+        Compiler::getScopeManager().getContext()->handleReturn(ret);
+        v->AddSuccess();
+        return;
+    }
+
     Compiler::getScopeManager().pushContext(new ReturnCompilerContext(v, ret));
     ret->expression->Accept(v);
     Compiler::getScopeManager().popContext();
@@ -33,7 +39,6 @@ void generateReturn(Visitor* v, Return* ret) {
             },
             ret->expression
         );
-        v->AddFailure();
         return;
     }
 

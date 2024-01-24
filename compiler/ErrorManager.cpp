@@ -64,7 +64,7 @@ void ErrorManager::Report(
                 "{b}{} | {error}{}{} {}",
                 {
                     std::string(spaces, ' '),
-                    std::string(std::max<int>(0, token.position.column + spaces - 1), ' '),
+                    std::string(std::max<int>(0, token.position.column + spaces - line.length()), ' '),
                     std::string(token.position.length, '^'),
                     Console::format(it->second, args)
                 }

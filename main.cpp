@@ -68,8 +68,17 @@ int main(int argc, char* argv[]) {
             visitor->TryGetResult(result);
         }
 
-        if (visitor->HasResults())
+        if (visitor->HasResults()) {
+            auto results = visitor->GetResults();
+            while (!results.empty()) {
+                auto result = results.top();
+                results.pop();
+
+                std::cerr << "Error: " << static_cast<int>(result.errorCode) << std::endl;
+            }
+
             return 1;
+        }
     }
 
     //

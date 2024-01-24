@@ -2,6 +2,7 @@
 
 #include "../Analyzer.h"
 #include "../../ast/statements/IfStatement.h"
+#include "../../context/analysis/IfStatementAnalysisContext.h"
 
 class IfStatementAnalyzer : public Analyzer<IfStatement> {
 public:
@@ -13,7 +14,7 @@ public:
 private:
     bool analyzeCondition();
 
-    bool analyzeBody();
+    bool analyzeBody(IfStatementAnalysisContext* context);
 
     bool analyzeElse();
 

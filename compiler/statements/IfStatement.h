@@ -1,9 +1,8 @@
 #pragma once
 
 #include <llvm/IR/Value.h>
-#include <llvm/IR/Function.h>
-#include "../../ast/Statements.h"
 #include "../Compiler.h"
+#include "../../context/compiler/IfCompilerContext.h"
 
 void generateIfStatement(Visitor* v, IfStatement* node);
 
@@ -33,6 +32,8 @@ namespace {
 }
 
 void generateIfStatement(Visitor* v, IfStatement* node) {
+    auto context = Compiler::getScopeManager().enter("if", new IfCompilerContext(v, node));
+
     llvm::Value* condition = nullptr;
     if (node->condition) {
         node->condition->Accept(v);
@@ -52,11 +53,11 @@ void generateIfStatement(Visitor* v, IfStatement* node) {
         "if.then",
         Compiler::getBuilder().GetInsertBlock()->getParent()
     );
-    auto exitBlock = llvm::BasicBlock::Create(
-        Compiler::getContext(),
-        "if.else",
-        Compiler::getBuilder().GetInsertBlock()->getParent()
-    );
+    auto exitBlock = context->exitBlock = llvm::BasicBlock::Create(
+                         Compiler::getContext(),
+                         "if.else",
+                         Compiler::getBuilder().GetInsertBlock()->getParent()
+                     );
 
     Compiler::getBuilder().CreateCondBr(condition, thenBlock, exitBlock);
 
@@ -67,6 +68,11 @@ void generateIfStatement(Visitor* v, IfStatement* node) {
 
         if (VisitorResult result; !v->TryGetResult(result)) return;
     }
+
+    if (auto lastBlock = Compiler::getBuilder().GetInsertBlock(); !lastBlock->getTerminator())
+        Compiler::getBuilder().CreateBr(exitBlock);
+
+    exitBlock->moveAfter(Compiler::getBuilder().GetInsertBlock());
 
     // Else block
     Compiler::getBuilder().SetInsertPoint(exitBlock);
@@ -84,6 +90,10 @@ void generateIfStatement(Visitor* v, IfStatement* node) {
         Compiler::getBuilder().CreateBr(currentBlock);
         Compiler::getBuilder().SetInsertPoint(currentBlock);
     }
+
+    // Cleanup
+    Compiler::getScopeManager().popContext();
+    Compiler::getScopeManager().leave("if");
 
     v->AddSuccess();
 }

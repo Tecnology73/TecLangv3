@@ -13,6 +13,19 @@ bool Function::AddParameter(const Token& token, const std::string& paramName, Ty
     return true;
 }
 
+bool Function::AddParameter(const Token& token, TypeReference* type) {
+    const std::string& paramName = StringInternTable::Intern(std::to_string(parameters.size() + 1));
+    if (parameters.contains(paramName))
+        return false;
+
+    auto param = new FunctionParameter(token, paramName, type, this);
+    param->index = parameters.size();
+    parameters.emplace(paramName, param);
+    parameterOrder.push_back(paramName);
+
+    return true;
+}
+
 FunctionParameter* Function::GetParameter(const std::string& parameterName) const {
     auto it = parameters.find(parameterName);
     if (it == parameters.end())
@@ -22,6 +35,9 @@ FunctionParameter* Function::GetParameter(const std::string& parameterName) cons
 }
 
 FunctionParameter* Function::GetParameter(unsigned int index) const {
+    if (isExternal)
+        index = std::clamp(index, 0u, static_cast<unsigned>(parameters.size() - 1));
+
     if (index >= parameters.size())
         return nullptr;
 

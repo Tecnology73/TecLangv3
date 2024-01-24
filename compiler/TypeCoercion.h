@@ -27,9 +27,13 @@ private:
         None = 0,
         Boolean,
         Int8,
+        UInt8,
         Int16,
+        UInt16,
         Int32,
+        UInt32,
         Int64,
+        UInt64,
         Double,
     };
 
@@ -41,5 +45,5 @@ private:
 
     static llvm::Value* coerceToDouble(llvm::Value* value, llvm::Type* type);
 
-    static unsigned getBitWidth(llvm::Type* type);
+    static unsigned getBitWidth(const llvm::Type* type);
 };

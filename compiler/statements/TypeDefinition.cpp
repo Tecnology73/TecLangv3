@@ -49,6 +49,22 @@ llvm::Function* generateDefaultConstructor(Visitor* v, TypeDefinition* type) {
             if (!v->TryGetResult(result)) return nullptr;
 
             value = result.value;
+        } else if (type->name == "string" && fieldName == "data") {
+            auto emptyStr = Compiler::getBuilder().CreateGlobalStringPtr("\0");
+            value = Compiler::getBuilder().CreateCall(
+                SymbolTable::GetInstance()->LookupFunction("malloc", {})->llvmFunction,
+                {
+                    Compiler::getBuilder().getInt64(1)
+                }
+            );
+
+            Compiler::getBuilder().CreateCall(
+                SymbolTable::GetInstance()->LookupFunction("strcpy", {})->llvmFunction,
+                {
+                    value,
+                    emptyStr
+                }
+            );
         } else
             value = item->type->ResolveType()->type->getDefaultValue();
 
@@ -61,11 +77,11 @@ llvm::Function* generateDefaultConstructor(Visitor* v, TypeDefinition* type) {
     Compiler::getBuilder().CreateRetVoid();
 
     // Register the constructor statement.
-    auto function = new Function("construct");
+    auto function = new Function(StringInternTable::Intern("construct"));
     function->ownerType = type;
     function->returnType = type->CreateReference();
     function->llvmFunction = func;
-    function->AddParameter(type->token, "this", type->CreateReference());
+    function->AddParameter(type->token, StringInternTable::Intern("this"), type->CreateReference());
 
     type->AddFunction(function);
 
@@ -129,14 +145,14 @@ llvm::Function* generateConstructor(Visitor* visitor, Function* function, llvm::
     return func;
 }
 
-void generateFunctions(Visitor* v, TypeDefinition* type) {
+bool generateFunctions(Visitor* v, TypeDefinition* type) {
     auto lastBlock = Compiler::getBuilder().GetInsertBlock();
 
     // Generate the default constructor `func<T> construct() {}`
     auto defaultConstruct = generateDefaultConstructor(v, type);
     if (!defaultConstruct) {
         v->AddFailure();
-        return;
+        return false;
     }
 
     // Generate all the functions for the type
@@ -150,7 +166,7 @@ void generateFunctions(Visitor* v, TypeDefinition* type) {
             if (item.first == "construct") {
                 if (!generateConstructor(v, func, defaultConstruct)) {
                     v->AddFailure();
-                    return;
+                    return false;
                 }
 
                 continue;
@@ -158,10 +174,15 @@ void generateFunctions(Visitor* v, TypeDefinition* type) {
 
             // Normal statement.
             func->Accept(v);
+
+            if (VisitorResult result; !v->TryGetResult(result))
+                return false;
         }
 
     // Restore the insert point.
     Compiler::getBuilder().SetInsertPoint(lastBlock);
+
+    return true;
 }
 
 TypeVariant* inferType(Visitor* v, Node* node) {
@@ -216,15 +237,13 @@ llvm::Type* generateTypeDefinition(Visitor* v, TypeDefinition* type) {
     if (type->llvmType)
         return type->getLlvmType();
 
-    if (type->name == "i8")
+    if (type->name == "i8" || type->name == "u8")
         return type->setLlvmType(Compiler::getBuilder().getInt8Ty());
-    if (type->name == "i8*")
-        return type->setLlvmType(Compiler::getBuilder().getInt8PtrTy());
-    if (type->name == "i16")
+    if (type->name == "i16" || type->name == "u16")
         return type->setLlvmType(Compiler::getBuilder().getInt16Ty());
-    if (type->name == "i32" || type->name == "int")
+    if (type->name == "i32" || type->name == "u32")
         return type->setLlvmType(Compiler::getBuilder().getInt32Ty());
-    if (type->name == "i64")
+    if (type->name == "i64" || type->name == "u64")
         return type->setLlvmType(Compiler::getBuilder().getInt64Ty());
     if (type->name == "double")
         return type->setLlvmType(Compiler::getBuilder().getDoubleTy());
@@ -232,6 +251,8 @@ llvm::Type* generateTypeDefinition(Visitor* v, TypeDefinition* type) {
         return type->setLlvmType(Compiler::getBuilder().getInt1Ty());
     if (type->name == "void")
         return type->setLlvmType(Compiler::getBuilder().getVoidTy());
+    if (type->name == "ptr")
+        return type->setLlvmType(Compiler::getBuilder().getPtrTy());
 
     // Generate the fields for the struct
     std::vector<llvm::Type *> fields;
@@ -260,7 +281,8 @@ llvm::Type* generateTypeDefinition(Visitor* v, TypeDefinition* type) {
 
     // Generate all the functions for the type.
     // This includes the constructors.
-    generateFunctions(v, type);
+    if (!generateFunctions(v, type))
+        return nullptr;
 
     return type->llvmType;
 }

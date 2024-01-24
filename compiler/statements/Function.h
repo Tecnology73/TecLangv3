@@ -16,12 +16,17 @@ void generateFunction(Visitor* v, Function* func) {
 
     // Generate parameters
     std::vector<llvm::Type *> parameters;
-    for (auto& paramName: func->parameterOrder)
-        parameters.push_back(func->parameters[paramName]->type->ResolveType()->type->getLlvmType()->getPointerTo());
+    for (auto& paramName: func->parameterOrder) {
+        auto paramType = func->parameters[paramName]->type->ResolveType()->type->getLlvmType();
+        // if (paramType)
+        // paramType = paramType->getPointerTo();
+
+        parameters.push_back(paramType);
+    }
 
     // Define the function.
     auto returnType = generateTypeDefinition(v, func->returnType->ResolveType()->type);
-    if (!func->returnType->ResolveType()->type->isValueType)
+    if (!func->returnType->ResolveType()->type->isValueType && !returnType->isPointerTy())
         returnType = returnType->getPointerTo();
 
     llvm::FunctionType* funcType = llvm::FunctionType::get(
@@ -73,10 +78,6 @@ void generateFunction(Visitor* v, Function* func) {
 
             if (VisitorResult result; !v->TryGetResult(result)) return;
         }
-
-        // Ensure `void` functions return.
-        if (function->getReturnType()->isVoidTy() && !function->end()->getTerminator())
-            Compiler::getBuilder().CreateRetVoid();
 
         // Close the scope
         Compiler::getScopeManager().popContext();

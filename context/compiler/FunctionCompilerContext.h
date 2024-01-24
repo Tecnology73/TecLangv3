@@ -12,6 +12,10 @@ public:
         return function->returnType->ResolveType();
     }
 
+    void handleReturn(const Node* node) override {
+        Compiler::getBuilder().CreateRetVoid();
+    }
+
     void handleReturn(const Node* node, llvm::Value* value) override {
         Compiler::getBuilder().CreateRet(value);
     }

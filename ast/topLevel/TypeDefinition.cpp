@@ -4,18 +4,20 @@
 #include "../../symbolTable/SymbolTable.h"
 
 llvm::Value* TypeDefinition::getDefaultValue() const {
-    if (name == "i8")
+    if (name == "i8" || name == "u8")
         return Compiler::getBuilder().getInt8(0);
-    if (name == "i16")
+    if (name == "i16" || name == "u16")
         return Compiler::getBuilder().getInt16(0);
-    if (name == "i32" || name == "int")
+    if (name == "i32" || name == "u32")
         return Compiler::getBuilder().getInt32(0);
-    if (name == "i64")
+    if (name == "i64" || name == "u64")
         return Compiler::getBuilder().getInt64(0);
     if (name == "double")
         return llvm::ConstantFP::get(Compiler::getBuilder().getDoubleTy(), 0);
     if (name == "bool")
         return Compiler::getBuilder().getInt1(false);
+    if (name == "ptr")
+        return llvm::ConstantPointerNull::get(Compiler::getBuilder().getPtrTy());
 
     if (isValueType)
         throw std::runtime_error("Cannot get default expression of non-type '" + name + "'!");

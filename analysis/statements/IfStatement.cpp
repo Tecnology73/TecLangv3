@@ -1,17 +1,17 @@
 #include "IfStatement.h"
 #include "../../compiler/Compiler.h"
-#include "../../context/analysis/IfStatementAnalysisContext.h"
 
 void IfStatementAnalyzer::Analyze() {
     auto context = Compiler::getScopeManager().enter("if", new IfStatementAnalysisContext(visitor, node));
 
-    if (analyzeCondition() && analyzeBody() && analyzeElse()) {
+    if (analyzeCondition() && analyzeBody(context) && analyzeElse()) {
         visitor->AddSuccess();
 
         if (context->hasReturned)
             propagateNarrowedTypes();
     }
 
+    Compiler::getScopeManager().popContext();
     Compiler::getScopeManager().leave("if");
 }
 
@@ -26,8 +26,8 @@ bool IfStatementAnalyzer::analyzeCondition() {
     return visitor->TryGetResult(result);
 }
 
-bool IfStatementAnalyzer::analyzeBody() {
-    for (const auto& item: node->body) {
+bool IfStatementAnalyzer::analyzeBody(IfStatementAnalysisContext* context) {
+    while (const auto& item = context->GetNextNode()) {
         item->Accept(visitor);
 
         if (VisitorResult result; !visitor->TryGetResult(result)) return false;

@@ -8,7 +8,7 @@ namespace {
     void genCstrCall(Visitor* v, VariableDeclaration* node) {
         node->alloc = Compiler::getBuilder().CreateCall(
             Compiler::getScopeManager().getFunction("malloc")->llvmFunction,
-            Compiler::getBuilder().getInt32(
+            Compiler::getBuilder().getInt64(
                 Compiler::getModule().getDataLayout().getTypeAllocSize(node->type->ResolveType()->type->getLlvmType())
             )
         );
@@ -49,7 +49,7 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
 
     // Ensure the type has been generated.
     auto nodeType = node->type->ResolveType()->type;
-    generateTypeDefinition(v, nodeType);
+    if (!generateTypeDefinition(v, nodeType)) return;
 
     if (Compiler::getScopeManager().HasVar(node->name)) {
         v->ReportError(ErrorCode::VARIABLE_ALREADY_DECLARED, {node->name}, node);
@@ -94,11 +94,32 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
 
         // Some expressions (like when) don't return an expression directly.
         node->expression->Accept(v);
-        if (auto result = v->GetResult(); result.success)
+
+        VisitorResult result;
+        if (!v->TryGetResult(result)) return;
+
+        if (nodeType->name == "string") {
+            if (!dynamic_cast<ConstructorCall *>(node->expression))
+                Compiler::getBuilder().CreateCall(
+                    nodeType->GetFunction("construct")->llvmFunction,
+                    {node->alloc}
+                );
+
+            if (dynamic_cast<String *>(node->expression)) {
+                auto tmp = Compiler::getBuilder().CreateAlloca(result.value->getType());
+                Compiler::getBuilder().CreateStore(result.value, tmp);
+
+                Compiler::getBuilder().CreateCall(
+                    nodeType->GetFunction("assign")->llvmFunction,
+                    {node->alloc, tmp}
+                );
+            }
+        } else if (result.value) {
             Compiler::getBuilder().CreateStore(
                 TypeCoercion::coerce(result.value, nodeType->llvmType),
                 node->alloc
             );
+        }
 
         // Cleanup
         Compiler::getScopeManager().popContext();

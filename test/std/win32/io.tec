@@ -1,0 +1,8 @@
+extern func GetStdHandle(i32) ptr
+extern func WriteConsoleA(ptr, ptr, u32, ptr, ptr) u32
+
+pub func log(str: string, len: u64) void {
+    stdout = GetStdHandle(-11)
+    WriteConsoleA(stdout, str, len, null, null)
+    WriteConsoleA(stdout, "\n", 1, null, null)
+}

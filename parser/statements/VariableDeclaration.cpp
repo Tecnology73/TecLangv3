@@ -27,7 +27,7 @@ VariableDeclaration* parseVariableDeclaration(Parser* parser) {
         return nullptr;
     }
 
-    if (parser->NextToken().is(Token::Type::Assign)) {
+    if (parser->currentToken.is(Token::Type::Assign)) {
         parser->NextToken(); // Consume '='
         node->expression = parseExpression(parser, 1);
     }

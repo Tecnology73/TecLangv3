@@ -1,8 +1,10 @@
 #pragma once
 
+#include <llvm/IR/GlobalVariable.h>
 #include "../Node.h"
 #include "../Visitor.h"
 #include "../topLevel/TypeDefinition.h"
+#include "../../symbolTable/SymbolTable.h"
 
 class String : public Literal {
 public:
@@ -16,10 +18,11 @@ public:
     }
 
     TypeVariant* getType() override {
-        // return Compiler::getScopeManager().getType("string");
-        return nullptr;
+        return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("string")->value)->createVariant();
     }
 
 public:
     const std::string& value;
+
+    llvm::GlobalVariable* llvmValue = nullptr;
 };

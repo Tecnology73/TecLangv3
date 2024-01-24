@@ -24,6 +24,8 @@ public:
 
     bool AddParameter(const Token& token, const std::string& paramName, TypeReference* type);
 
+    bool AddParameter(const Token& token, TypeReference* type);
+
     FunctionParameter* GetParameter(const std::string& parameterName) const;
 
     FunctionParameter* GetParameter(unsigned index) const;

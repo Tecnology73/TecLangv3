@@ -1,18 +1,22 @@
 #include "SymbolTable.h"
 #include "../ast/TopLevel.h"
+#include "../compiler/TypeCoercion.h"
 
 SymbolTable* SymbolTable::instance = nullptr;
 
 SymbolTable::SymbolTable() {
     addBuiltinType("bool");
     addBuiltinType("i8");
-    addBuiltinType("i8*");
     addBuiltinType("i16");
     addBuiltinType("i32");
-    addBuiltinType("int");
     addBuiltinType("i64");
+    addBuiltinType("u8");
+    addBuiltinType("u16");
+    addBuiltinType("u32");
+    addBuiltinType("u64");
     addBuiltinType("double");
     addBuiltinType("void");
+    addBuiltinType("ptr");
 }
 
 SymbolTable::SymbolTable(const std::string& package) : package(package) {
@@ -25,6 +29,9 @@ void SymbolTable::addBuiltinType(const std::string& name) {
     );
     type->isDeclared = true;
     type->isValueType = true;
+
+    if (name == "ptr")
+        type->isValueType = false;
 
     Add(type);
 }
@@ -111,6 +118,11 @@ Function* SymbolTable::LookupFunction(const std::string& name, const std::vector
     if (it == functions.end())
         return nullptr;
 
+    // Bit of a hack to get external functions (like `printf(...)`)to resolve properly
+    // when the provided arguments don't actually match.
+    if (it->second.size() == 1 && it->second[0]->isExternal)
+        return it->second[0];
+
     for (const auto& function: it->second) {
         if (function->parameters.size() != args.size())
             continue;
@@ -118,7 +130,9 @@ Function* SymbolTable::LookupFunction(const std::string& name, const std::vector
         bool match = true;
         unsigned i = 0;
         for (const auto& param: function->parameters | std::views::values) {
-            if (param->type->name != args[i++]->name) {
+            auto paramType = param->type->ResolveType()->type;
+            auto argType = args[i++]->ResolveType()->type;
+            if (!TypeCoercion::isTypeCompatible(argType, paramType)) {
                 match = false;
                 break;
             }
