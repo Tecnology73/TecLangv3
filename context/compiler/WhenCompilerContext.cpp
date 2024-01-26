@@ -7,9 +7,9 @@
 WhenCompilerContext::WhenCompilerContext(Visitor* visitor, When* when) : Context(visitor), when(when) {
 }
 
-TypeVariant* WhenCompilerContext::getReturnType() {
+TypeReference* WhenCompilerContext::getReturnType() {
     if (auto varContext = dynamic_cast<VarDeclarationCompilerContext *>(parent))
-        return varContext->var->type->ResolveType();
+        return varContext->var->type;
 
     if (auto returnContext = dynamic_cast<ReturnCompilerContext *>(parent))
         return returnContext->getReturnType();
@@ -19,13 +19,15 @@ TypeVariant* WhenCompilerContext::getReturnType() {
 
 void WhenCompilerContext::handleReturn(const Node* node, llvm::Value* value) {
     if (auto varContext = dynamic_cast<VarDeclarationCompilerContext *>(parent)) {
-        auto coercedValue = TypeCoercion::coerce(value, varContext->var->type->ResolveType()->type->llvmType);
+        auto coercedValue = TypeCoercion::coerce(value, varContext->var->type->ResolveType()->llvmType);
         if (!coercedValue) {
+            // FIXME: This should probably be caught during semantic analysis.
             visitor->ReportError(
                 ErrorCode::TYPE_COERCION_IMPLICIT_FAILED,
                 {
-                    Compiler::getScopeManager().getType(value->getType())->name.c_str(),
-                    varContext->var->type->ResolveType()->type->name.c_str()
+                    // Compiler::getScopeManager().getType(value->getType())->name.c_str(),
+                    "",
+                    varContext->var->type->ResolveType()->name
                 },
                 node
             );
@@ -35,13 +37,15 @@ void WhenCompilerContext::handleReturn(const Node* node, llvm::Value* value) {
         Compiler::getBuilder().CreateStore(coercedValue, varContext->var->alloc);
     } else if (auto returnContext = dynamic_cast<ReturnCompilerContext *>(parent)) {
         auto returnType = returnContext->getReturnType();
-        auto coercedValue = TypeCoercion::coerce(value, returnType->type->llvmType);
+        auto coercedValue = TypeCoercion::coerce(value, returnType->ResolveType()->llvmType);
         if (!coercedValue) {
+            // FIXME: This should probably be caught during semantic analysis.
             visitor->ReportError(
                 ErrorCode::TYPE_COERCION_IMPLICIT_FAILED,
                 {
-                    Compiler::getScopeManager().getType(value->getType())->name.c_str(),
-                    returnType->type->name.c_str()
+                    // Compiler::getScopeManager().getType(value->getType())->name.c_str(),
+                    "",
+                    returnType->name
                 },
                 node
             );

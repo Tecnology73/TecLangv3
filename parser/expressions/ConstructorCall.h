@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../ast/Expressions.h"
-#include "../Parser.h"
+#include "../../ast/expressions/ConstructorCall.h"
 
 ConstructorCall *parseConstructorCall(Parser *parser);

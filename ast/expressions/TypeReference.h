@@ -3,25 +3,16 @@
 #include "../Node.h"
 #include "../Visitor.h"
 #include "../../misc/BitFlag.h"
-#include "../StringInternTable.h"
 
 class TypeReference : public Node {
 public:
-    explicit TypeReference(const Token& token, const std::string& name) : Node(token), name(name) {
-    }
+    explicit TypeReference(const Token& token, const std::string& name);
 
-    static TypeReference* Infer() {
-        if (!infer)
-            infer = new TypeReference(Token{.type = Token::Type::Type}, StringInternTable::Intern("infer"));
+    void Accept(Visitor* visitor) override;
 
-        return infer;
-    }
+    TypeReference* Clone() const;
 
-    void Accept(Visitor* visitor) override {
-        visitor->Visit(this);
-    }
-
-    TypeVariant* ResolveType();
+    TypeBase* ResolveType();
 
 public:
     const std::string& name;
@@ -31,5 +22,5 @@ private:
     inline static TypeReference* infer = nullptr;
 
     bool resolved = false;
-    TypeVariant* variant = nullptr;
+    TypeBase* concreteType = nullptr;
 };

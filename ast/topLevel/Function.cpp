@@ -1,5 +1,6 @@
 #include "Function.h"
 #include "../../compiler/Compiler.h"
+#include "../StringInternTable.h"
 
 bool Function::AddParameter(const Token& token, const std::string& paramName, TypeReference* type) {
     if (parameters.contains(paramName))
@@ -14,7 +15,7 @@ bool Function::AddParameter(const Token& token, const std::string& paramName, Ty
 }
 
 bool Function::AddParameter(const Token& token, TypeReference* type) {
-    const std::string& paramName = StringInternTable::Intern(std::to_string(parameters.size() + 1));
+    auto& paramName = StringInternTable::Intern(std::to_string(parameters.size() + 1));
     if (parameters.contains(paramName))
         return false;
 

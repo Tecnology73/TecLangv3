@@ -7,9 +7,9 @@
 namespace {
     void genCstrCall(Visitor* v, VariableDeclaration* node) {
         node->alloc = Compiler::getBuilder().CreateCall(
-            Compiler::getScopeManager().getFunction("malloc")->llvmFunction,
+            SymbolTable::GetInstance()->LookupFunction("malloc")[0]->llvmFunction,
             Compiler::getBuilder().getInt64(
-                Compiler::getModule().getDataLayout().getTypeAllocSize(node->type->ResolveType()->type->getLlvmType())
+                Compiler::getModule().getDataLayout().getTypeAllocSize(node->type->ResolveType()->getLlvmType())
             )
         );
 
@@ -19,16 +19,7 @@ namespace {
 
             // Some expressions (like 'when') don't return an expression directly.
             node->expression->Accept(v);
-            if (!v->GetResult().success) {
-                v->AddFailure();
-                return;
-            }
-
-            /*if (auto expr = node->expression->Accept(v))
-                Compiler::getBuilder().CreateStore(
-                    TypeCoercion::coerce(expr, node->type->llvmType),
-                    node->alloc
-                );*/
+            if (VisitorResult result; !v->TryGetResult(result)) return;
 
             // Cleanup
             Compiler::getScopeManager().popContext();
@@ -48,13 +39,8 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
     }
 
     // Ensure the type has been generated.
-    auto nodeType = node->type->ResolveType()->type;
+    auto nodeType = node->type->ResolveType();
     if (!generateTypeDefinition(v, nodeType)) return;
-
-    if (Compiler::getScopeManager().HasVar(node->name)) {
-        v->ReportError(ErrorCode::VARIABLE_ALREADY_DECLARED, {node->name}, node);
-        return;
-    }
 
     // If the expression is a constant, we don't need to do any allocations.
     /*if (!node->type->isStruct && dynamic_cast<Literal *>(node->expression)) {
@@ -69,19 +55,6 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
         return;
     }
 
-    // if (node->type->isStruct) {
-    /*if (false) {
-        if (node->expression) {
-            node->expression->Accept(v);
-            auto result = v->GetResult();
-            if (!result.success) {
-                v->AddFailure();
-                return;
-            }
-
-            node->alloc = result.value;
-        }
-    } else {*/
     node->alloc = Compiler::getBuilder().CreateAlloca(
         nodeType->llvmType,
         nullptr,
@@ -128,7 +101,6 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
         // Assign the default expression for the type.
         Compiler::getBuilder().CreateStore(nodeType->getDefaultValue(), node->alloc);
     }
-    // }
 
     Compiler::getScopeManager().Add(node);
     v->AddSuccess(node->alloc);

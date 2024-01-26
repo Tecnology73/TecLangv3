@@ -1,13 +1,10 @@
 #pragma once
 
-#include "../../ast/Literals.h"
 #include "../Parser.h"
+#include "../../ast/literals/Boolean.h"
 
-Boolean *parseBoolean(Parser *parser) {
-    if (
-        parser->currentToken.isNot(Token::Type::Boolean_True) &&
-        parser->currentToken.isNot(Token::Type::Boolean_False)
-        ) {
+Boolean* parseBoolean(Parser* parser) {
+    if (parser->currentToken.isNot(Token::Type::Boolean_True, Token::Type::Boolean_False)) {
         parser->PrintSyntaxError("boolean literal (e.g. true/false)");
         return nullptr;
     }

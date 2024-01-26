@@ -1,11 +1,10 @@
 #include "Function.h"
-#include "../Parser.h"
 #include "Expression.h"
 #include "TypeReference.h"
 #include "../statements/FunctionParameter.h"
-#include "../../compiler/Compiler.h"
-#include "../../symbolTable/SymbolTable.h"
 #include "../../ast/StringInternTable.h"
+#include "../../ast/topLevel/TypeDefinition.h"
+#include "../../symbolTable/SymbolTable.h"
 
 bool parseParameters(Parser* parser, Function* function, const bool isParamNameOptional) {
     if (parser->currentToken.isNot(Token::Type::OpenParen)) {

@@ -19,7 +19,7 @@ void generateWhen(Visitor* v, When* node) {
 
     auto matchValue = matchResult.value;
     if (matchValue->getType()->isPointerTy())
-        matchValue = Compiler::getBuilder().CreateLoad(matchResult.type->type->getLlvmType(), matchValue);
+        matchValue = Compiler::getBuilder().CreateLoad(matchResult.type->ResolveType()->getLlvmType(), matchValue);
 
     auto switchInst = Compiler::getBuilder().CreateSwitch(
         matchValue,
@@ -82,7 +82,7 @@ void generateWhen(Visitor* v, When* node) {
         // We need to ensure that the exit block has something inside of it,
         // otherwise it's considered invalid.
         // FIXME: When all possible cases are covered (such as with an enum), it would be better if we didn't generate an exit block at all.
-        Compiler::getBuilder().CreateRet(context->getReturnType()->type->getDefaultValue());
+        Compiler::getBuilder().CreateRet(context->getReturnType()->ResolveType()->getDefaultValue());
     } else
         Compiler::getBuilder().SetInsertPoint(context->exitBlock);
 

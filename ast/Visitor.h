@@ -1,13 +1,14 @@
 #pragma once
 
+#include <llvm/IR/Value.h>
 #include "../parser/Parser.h"
 #include "../compiler/ErrorManager.h"
-#include "topLevel/TypeVariant.h"
+#include "topLevel/TypeBase.h"
 
 struct VisitorResult {
     bool success = false;
     llvm::Value* value = nullptr;
-    TypeVariant* type = nullptr;
+    TypeReference* type = nullptr;
     ErrorCode errorCode = ErrorCode::UNKNOWN_ERROR;
 };
 
@@ -35,15 +36,11 @@ public:
         results.emplace(true, value, nullptr);
     }
 
-    void AddSuccess(TypeBase* type) {
-        results.emplace(true, nullptr, type->createVariant());
-    }
-
-    void AddSuccess(TypeVariant* type) {
+    void AddSuccess(TypeReference* type) {
         results.emplace(true, nullptr, type);
     }
 
-    void AddSuccess(llvm::Value* value, TypeVariant* type) {
+    void AddSuccess(llvm::Value* value, TypeReference* type) {
         results.emplace(true, value, type);
     }
 

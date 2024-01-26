@@ -25,8 +25,6 @@ public:
 
     void Accept(Visitor* visitor) override;
 
-    // TypeVariant* GetCompiledType(Visitor* visitor);
-
 public:
     const std::string& name;
     TypeReference* type = nullptr;

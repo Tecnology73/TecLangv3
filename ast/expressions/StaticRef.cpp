@@ -1,18 +1,19 @@
 #include "StaticRef.h"
 #include "../../compiler/Compiler.h"
+#include "../../symbolTable/SymbolTable.h"
 
-TypeVariant* StaticRef::getFinalType() {
-    auto type = Compiler::getScopeManager().getType(name);
-    if (!type) return nullptr;
+TypeBase* StaticRef::getFinalType() {
+    auto type = SymbolTable::GetInstance()->Get(name);
+    if (!type.has_value()) return nullptr;
 
     if (next)
-        return next->getFinalType(type->createVariant());
+        return next->getFinalType(type->value);
 
-    return type->createVariant();
+    return type->value;
 }
 
-TypeVariant* StaticRef::getFinalType(TypeVariant* parentType) {
-    auto type = parentType->type->GetField(name);
+TypeBase* StaticRef::getFinalType(const TypeBase* parentType) {
+    auto type = parentType->GetField(name);
     if (!type) return nullptr;
 
     if (next)

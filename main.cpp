@@ -6,10 +6,10 @@
 #include "debug/timer.h"
 #include "parser/Parser.h"
 // Visitors
-#include "debug/PrettyPrintVisitor.h"
+#include "analysisFirst/AnalysisFirstStageVisitor.h"
 #include "analysis/SemanticAnalysisVisitor.h"
+#include "debug/PrettyPrintVisitor.h"
 #include "compiler/CodegenVisitor.h"
-#include "symbolTable/SymbolTable.h"
 
 int main(int argc, char* argv[]) {
     MEASURE("Total");
@@ -45,13 +45,12 @@ int main(int argc, char* argv[]) {
 
     // return 0;
 
-    auto s = SymbolTable::GetInstance();
-
     //
     // Visitors
     //
 
     std::vector<std::unique_ptr<Visitor>> visitorPipeline;
+    visitorPipeline.emplace_back(std::make_unique<AnalysisFirstStageVisitor>(parser));
     visitorPipeline.emplace_back(std::make_unique<SemanticAnalysisVisitor>(parser));
     if (args.printAst)
         visitorPipeline.emplace_back(std::make_unique<PrettyPrintVisitor>(parser));

@@ -6,6 +6,7 @@
 #include "../Compiler.h"
 #include "../../symbolTable/SymbolTable.h"
 #include "../../context/compiler/ForLoopCompilerContext.h"
+#include "../../ast/StringInternTable.h"
 
 void generateForLoop(Visitor* v, ForLoop* node) {
     // Setup context
@@ -38,9 +39,9 @@ void generateForLoop(Visitor* v, ForLoop* node) {
     // iterator
     auto it = node->identifier = new VariableDeclaration(node->token, StringInternTable::Intern("it"));
     // it->type = inferType(v, cond->lhs);
-    it->type = std::get<TypeDefinition*>(SymbolTable::GetInstance()->Get("i32")->value)->createVariant()->CreateReference();
+    it->type = SymbolTable::GetInstance()->GetReference<TypeDefinition>("i32");
 
-    auto keyPhi = Compiler::getBuilder().CreatePHI(it->type->ResolveType()->type->llvmType, 2, node->identifier->name);
+    auto keyPhi = Compiler::getBuilder().CreatePHI(it->type->ResolveType()->llvmType, 2, node->identifier->name);
     it->alloc = keyPhi;
 
     Compiler::getScopeManager().Add(it);
@@ -51,7 +52,7 @@ void generateForLoop(Visitor* v, ForLoop* node) {
     if (!v->TryGetResult(lhsResult)) return;
 
     keyPhi->addIncoming(
-        TypeCoercion::coerce(lhsResult.value, it->type->ResolveType()->type->llvmType),
+        TypeCoercion::coerce(lhsResult.value, it->type->ResolveType()->llvmType),
         // Range lower bound
         entryBlock
     );
@@ -63,7 +64,7 @@ void generateForLoop(Visitor* v, ForLoop* node) {
 
     auto conditionValue = Compiler::getBuilder().CreateICmpSLT(
         keyPhi,
-        TypeCoercion::coerce(rhsResult.value, it->type->ResolveType()->type->llvmType),
+        TypeCoercion::coerce(rhsResult.value, it->type->ResolveType()->llvmType),
         // Range upper bound
         "cond"
     );
@@ -91,7 +92,7 @@ void generateForLoop(Visitor* v, ForLoop* node) {
         VisitorResult stepResult;
         if (!v->TryGetResult(stepResult)) return;
 
-        stepValue = TypeCoercion::coerce(stepResult.value, it->type->ResolveType()->type->llvmType);
+        stepValue = TypeCoercion::coerce(stepResult.value, it->type->ResolveType()->llvmType);
     } else
         stepValue = Compiler::getBuilder().getInt32(1);
 

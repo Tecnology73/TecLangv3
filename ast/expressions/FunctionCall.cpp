@@ -1,9 +1,10 @@
 #include "FunctionCall.h"
 #include "../../compiler/Compiler.h"
+#include "../../symbolTable/SymbolTable.h"
 
-TypeVariant* FunctionCall::getFinalType() {
-    auto function = Compiler::getScopeManager().getFunction(name);
-    if (!function) return nullptr;
+TypeBase* FunctionCall::getFinalType() {
+    if (!function->returnType)
+        return nullptr;
 
     if (next)
         return next->getFinalType(function->returnType->ResolveType());
@@ -11,9 +12,12 @@ TypeVariant* FunctionCall::getFinalType() {
     return function->returnType->ResolveType();
 }
 
-TypeVariant* FunctionCall::getFinalType(TypeVariant* parentType) {
-    auto function = parentType->type->GetFunction(name);
+TypeBase* FunctionCall::getFinalType(const TypeBase* parentType) {
+    auto function = parentType->GetFunction(name);
     if (!function) return nullptr;
+
+    if (!function->returnType)
+        return nullptr;
 
     if (next)
         return next->getFinalType(function->returnType->ResolveType());

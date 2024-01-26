@@ -23,8 +23,6 @@ public:
 
     virtual bool canCastTo(TypeBase* other) const = 0;
 
-    class TypeVariant* createVariant();
-
     class TypeReference* CreateReference() const;
 
     llvm::Type* getLlvmType();
@@ -44,7 +42,7 @@ public:
     Function* FindFunction(
         const std::string& funcName,
         const std::vector<llvm::Value *>& parameters,
-        const std::vector<const TypeVariant *>& paramTypes
+        const std::vector<TypeReference *>& paramTypes
     ) const;
 
 public:
@@ -72,7 +70,6 @@ public:
     const std::string& name;
     BitFlag<TypeFlag> flags;
 
-    // class TypeVariant* type = nullptr; // Empty if we need to infer the type.
     class TypeReference* type = nullptr; // Empty if we need to infer the type.
     Node* expression = nullptr;
     int index = 0;

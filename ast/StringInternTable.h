@@ -12,7 +12,7 @@ public:
         return *instance->strings.emplace(str).first;
     }
 
-// private:
+private:
     inline static StringInternTable* instance = nullptr;
 
     std::unordered_set<std::string> strings = {};

@@ -1,5 +1,6 @@
 #include "StaticRef.h"
 #include "VariableReference.h"
+#include "../../ast/StringInternTable.h"
 
 StaticRef* parseStaticRef(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {

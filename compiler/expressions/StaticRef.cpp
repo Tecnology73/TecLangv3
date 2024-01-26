@@ -1,18 +1,19 @@
 #include "StaticRef.h"
 #include "../Compiler.h"
+#include "../../symbolTable/SymbolTable.h"
 
 void generateStaticRef(Visitor* v, StaticRef* ref) {
     if (!ref->ownerType) {
-        ref->ownerType = Compiler::getScopeManager().getEnum(ref->name)->createVariant();
+        ref->ownerType = SymbolTable::GetInstance()->GetReference(ref->name);
         if (!ref->ownerType) {
             v->ReportError(ErrorCode::STATIC_REF_UNKNOWN, {ref->name}, ref);
             return;
         }
     }
 
-    auto key = ref->ownerType->type->GetField(ref->next->name);
+    auto key = ref->ownerType->ResolveType()->GetField(ref->next->name);
     if (!key) {
-        v->ReportError(ErrorCode::ENUM_UNKNOWN_VALUE, {ref->next->name, ref->ownerType->type->name}, ref->next);
+        v->ReportError(ErrorCode::ENUM_UNKNOWN_VALUE, {ref->next->name, ref->ownerType->name}, ref->next);
         return;
     }
 

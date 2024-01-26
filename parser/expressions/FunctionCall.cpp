@@ -1,5 +1,7 @@
 #include "FunctionCall.h"
 #include "Expression.h"
+#include "VariableReference.h"
+#include "../../ast/StringInternTable.h"
 
 FunctionCall* parseFunctionCall(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {

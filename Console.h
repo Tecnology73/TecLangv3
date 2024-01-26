@@ -13,7 +13,7 @@ struct RGB {
     int b;
 
     std::string ToString() const {
-        return std::to_string(r) + ";" + std::to_string(g) + ";" + std::to_string(b);
+        return std::format("{};{};{}", r, g, b);
     }
 };
 
@@ -33,7 +33,7 @@ struct Color {
 };
 
 template<typename... Args>
-void print(RGB color, const std::string& format, Args... args) {
+void print(const RGB& color, const std::string& format, Args... args) {
     std::cout << "\033[38;2;" << color.ToString() << "m";
     printf(format.c_str(), args...);
     std::cout << "\033[0m" << std::endl;

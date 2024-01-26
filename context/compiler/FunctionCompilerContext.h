@@ -8,8 +8,8 @@ public:
     explicit FunctionCompilerContext(Visitor* visitor, Function* function) : Context(visitor), function(function) {
     }
 
-    TypeVariant* getReturnType() override {
-        return function->returnType->ResolveType();
+    TypeReference* getReturnType() override {
+        return function->returnType;
     }
 
     void handleReturn(const Node* node) override {

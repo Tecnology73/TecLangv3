@@ -1,8 +1,7 @@
 #include "ConstructorCall.h"
 #include "Expression.h"
 #include "TypeReference.h"
-#include "../../ast/topLevel/TypeDefinition.h"
-#include "../../compiler/Compiler.h"
+#include "../../ast/StringInternTable.h"
 
 bool parseArguments(Parser* parser, ConstructorCall* c) {
     if (parser->currentToken.isNot(Token::Type::OpenParen)) {

@@ -9,8 +9,17 @@ public:
     explicit FunctionAnalysisContext(Visitor* visitor, Function* function) : Context(visitor), function(function) {
     }
 
-    TypeVariant* getReturnType() override {
-        return function->returnType->ResolveType();
+    TypeReference* getReturnType() override {
+        return function->returnType;
+    }
+
+    void handleReturn(const Node* node) override {
+    }
+
+    void handleReturn(const Node* node, llvm::Value* value) override {
+    }
+
+    void handleReturn(const Node* node, const TypeReference* type) override {
     }
 
     Node* GetNextNode() {
@@ -25,17 +34,8 @@ public:
         delete oldNode;
     }
 
-    void handleReturn(const Node* node, const TypeVariant* type) override {
-        if (!returnStatements.contains(type))
-            returnStatements.emplace(type, std::vector<const Return *>());
-
-        returnStatements[type].emplace_back(dynamic_cast<const Return *>(node));
-    }
-
 public:
     Function* const function;
-    // Keep track of return statements, so we can infer the return type if required.
-    std::map<const TypeVariant *, std::vector<const Return *>> returnStatements;
 
     unsigned astLoopIndex = 0;
 };

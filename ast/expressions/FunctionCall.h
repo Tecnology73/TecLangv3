@@ -11,10 +11,13 @@ public:
         visitor->Visit(this);
     }
 
-    TypeVariant* getFinalType() override;
+    TypeBase* getFinalType() override;
 
-    TypeVariant* getFinalType(TypeVariant* parentType) override;
+    TypeBase* getFinalType(const TypeBase* parentType) override;
 
 public:
     std::vector<Node *> arguments;
+    // During one of the early analysis stages, we lookup the function this
+    // is calling and save it so we don't have to keep performing lookups.
+    Function* function = nullptr;
 };

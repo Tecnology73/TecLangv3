@@ -14,7 +14,7 @@ public:
 public:
     Node* expression;
     std::vector<class WhenCondition *> body;
-    TypeVariant* returnType = nullptr;
+    TypeReference* returnType = nullptr;
 
     // TODO: This is a messy. Fix it.
     bool hasElse = false;

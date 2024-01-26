@@ -30,8 +30,23 @@ llvm::Value* TypeCoercion::coerce(llvm::Value* value, llvm::Type* toType, bool f
     return value;
 }
 
-TypeBase* TypeCoercion::getCommonType(const TypeVariant* typeA, const TypeVariant* typeB) {
-    return getCommonType(typeA->type, typeB->type);
+TypeReference* TypeCoercion::getCommonType(TypeReference* typeA, TypeReference* typeB) {
+    auto priorityA = getTypePriority(typeA->ResolveType());
+    auto priorityB = getTypePriority(typeB->ResolveType());
+
+    if (priorityA == priorityB) // Same type
+        return typeA;
+
+    if (priorityA == 0 || priorityB == 0) // Object?
+        return nullptr;
+
+    if (priorityA > priorityB) // Upcast A -> B
+        return typeA;
+
+    if (priorityA < priorityB) // Upcast B -> A
+        return typeB;
+
+    return nullptr; // Differing/Incompatible types
 }
 
 TypeBase* TypeCoercion::getCommonType(TypeBase* typeA, TypeBase* typeB) {
@@ -66,8 +81,8 @@ llvm::Type* TypeCoercion::getCommonType(llvm::Type* typeA, llvm::Type* typeB) {
     return typeA;
 }
 
-bool TypeCoercion::isTypeCompatible(const TypeVariant* type, const TypeVariant* otherType) {
-    return isTypeCompatible(type->type, otherType->type);
+bool TypeCoercion::isTypeCompatible(TypeReference* type, TypeReference* otherType) {
+    return isTypeCompatible(type->ResolveType(), otherType->ResolveType());
 }
 
 bool TypeCoercion::isTypeCompatible(const TypeBase* type, const TypeBase* otherType) {
@@ -136,8 +151,12 @@ int TypeCoercion::getTypePriority(const TypeBase* type) {
 }
 
 llvm::Value* TypeCoercion::coerceToInt(llvm::Value* value, llvm::Type* type) {
-    if (value->getType()->isDoubleTy())
+    if (value->getType()->isDoubleTy()) {
+        if (getBitWidth(type) < 64)
+            return nullptr;
+
         return Compiler::getBuilder().CreateFPToSI(value, type);
+    }
 
     unsigned valueBitWidth = getBitWidth(value->getType());
     unsigned targetBitWidth = getBitWidth(type);

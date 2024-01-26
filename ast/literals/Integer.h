@@ -20,13 +20,12 @@ public:
         visitor->Visit(this);
     }
 
-    TypeVariant* getType() override {
+    TypeReference* getType() override {
         if (numBits == 1)
-            return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("i8")->value)->createVariant();
+            // I can't remember why this is i8 instead of bool.
+            return SymbolTable::GetInstance()->GetReference<TypeDefinition>("i8");
 
-        return std::get<TypeDefinition *>(
-            SymbolTable::GetInstance()->Get("i" + std::to_string(numBits))->value
-        )->createVariant();
+        return SymbolTable::GetInstance()->GetReference<TypeDefinition>(std::format("i{}", numBits));
     }
 
 private:

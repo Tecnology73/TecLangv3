@@ -13,17 +13,17 @@ public:
         delete step;
         delete identifier;
 
-        for (auto &node: body)
+        for (const auto& node: body)
             delete node;
     }
 
-    void Accept(Visitor *visitor) override {
+    void Accept(Visitor* visitor) override {
         visitor->Visit(this);
     }
 
 public:
-    Node *value = nullptr; // what to loop over (range, array, etc.)
-    Node *step = nullptr; // step [expr]
-    VariableDeclaration *identifier = nullptr; // as [name] (defaults to `as it`)
+    Node* value = nullptr; // what to loop over (range, array, etc.)
+    Node* step = nullptr; // step [expr]
+    VariableDeclaration* identifier = nullptr; // as [name] (defaults to `as it`)
     std::vector<Node *> body;
 };

@@ -1,6 +1,4 @@
 #include "VarDeclaration.h"
-#include "../../compiler/Compiler.h"
-#include "../../compiler/statements/TypeDefinition.h"
 
 VariableDeclaration::VariableDeclaration(
     const Token& beginToken,
@@ -29,19 +27,3 @@ VariableDeclaration::~VariableDeclaration() {
 void VariableDeclaration::Accept(Visitor* visitor) {
     visitor->Visit(this);
 }
-
-/*TypeVariant* VariableDeclaration::GetCompiledType(Visitor* visitor) {
-    if (!type) {
-        type = inferType(visitor, this)->CreateReference();
-        if (!type) return nullptr;
-    }
-
-    if (!type->ResolveType()->type->llvmType) {
-        if (auto typeDef = dynamic_cast<TypeDefinition *>(type->type))
-            generateTypeDefinition(visitor, typeDef);
-        else
-            type->type->llvmType = Compiler::getScopeManager().getType("i32")->llvmType;
-    }
-
-    return type;
-}*/

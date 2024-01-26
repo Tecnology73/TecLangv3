@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <llvm/IR/Function.h>
 #include "../Node.h"
+#include "../../analysis/AnalysisInfo.h"
 #include "../statements/VarDeclaration.h"
 
 class FunctionParameter;
@@ -38,10 +39,15 @@ public:
     std::vector<std::string_view> parameterOrder;
     std::vector<Node *> body;
     TypeReference* returnType = nullptr;
+    // This is a TypeBase. instead of a TypeRef. because the type *must*
+    // exist if this is a type function. If the type does not exist,
+    // then how does this function exist?
     TypeBase* ownerType = nullptr;
     bool isExternal = false;
 
     llvm::Function* llvmFunction = nullptr;
+
+    AnalysisInfo* analysisInfo = nullptr;
 };
 
 class FunctionParameter : public VariableDeclaration {

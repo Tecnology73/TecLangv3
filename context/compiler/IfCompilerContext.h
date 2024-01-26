@@ -9,10 +9,6 @@ public:
     explicit IfCompilerContext(Visitor* visitor, IfStatement* node) : Context(visitor), node(node) {
     }
 
-    TypeVariant* getReturnType() override {
-        return parent->getReturnType();
-    }
-
     void handleReturn(const Node* node, llvm::Value* value) override {
         parent->handleReturn(node, value);
     }

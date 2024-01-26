@@ -2,6 +2,7 @@
 #include "../../compiler/Compiler.h"
 #include "../../compiler/TypeCoercion.h"
 #include "../../symbolTable/SymbolTable.h"
+#include "../StringInternTable.h"
 
 llvm::Value* TypeDefinition::getDefaultValue() const {
     if (name == "i8" || name == "u8")
@@ -27,7 +28,7 @@ llvm::Value* TypeDefinition::getDefaultValue() const {
 
     // Create an instance of the type.
     auto ptr = Compiler::getBuilder().CreateCall(
-        Compiler::getScopeManager().getFunction("malloc")->llvmFunction,
+        SymbolTable::GetInstance()->LookupFunction("malloc")[0]->llvmFunction,
         Compiler::getBuilder().getInt32(
             Compiler::getModule().getDataLayout().getTypeAllocSize(llvmType)
         )
@@ -42,70 +43,33 @@ bool TypeDefinition::canCastTo(TypeBase* other) const {
     return TypeCoercion::canCoerceTo(this, other);
 }
 
-/*TypeVariant* TypeDefinition::Create(const Token& token) {
-    return Create(token, token.value);
-}
-
-TypeVariant* TypeDefinition::Create(const Token& token, const std::string& name) {
-    if (const auto existingType = Compiler::getScopeManager().getType(name, true))
-        return existingType->createVariant();
-
-    const auto type = new TypeDefinition(token, name);
-    type->isDeclared = true;
-
-    Compiler::getScopeManager().add(type);
-    return type->createVariant();
-}
-
-TypeVariant* TypeDefinition::CreateTemporary(const Token& token) {
-    if (const auto existingType = Compiler::getScopeManager().getType(token.value))
-        return existingType->createVariant();
-
-    const auto type = new TypeDefinition(token, token.value);
-    Compiler::getScopeManager().add(type);
-    return type->createVariant();
-}*/
-
 TypeDefinition* TypeDefinition::Create(const Token& token) {
-    auto symbol = SymbolTable::GetInstance()->Get(StringInternTable::Intern(token.value));
-    if (symbol.has_value()) {
-        if (symbol->type != SymbolType::Type)
-            return nullptr;
+    auto& name = StringInternTable::Intern(token.value);
+    auto type = SymbolTable::GetInstance()->Get<TypeDefinition>(name);
+    if (!type) {
+        type = new TypeDefinition(token, name);
 
-        auto type = std::get<TypeDefinition *>(symbol->value);
-        type->isDeclared = true;
-
-        return type;
+        SymbolTable::GetInstance()->Add(type);
     }
 
-    auto type = new TypeDefinition(
-        token,
-        StringInternTable::Intern(token.value)
-    );
     type->isDeclared = true;
-
-    SymbolTable::GetInstance()->Add(type);
-
     return type;
 }
 
 TypeBase* TypeDefinition::CreateUndeclared(const Token& token) {
-    auto symbol = SymbolTable::GetInstance()->Get(StringInternTable::Intern(token.value));
+    auto& name = StringInternTable::Intern(token.value);
+    auto symbol = SymbolTable::GetInstance()->Get(name);
     if (symbol.has_value()) {
         if (symbol->type == SymbolType::Enum)
-            return std::get<Enum *>(symbol->value);
+            return dynamic_cast<Enum *>(symbol->value);
 
-        return std::get<TypeDefinition *>(symbol->value);
+        return dynamic_cast<TypeDefinition *>(symbol->value);
     }
 
     // Create a new type.
-    auto type = new TypeDefinition(
-        token,
-        StringInternTable::Intern(token.value)
-    );
+    auto type = new TypeDefinition(token, name);
     // Don't mark it as declared.
 
     SymbolTable::GetInstance()->Add(type);
-
     return type;
 }

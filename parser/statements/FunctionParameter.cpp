@@ -1,5 +1,6 @@
 #include "FunctionParameter.h"
 #include "../../ast/topLevel/TypeDefinition.h"
+#include "../../ast/StringInternTable.h"
 
 bool parseFunctionParameter(Parser* parser, Function* function, const bool isNameOptional) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {

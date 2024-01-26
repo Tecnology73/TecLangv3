@@ -2,15 +2,14 @@
 
 #include <llvm/IR/Value.h>
 #include <string>
-#include "../../ast/Expressions.h"
 #include "../Compiler.h"
 #include "../statements/TypeDefinition.h"
 #include "../ErrorManager.h"
 #include "../TypeCoercion.h"
 #include "../../context/compiler/VarDeclarationCompilerContext.h"
 
-void generateConstructorCall(Visitor* v, ConstructorCall* node) {
-    auto nodeType = node->type->ResolveType()->type;
+void generateConstructorCall(Visitor* v, const ConstructorCall* node) {
+    auto nodeType = node->type->ResolveType();
     generateTypeDefinition(v, nodeType);
 
     // FIXME: This could probably be a little cleaner/efficient if we just pass in `node->parameters`
@@ -21,8 +20,8 @@ void generateConstructorCall(Visitor* v, ConstructorCall* node) {
     std::vector<llvm::Value *> args = {
         context->var->alloc
     };
-    std::vector<const TypeVariant *> argTypes{
-        context->var->type->ResolveType()
+    std::vector<TypeReference *> argTypes{
+        context->var->type
     };
     for (const auto& item: node->arguments) {
         item->Accept(v);
@@ -39,7 +38,7 @@ void generateConstructorCall(Visitor* v, ConstructorCall* node) {
     if (!constructFunction) {
         std::string argTypesStr;
         for (const auto& type: argTypes) {
-            argTypesStr += type->type->name;
+            argTypesStr += type->name;
             if (&type != &argTypes.back()) argTypesStr += ", ";
         }
 
@@ -51,7 +50,7 @@ void generateConstructorCall(Visitor* v, ConstructorCall* node) {
     for (int i = 0; i < args.size(); i++)
         args[i] = TypeCoercion::coerce(
             args[i],
-            constructFunction->GetParameter(i)->type->ResolveType()->type->llvmType
+            constructFunction->GetParameter(i)->type->ResolveType()->llvmType
         );
 
     // Call the constructor
@@ -72,7 +71,7 @@ void generateConstructorCall(Visitor* v, ConstructorCall* node) {
         VisitorResult result;
         if (!v->TryGetResult(result)) return;
 
-        auto type = TypeCoercion::coerce(result.value, field->type->ResolveType()->type->getLlvmType());
+        auto type = TypeCoercion::coerce(result.value, field->type->ResolveType()->getLlvmType());
         if (type == nullptr) {
             v->ReportError(ErrorCode::UNKNOWN_ERROR, {}, item);
             return;

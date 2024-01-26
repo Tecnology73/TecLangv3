@@ -1,4 +1,5 @@
 #include "TypeReference.h"
+#include "../../ast/StringInternTable.h"
 
 TypeReference* parseTypeReference(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {

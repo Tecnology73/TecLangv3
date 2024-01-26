@@ -1,6 +1,7 @@
 #include "SymbolTable.h"
 #include "../ast/TopLevel.h"
 #include "../compiler/TypeCoercion.h"
+#include "../ast/StringInternTable.h"
 
 SymbolTable* SymbolTable::instance = nullptr;
 
@@ -85,21 +86,9 @@ bool SymbolTable::Has(const std::string& name) const {
     return Get(name).has_value();
 }
 
-bool SymbolTable::Has(const std::string& name, const SymbolType allowedTypes) const {
-    return Get(name, allowedTypes).has_value();
-}
-
 std::optional<SymbolN> SymbolTable::Get(const std::string& name) const {
     auto it = symbols.find(name);
     if (it == symbols.end())
-        return std::nullopt;
-
-    return it->second;
-}
-
-std::optional<SymbolN> SymbolTable::Get(const std::string& name, const SymbolType allowedTypes) const {
-    auto it = symbols.find(name);
-    if (it == symbols.end() || (it->second.type & allowedTypes) == SymbolType::Unknown)
         return std::nullopt;
 
     return it->second;
@@ -130,8 +119,8 @@ Function* SymbolTable::LookupFunction(const std::string& name, const std::vector
         bool match = true;
         unsigned i = 0;
         for (const auto& param: function->parameters | std::views::values) {
-            auto paramType = param->type->ResolveType()->type;
-            auto argType = args[i++]->ResolveType()->type;
+            auto paramType = param->type->ResolveType();
+            auto argType = args[i++]->ResolveType();
             if (!TypeCoercion::isTypeCompatible(argType, paramType)) {
                 match = false;
                 break;

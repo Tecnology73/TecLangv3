@@ -1,5 +1,6 @@
 #include "Enum.h"
 #include "../../compiler/Compiler.h"
+#include "../../symbolTable/SymbolTable.h"
 
 llvm::Value* Enum::getDefaultValue() const {
     return Compiler::getBuilder().getInt32(0);
@@ -10,13 +11,14 @@ bool Enum::canCastTo(TypeBase* other) const {
 }
 
 Enum* Enum::Create(const Token& token, const std::string& name) {
-    if (auto existingEnum = Compiler::getScopeManager().getEnum(name, true))
+    // FIXME: Don't overwrite a TypeDef if that already exists with the same name.
+    if (auto existingEnum = SymbolTable::GetInstance()->Get<Enum>(name); existingEnum->isDeclared)
         return existingEnum;
 
     auto anEnum = new Enum(token, name);
     anEnum->isDeclared = true;
 
-    Compiler::getScopeManager().add(anEnum);
+    SymbolTable::GetInstance()->Add(anEnum);
 
     return anEnum;
 }

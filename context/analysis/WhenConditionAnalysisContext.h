@@ -6,10 +6,11 @@
 
 class WhenConditionAnalysisContext : public Context {
 public:
-    explicit WhenConditionAnalysisContext(Visitor* visitor, WhenCondition* condition) : Context(visitor), condition(condition) {
+    explicit WhenConditionAnalysisContext(Visitor* visitor, WhenCondition* condition) : Context(visitor),
+        condition(condition) {
     }
 
-    TypeVariant* getReturnType() override {
+    TypeReference* getReturnType() override {
         return parent->getReturnType();
     }
 
@@ -25,12 +26,8 @@ public:
         delete oldNode;
     }
 
-    void handleReturn(const Node* node, const TypeVariant* type) override {
-        parent->handleReturn(node, type);
-    }
-
     bool isParentReturn() const {
-        return dynamic_cast<WhenAnalysisContext*>(parent)->isParentReturn();
+        return dynamic_cast<WhenAnalysisContext *>(parent)->isParentReturn();
     }
 
 public:

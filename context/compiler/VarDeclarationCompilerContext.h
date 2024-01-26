@@ -8,8 +8,8 @@ public:
     explicit VarDeclarationCompilerContext(Visitor* visitor, VariableDeclaration* var) : Context(visitor), var(var) {
     }
 
-    TypeVariant* getReturnType() override {
-        return var->type->ResolveType();
+    TypeReference* getReturnType() override {
+        return var->type;
     }
 
 public:

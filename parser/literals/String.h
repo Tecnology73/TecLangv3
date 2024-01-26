@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../ast/Literals.h"
 #include "../Parser.h"
+#include "../../ast/literals/String.h"
 #include "../../ast/StringInternTable.h"
 
 String* parseString(Parser* parser) {

@@ -1,6 +1,5 @@
 #include "Parser.h"
 #include <format>
-#include "../App.h"
 #include "expressions/Function.h"
 #include "topLevel/TypeDefinition.h"
 #include "topLevel/Enum.h"

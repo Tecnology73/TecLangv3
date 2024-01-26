@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../ast/Expressions.h"
-#include "../Parser.h"
+#include "../../ast/expressions/When.h"
 
 When *parseWhen(Parser *parser);

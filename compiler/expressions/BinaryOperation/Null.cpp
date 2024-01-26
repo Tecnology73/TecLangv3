@@ -24,7 +24,7 @@ llvm::Value* BinaryOperation_Null::generateEqual(Visitor* v, const BinaryOperati
     v->TryGetResult(rhsResult);
     if (rhs == nullptr) return nullptr;
 
-    rhs = TypeCoercion::coerce(rhs, lhsResult.type->type->getLlvmType());
+    rhs = TypeCoercion::coerce(rhs, lhsResult.type->ResolveType()->getLlvmType());
 
     return BinaryOperation_Value::generateEqual(lhs, rhs);
 }
@@ -47,7 +47,7 @@ llvm::Value* BinaryOperation_Null::generateNotEqual(Visitor* v, const BinaryOper
     v->TryGetResult(rhsResult);
     if (rhs == nullptr) return nullptr;
 
-    rhs = TypeCoercion::coerce(rhs, lhsResult.type->type->getLlvmType());
+    rhs = TypeCoercion::coerce(rhs, lhsResult.type->ResolveType()->getLlvmType());
 
     return BinaryOperation_Value::generateNotEqual(lhs, rhs);
 }
@@ -75,9 +75,9 @@ llvm::Value* BinaryOperation_Null::generateAssign(Visitor* v, const BinaryOperat
     if (rhs == nullptr)
         return nullptr;
 
-    rhs = TypeCoercion::coerce(rhs, lhsResult.type->type->getLlvmType());
+    rhs = TypeCoercion::coerce(rhs, lhsResult.type->ResolveType()->getLlvmType());
 
-    if (lhsResult.type->type->name == "string") {
+    if (lhsResult.type->name == "string") {
         // String literals are stored as a global.
         // Inside a function, we normally load the value if it's a pointer (which it is in the case of a string).
         // This is a bit of a hack to get around that.
@@ -87,7 +87,7 @@ llvm::Value* BinaryOperation_Null::generateAssign(Visitor* v, const BinaryOperat
         }
 
         return Compiler::getBuilder().CreateCall(
-            lhsResult.type->type->GetFunction("assign")->llvmFunction,
+            lhsResult.type->ResolveType()->GetFunction("assign")->llvmFunction,
             {lhs, rhs}
         );
     }
@@ -117,7 +117,7 @@ llvm::Value* BinaryOperation_Null::generateIs(Visitor* v, const BinaryOperation*
     // (int | double | bool | string) is type
     if (auto literal = dynamic_cast<Literal *>(node->lhs)) {
         auto lhsType = literal->getType();
-        auto rhsType = dynamic_cast<StaticRef *>(node->rhs)->getFinalType();
+        auto rhsType = dynamic_cast<StaticRef *>(node->rhs)->getFinalType()->CreateReference();
 
         return Compiler::getBuilder().getInt1(
             TypeCoercion::isTypeCompatible(lhsType, rhsType)

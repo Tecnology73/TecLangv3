@@ -8,13 +8,6 @@ public:
     explicit ForLoopCompilerContext(Visitor* visitor, ForLoop* loop): Context(visitor), loop(loop) {
     }
 
-    TypeVariant* getReturnType() override {
-        if (!parent)
-            return nullptr;
-
-        return parent->getReturnType();
-    }
-
     void handleReturn(const Node* node, llvm::Value* value) override {
         Compiler::getBuilder().CreateRet(value);
     }

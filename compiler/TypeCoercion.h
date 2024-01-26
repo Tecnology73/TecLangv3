@@ -10,11 +10,11 @@ public:
 
     static llvm::Value* coerce(llvm::Value* value, llvm::Type* toType, bool forcePointerCast = false);
 
-    static bool isTypeCompatible(const TypeVariant* type, const TypeVariant* otherType);
+    static bool isTypeCompatible(TypeReference* type, TypeReference* otherType);
 
     static bool isTypeCompatible(const TypeBase* type, const TypeBase* otherType);
 
-    static TypeBase* getCommonType(const TypeVariant* typeA, const TypeVariant* typeB);
+    static TypeReference* getCommonType(TypeReference* typeA, TypeReference* typeB);
 
     static TypeBase* getCommonType(TypeBase* typeA, TypeBase* typeB);
 
@@ -23,6 +23,7 @@ public:
     static bool canCoerceTo(const TypeBase* fromType, const TypeBase* toType);
 
 private:
+    // Items placed higher in this list will allow for lower items to be coerced up to them.
     enum class Priority {
         None = 0,
         Boolean,

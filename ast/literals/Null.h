@@ -13,7 +13,7 @@ public:
         visitor->Visit(this);
     }
 
-    TypeVariant* getType() override {
-        return std::get<TypeDefinition *>(SymbolTable::GetInstance()->Get("ptr")->value)->createVariant();
+    TypeReference* getType() override {
+        return SymbolTable::GetInstance()->GetReference<TypeDefinition>("ptr");
     }
 };

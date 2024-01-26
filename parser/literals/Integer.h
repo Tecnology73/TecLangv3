@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../ast/Literals.h"
 #include "../Parser.h"
+#include "../../ast/literals/Integer.h"
 
 Integer *parseInteger(Parser *parser) {
     if (parser->currentToken.isNot(Token::Type::Integer)) {

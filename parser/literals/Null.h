@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../../ast/Literals.h"
 #include "../Parser.h"
+#include "../../ast/literals/Null.h"
 
-Null *parseNull(Parser *parser) {
+Null* parseNull(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::Null)) {
         parser->PrintSyntaxError("null");
         return nullptr;

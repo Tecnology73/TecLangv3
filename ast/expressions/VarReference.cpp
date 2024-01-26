@@ -1,18 +1,18 @@
 #include "VarReference.h"
 #include "../../compiler/Compiler.h"
 
-TypeVariant* VariableReference::getFinalType() {
+TypeBase* VariableReference::getFinalType() {
     auto variable = Compiler::getScopeManager().GetVar(name);
     if (!variable) return nullptr;
 
     if (next)
-        return next->getFinalType(variable->narrowedType);
+        return next->getFinalType(variable->narrowedType->ResolveType());
 
-    return variable->narrowedType;
+    return variable->narrowedType->ResolveType();
 }
 
-TypeVariant* VariableReference::getFinalType(TypeVariant* parentType) {
-    auto type = parentType->type->GetField(name)->type;
+TypeBase* VariableReference::getFinalType(const TypeBase* parentType) {
+    auto type = parentType->GetField(name)->type;
     if (next)
         return next->getFinalType(type->ResolveType());
 

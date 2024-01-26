@@ -1,0 +1,68 @@
+// Import everything from a package.
+// Access things as [filename].*
+import std.win32.*
+
+func main() {
+    io.log("", 4)
+    return 0
+}
+
+// ----------------------------------------------------
+// Import everything from a package and give it an alias.
+// Access things as win32.*
+import std.win32.* as win32
+
+func main() {
+    win32.log("", 4)
+    return 0
+}
+
+// ----------------------------------------------------
+// Import a specific file from a package
+// Everything imported is treated as if it were in this file.
+// If there is a conflict between functions,
+// the function in this file takes precedence.
+import std.win32.io
+
+func main() {
+    log("", 4)
+    return 0
+}
+
+// ----------------------------------------------------
+// How would this work with 2 overlapping functions in the same package?
+// Are files within the same package automatically imported?
+// Should you explicitly import them?
+// It should probably be explicit imports :FeelsThinkingMan:
+// If you import 2 files and the functions overlap, I could show a warning
+// and then just choose the function from the latest import.
+// I think error'ing on this would cause headaches for
+// developers in some cases :PU_pepeThinkBaguette:
+
+// user.tec
+func log() { }
+
+// account.tec
+func log() { }
+
+// main.tec
+func main() {
+    log() // Which log is called???
+    return 0
+}
+
+// ----------------------------------------------------
+// user.tec
+func log() {}
+
+// account.tec
+func log() {}
+
+// main.tec
+import user
+import account
+
+func main() {
+    log() // Warning: log() from account.tec is called
+    return 0
+}

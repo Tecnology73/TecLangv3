@@ -1,104 +1,11 @@
-/*extern func GetStdHandle(i32) ptr
-extern func WriteConsoleA(ptr, ptr, u32, ptr, ptr) u32
-
-// func log(str: string, len: u64) void {
-func log(str: string) void {
-    stdout = GetStdHandle(-11)
-    // WriteConsoleA(stdout, str, len, null, null)
-    WriteConsoleA(stdout, str, str.length, null, null)
-    WriteConsoleA(stdout, "\n", 1, null, null)
-}
-
-func main() i32 {
-    // str = "Hello, World!"
-    // log(str, str.length)
-    log("Hello, World!")
-
-    return 0
-}*/
-
-extern func malloc(u64) ptr
-extern func realloc(ptr, u64) ptr
-// extern func calloc(u64, u64) ptr
-// extern func free(ptr) void
-
-extern func ceil(double) double
-extern func printf(ptr) void
-
-extern func strlen(ptr) u64
-extern func strcat(ptr, ptr) ptr
-extern func strcpy(ptr, ptr) ptr
-
-// extern func GetStdHandle(i32) ptr
-// extern func WriteConsoleA(ptr, ptr, u32, ptr, ptr) u32
-
-type string {
-    priv data: ptr
-    priv capacity: u64
-    length: u64
-}
-
-func<string> resize(newLength: u64) {
-    if this.capacity <= newLength {
-        this.capacity = ceil(newLength / 8.0) * 8
-        this.data = realloc(this.data, this.capacity)
-    }
-
-    this.length = newLength
-}
-
-func<string> tryResize(addLength: u64) {
-    newLength = this.length + addLength
-    if this.capacity <= newLength {
-        this.capacity = ceil(newLength / 8.0) * 8
-        this.data = realloc(this.data, this.capacity)
-    }
-
-    this.length = newLength
-}
-
-func<string> assign(str: ptr) {
-    resize(strlen(str))
-    strcpy(this.data, str)
-}
-
-func<string> append(str: ptr) {
-    tryResize(strlen(str))
-    strcat(this.data, str)
-}
-
-func main() i32 {
-    // str: string = new string()
-    str: string = "Something"
-
-    str.append("Else")
-    printf("%s\n", str)
-
-    // str = "other"
-
-    // str.assign("Hello, ")
-    /*str = "Hello, "
-    printf("%s\n", str)
-    printf("Length: %d\n", str.length)
-    printf("Capacity: %d\n", str.capacity)
-    printf("---\n")
-
-    str.append("World!")
-    printf("%s\n", str)
-    printf("Length: %d\n", str.length)
-    printf("Capacity: %d\n", str.capacity)
-    printf("---\n")*/
-
-    // stdout = GetStdHandle(-11)
-    // WriteConsoleA(stdout, str, str.length, null, null)
-    // WriteConsoleA(stdout, "\n", 1, null, null)
-
-    return 0
-}
-
-/*import std.win32.*
-
 func main() {
-    log("Hello, World!")
-    return 0
-}*/
+    return a()
+}
+
+func a() {
+    return b()
+}
+
+func b() {
+    return 42.69
+}

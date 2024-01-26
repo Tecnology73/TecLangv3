@@ -1,11 +1,12 @@
 #include "Return.h"
 #include "../../compiler/Compiler.h"
+#include "../../symbolTable/SymbolTable.h"
 
 void ReturnAnalyzer::Analyze() {
     if (!node->expression) {
         Compiler::getScopeManager().getContext()->handleReturn(
             node,
-            Compiler::getScopeManager().getType("void")->createVariant()
+            SymbolTable::GetInstance()->GetReference("void")
         );
         return;
     }

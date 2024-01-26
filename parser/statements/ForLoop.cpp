@@ -2,6 +2,7 @@
 #include "../expressions/Expression.h"
 #include "../../compiler/Compiler.h"
 #include "../../ast/Literals.h"
+#include "../../ast/StringInternTable.h"
 
 ForLoop* parseForLoop(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::For)) {
@@ -29,7 +30,7 @@ ForLoop* parseForLoop(Parser* parser) {
             }
 
             identifier = new VariableDeclaration(parser->currentToken, parser->currentToken.value.data());
-            identifier->type = TypeReference::Infer();
+            // identifier->type = TypeReference::Infer();
 
             parser->NextToken(); // Consume identifier
         } else if (parser->currentToken.is(Token::Type::Step)) {
@@ -47,8 +48,9 @@ ForLoop* parseForLoop(Parser* parser) {
     // If no identifier was specified, create one.
     if (!identifier) {
         identifier = new VariableDeclaration(loop->token, StringInternTable::Intern("it"));
+        // TODO: This should be inferred from the type of the expression.
         // identifier->type = TypeReference::Infer();
-        identifier->type = std::get<TypeDefinition*>(SymbolTable::GetInstance()->Get("i32")->value)->CreateReference();
+        identifier->type = SymbolTable::GetInstance()->GetReference<TypeDefinition>("i32");
         // We default to zero here.
         // We'll set this to the actual start expression when we generate the for loop.
         identifier->expression = new Integer(loop->token, 0);

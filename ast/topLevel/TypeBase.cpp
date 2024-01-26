@@ -1,14 +1,10 @@
 #include "TypeBase.h"
-#include "TypeVariant.h"
 #include "Function.h"
 #include <llvm/IR/DerivedTypes.h>
 #include "../../compiler/Compiler.h"
 #include "../../compiler/statements/TypeDefinition.h"
 #include "../../compiler/TypeCoercion.h"
-
-TypeVariant* TypeBase::createVariant() {
-    return new TypeVariant(this);
-}
+#include "../StringInternTable.h"
 
 TypeReference* TypeBase::CreateReference() const {
     return new TypeReference(token, StringInternTable::Intern(name));
@@ -88,7 +84,7 @@ Function* TypeBase::GetFunction(const std::string& funcName) const {
 Function* TypeBase::FindFunction(
     const std::string& funcName,
     const std::vector<llvm::Value *>& parameters,
-    const std::vector<const TypeVariant *>& paramTypes
+    const std::vector<TypeReference *>& paramTypes
 ) const {
     auto it = functions.find(funcName);
     if (it == functions.end())
@@ -100,9 +96,9 @@ Function* TypeBase::FindFunction(
         bool match = true;
         for (int i = 0; i < parameters.size(); i++) {
             auto arg = function->GetParameter(i);
-            auto variant = paramTypes[i];
+            auto paramType = paramTypes[i];
 
-            if (!TypeCoercion::isTypeCompatible(variant->type, arg->type->ResolveType()->type)) {
+            if (!TypeCoercion::isTypeCompatible(paramType, arg->type)) {
                 match = false;
                 break;
             }

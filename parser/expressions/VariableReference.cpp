@@ -1,6 +1,7 @@
 #include "VariableReference.h"
 #include "FunctionCall.h"
 #include "StaticRef.h"
+#include "../../ast/StringInternTable.h"
 
 ChainableNode* parseChainable(Parser* parser) {
     switch (parser->PeekToken().type) {

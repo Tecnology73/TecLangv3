@@ -8,10 +8,8 @@
 
 class Compiler {
 public:
-    Compiler() :
-        module("MyModule", context),
-        builder(context),
-        scopeManager(context) {
+    Compiler() : module("MyModule", context),
+                 builder(context) {
         llvm::InitializeAllTargets();
         llvm::InitializeAllTargetMCs();
         llvm::InitializeAllAsmParsers();
@@ -22,18 +20,18 @@ public:
         module.setTargetTriple("x86_64-pc-windows-msvc");
     }
 
-    static Compiler &getInstance() {
+    static Compiler& getInstance() {
         static Compiler instance;
         return instance;
     }
 
-    static llvm::LLVMContext &getContext() { return getInstance().context; }
+    static llvm::LLVMContext& getContext() { return getInstance().context; }
 
-    static llvm::Module &getModule() { return getInstance().module; }
+    static llvm::Module& getModule() { return getInstance().module; }
 
-    static llvm::IRBuilder<> &getBuilder() { return getInstance().builder; }
+    static llvm::IRBuilder<>& getBuilder() { return getInstance().builder; }
 
-    static ScopeManager &getScopeManager() { return getInstance().scopeManager; }
+    static ScopeManager& getScopeManager() { return getInstance().scopeManager; }
 
 private:
     llvm::LLVMContext context;

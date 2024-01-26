@@ -4,10 +4,8 @@
 #include "../../symbolTable/SymbolTable.h"
 
 void FunctionAnalyzer::Analyze() {
-    if (node->isExternal) {
-        Compiler::getScopeManager().add(node);
+    if (node->isExternal)
         return;
-    }
 
     if (node->ownerType && !node->ownerType->isDeclared) {
         visitor->ReportError(ErrorCode::TYPE_UNKNOWN, {node->ownerType->name}, node->ownerType);
@@ -47,40 +45,48 @@ void FunctionAnalyzer::Analyze() {
     Compiler::getScopeManager().popContext();
     Compiler::getScopeManager().leave(std::string(node->name));
 
-    // Register the function
-    if (!node->ownerType)
-        Compiler::getScopeManager().add(node);
-
-    visitor->AddSuccess(node->returnType->ResolveType());
+    visitor->AddSuccess(node->returnType);
 }
 
 bool FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) {
-    // Collect all of the return types seen
-    std::set<const TypeVariant *> returnTypes;
-    for (const auto& key: context->returnStatements | std::views::keys)
-        returnTypes.emplace(key);
+    if (node->returnType)
+        return true;
 
-    // Reduce all common types
-    reduceReturnTypes(returnTypes);
+    while (!node->analysisInfo->unknownReturnTypes.empty()) {
+        auto unknown = node->analysisInfo->unknownReturnTypes.top();
 
-    if (returnTypes.empty()) {
-        // If there are no return statements and a return type hasn't been specified,
-        // it should be safe to assume that the return type is void.
-        if (!node->returnType)
-            node->returnType = std::get<TypeDefinition *>(
-                SymbolTable::GetInstance()->Get("void")->value
-            )->CreateReference();
-    } else if (returnTypes.size() != 1) {
-        visitor->ReportError(ErrorCode::FUNCTION_MULTIPLE_RETURN_TYPES, {std::string(node->name)}, node);
-        return false;
-    } else if (!node->returnType) {
-        node->returnType = (*returnTypes.begin())->CreateReference();
+        // Try to resolve the type.
+        unknown->Accept(visitor);
+
+        VisitorResult result;
+        if (!visitor->TryGetResult(result)) return false;
+
+        // We know what the type is now.
+        auto it = node->analysisInfo->possibleReturnTypes.find(result.type->name);
+        if (it == node->analysisInfo->possibleReturnTypes.end())
+            it = node->analysisInfo->possibleReturnTypes.emplace(result.type->name, std::vector<Node *>()).first;
+
+        it->second.push_back(result.type);
+
+        // We don't pop it until here so that we can maybe
+        // use it to show a more detailed error message.
+        node->analysisInfo->unknownReturnTypes.pop();
     }
 
-    if (node->returnType->name == "void" && context->returnStatements.empty())
-        node->body.push_back(new Return(Token{}));
+    if (!node->analysisInfo->unknownReturnTypes.empty()) {
+        // Change error to "unable to infer return type".
+        visitor->ReportError(ErrorCode::FUNCTION_MULTIPLE_RETURN_TYPES, {node->name}, node);
+        return false;
+    }
 
-    return true;
+    if (node->analysisInfo->possibleReturnTypes.size() > 1) {
+        visitor->ReportError(ErrorCode::FUNCTION_MULTIPLE_RETURN_TYPES, {node->name}, node);
+        return false;
+    }
+
+    node->returnType = SymbolTable::GetInstance()->GetReference(
+        std::string(node->analysisInfo->possibleReturnTypes.begin()->first)
+    );
 }
 
 /// <summary>
@@ -88,10 +94,10 @@ bool FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) 
 /// For example, if a bool & i8 are returned, the common type would be i8.
 /// The goal is to reduce the number of return types to 1.
 /// </summary>
-void FunctionAnalyzer::reduceReturnTypes(std::set<const TypeVariant *>& types) {
+void FunctionAnalyzer::reduceReturnTypes(std::set<TypeReference *>& types) {
     if (types.size() <= 1) return;
 
-    std::vector<const TypeVariant *> typesArray;
+    std::vector<TypeReference *> typesArray;
     typesArray.reserve(types.size());
     for (const auto& item: types)
         typesArray.emplace_back(item);

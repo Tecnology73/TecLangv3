@@ -76,9 +76,9 @@ bool WhenAnalyzer::exhaustiveCaseCheck() {
 }
 
 void WhenAnalyzer::inferReturnTypes(const WhenAnalysisContext* context) {
-    // Collect all of the return types seen
-    std::set<const TypeVariant *> returnTypes;
-    for (const auto& key: context->returnStatements | std::views::keys)
+    // Collect all the return types seen
+    /*std::set<const TypeVariant *> returnTypes;
+    for (const auto &key: context->returnStatements | std::views::keys)
         returnTypes.emplace(key);
 
     // Reduce all common types
@@ -87,12 +87,12 @@ void WhenAnalyzer::inferReturnTypes(const WhenAnalysisContext* context) {
     if (returnTypes.empty()) {
         // If there are no return statements,
         // it should be safe to assume that the return type is void.
-        node->returnType = Compiler::getScopeManager().getType("void")->createVariant();
+        node->returnType = SymbolTable::GetInstance()->GetVariant<TypeDefinition>("void");
     } else if (returnTypes.size() != 1) {
         visitor->ReportError(ErrorCode::WHEN_MULTIPLE_RETURN_TYPES, {}, node);
     } else if (!node->returnType) {
         node->returnType = const_cast<TypeVariant *>(*returnTypes.begin());
-    }
+    }*/
 }
 
 /// <summary>
@@ -100,10 +100,10 @@ void WhenAnalyzer::inferReturnTypes(const WhenAnalysisContext* context) {
 /// For example, if a bool & i8 are returned, the common type would be i8.
 /// The goal is to reduce the number of return types to 1.
 /// </summary>
-void WhenAnalyzer::reduceReturnTypes(std::set<const TypeVariant *>& types) {
+void WhenAnalyzer::reduceReturnTypes(std::set<TypeReference *>& types) {
     if (types.size() <= 1) return;
 
-    std::vector<const TypeVariant *> typesArray;
+    std::vector<TypeReference *> typesArray;
     typesArray.reserve(types.size());
     for (const auto& item: types)
         typesArray.emplace_back(item);

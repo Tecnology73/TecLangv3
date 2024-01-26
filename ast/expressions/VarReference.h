@@ -11,7 +11,10 @@ public:
         visitor->Visit(this);
     }
 
-    TypeVariant* getFinalType() override;
+    TypeBase* getFinalType() override;
 
-    TypeVariant* getFinalType(TypeVariant* parentType) override;
+    TypeBase* getFinalType(const TypeBase* parentType) override;
+
+public:
+    TypeReference* type = nullptr;
 };

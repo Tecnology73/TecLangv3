@@ -67,7 +67,7 @@ void BinaryOperationAnalyzer::analyzeAssign() {
     // TODO: Support other types (like arrays) that proxy to their internal data.
     // If the right-most node (of LHS) is a string, we do not want to load it.
     // We have special `T_assign` functions that take in the struct as the first argument.
-    if (chainNode->getFinalType()->type->name == "string")
+    if (chainNode->getFinalType()->name == "string")
         chainNode->loadInternalData = false;
 
     VisitorResult rhsResult;
@@ -79,8 +79,8 @@ void BinaryOperationAnalyzer::analyzeAssign() {
         visitor->ReportError(
             ErrorCode::ASSIGN_TYPE_MISMATCH,
             {
-                lhsResult.type->type->name,
-                rhsResult.type->type->name
+                lhsResult.type->name,
+                rhsResult.type->name
             },
             node
         );
@@ -95,8 +95,11 @@ void BinaryOperationAnalyzer::analyzeIs() {
         if (auto null = dynamic_cast<Null *>(node->rhs))
             Compiler::getScopeManager().getContext()->narrowType(chainNode, null->getType());
         else if (auto staticRef = dynamic_cast<StaticRef *>(node->rhs))
-            Compiler::getScopeManager().getContext()->narrowType(chainNode, staticRef->getFinalType());
+            Compiler::getScopeManager().getContext()->narrowType(
+                chainNode,
+                staticRef->getFinalType()->CreateReference()
+            );
     }
 
-    visitor->AddSuccess(Compiler::getScopeManager().getType("bool"));
+    visitor->AddSuccess(SymbolTable::GetInstance()->GetReference("bool"));
 }

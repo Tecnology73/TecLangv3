@@ -1,49 +1,45 @@
 #include "TypeDefinition.h"
-
-#include "../../compiler/Compiler.h"
-#include "../../symbolTable/SymbolTable.h"
-#include "../../ast/expressions/TypeReference.h"
 #include "../expressions/Expression.h"
 #include "../expressions/TypeReference.h"
+#include "../../ast/StringInternTable.h"
+#include "../../symbolTable/SymbolTable.h"
 
-namespace {
-    TypeField* parseField(Parser* parser) {
-        auto isPublic = parser->currentToken.is(Token::Type::Public);
-        auto isPrivate = parser->currentToken.is(Token::Type::Private);
-        if (parser->currentToken.is(Token::Type::Public, Token::Type::Private))
-            parser->NextToken(); // Consume 'public' or 'private'
+TypeField* parseField(Parser* parser) {
+    auto isPublic = parser->currentToken.is(Token::Type::Public);
+    auto isPrivate = parser->currentToken.is(Token::Type::Private);
+    if (parser->currentToken.is(Token::Type::Public, Token::Type::Private))
+        parser->NextToken(); // Consume 'public' or 'private'
 
-        // TODO: Would it be confusing allowing keywords to have different meanings based on the context?
-        // Instead of explicitly listing "type" to be allowed here, we should probably tokenize
-        // things differently so that we can allow other keywords.
-        if (parser->currentToken.isNot(Token::Type::Identifier, Token::Type::Type)) {
-            parser->PrintSyntaxError("field name");
-            return nullptr;
-        }
-
-        auto field = new TypeField(
-            parser->currentToken,
-            StringInternTable::Intern(parser->currentToken.value)
-        );
-        if (isPublic) field->flags.Set(TypeFlag::PUBLIC);
-        else if (isPrivate) field->flags.Set(TypeFlag::PRIVATE);
-
-        if (parser->NextToken().is(Token::Type::Colon)) {
-            parser->NextToken(); // Consume ':'
-
-            field->type = parseTypeReference(parser);
-        } else
-            field->type = TypeReference::Infer();
-
-        if (parser->currentToken.is(Token::Type::Assign)) {
-            parser->NextToken(); // Consume '='
-            field->expression = parseExpression(parser);
-            if (!field->expression)
-                return nullptr;
-        }
-
-        return field;
+    // TODO: Would it be confusing allowing keywords to have different meanings based on the context?
+    // Instead of explicitly listing "type" to be allowed here, we should probably tokenize
+    // things differently so that we can allow other keywords.
+    if (parser->currentToken.isNot(Token::Type::Identifier, Token::Type::Type)) {
+        parser->PrintSyntaxError("field name");
+        return nullptr;
     }
+
+    auto field = new TypeField(
+        parser->currentToken,
+        StringInternTable::Intern(parser->currentToken.value)
+    );
+    if (isPublic) field->flags.Set(TypeFlag::PUBLIC);
+    else if (isPrivate) field->flags.Set(TypeFlag::PRIVATE);
+
+    if (parser->NextToken().is(Token::Type::Colon)) {
+        parser->NextToken(); // Consume ':'
+
+        field->type = parseTypeReference(parser);
+    } /* else
+        field->type = TypeReference::Infer();*/
+
+    if (parser->currentToken.is(Token::Type::Assign)) {
+        parser->NextToken(); // Consume '='
+        field->expression = parseExpression(parser);
+        if (!field->expression)
+            return nullptr;
+    }
+
+    return field;
 }
 
 TypeDefinition* parseTypeDefinition(Parser* parser) {

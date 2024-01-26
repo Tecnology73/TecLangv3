@@ -4,8 +4,7 @@
 #include "../lexer/Token.h"
 
 class TypeBase;
-
-class TypeVariant;
+class TypeReference;
 
 class Node {
 public:
@@ -36,9 +35,9 @@ public:
     ChainableNode(const Token& beginToken, const std::string& name) : Node(beginToken), name(name) {
     }
 
-    virtual TypeVariant* getFinalType() = 0;
+    virtual TypeBase* getFinalType() = 0;
 
-    virtual TypeVariant* getFinalType(TypeVariant* parentType) = 0;
+    virtual TypeBase* getFinalType(const TypeBase* parentType) = 0;
 
     std::string GetText() const override {
         std::string value = name;
@@ -53,7 +52,7 @@ public:
     ChainableNode* prev = nullptr;
     ChainableNode* next = nullptr;
 
-    TypeVariant* ownerType = nullptr;
+    TypeReference* ownerType = nullptr;
     // If true, when we generate the load instructions, we will return the data from inside the struct.
     // If false, we will return the struct itself.
     bool loadInternalData = false;
@@ -67,5 +66,5 @@ public:
         throw std::runtime_error("Literal::Accept() should never be called.");
     }
 
-    virtual TypeVariant* getType() = 0;
+    virtual TypeReference* getType() = 0;
 };

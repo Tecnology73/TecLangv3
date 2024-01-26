@@ -21,12 +21,12 @@ public:
         delete oldNode;
     }
 
-    void handleReturn(const Node* node, const TypeVariant* type) override {
+    void handleReturn(const Node* node, const TypeReference* type) override {
         hasReturned = true;
         parent->handleReturn(node, type);
     }
 
-    void narrowType(const ChainableNode* node, const TypeVariant* variant) const override {
+    void narrowType(const ChainableNode* node, const TypeReference* type) const override {
         auto fullName = node->GetText();
         // Check to see if the full chain has already been cached.
         auto symbol = Compiler::getScopeManager().GetVar(fullName);
@@ -45,7 +45,7 @@ public:
             // Something's serious fucked up if we end up here...
             return;
 
-        Compiler::getScopeManager().Add(fullName, symbol->node, variant);
+        Compiler::getScopeManager().Add(fullName, symbol->node, type);
     }
 
 public:

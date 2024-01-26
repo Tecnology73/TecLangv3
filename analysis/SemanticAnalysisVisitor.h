@@ -2,6 +2,7 @@
 
 #include "../ast/Visitor.h"
 #include "../compiler/Compiler.h"
+#include "../symbolTable/SymbolTable.h"
 //
 #include "topLevel/Enum.h"
 #include "topLevel/Function.h"
@@ -10,9 +11,13 @@
 #include "expressions/WhenCondition.h"
 #include "expressions/BinaryOperation.h"
 //
-#include "../symbolTable/SymbolTable.h"
 #include "statements/IfStatement.h"
 #include "statements/Return.h"
+//
+#include "../ast/expressions/StaticRef.h"
+#include "../ast/expressions/ConstructorCall.h"
+#include "../ast/expressions/VarReference.h"
+#include "../ast/Literals.h"
 
 class SemanticAnalysisVisitor : public Visitor {
 public:
@@ -56,7 +61,7 @@ public:
     void Visit(class EnumParameter* node) override {
     }
 
-    void Visit(class Function* node) override {
+    void Visit(Function* node) override {
         FunctionAnalyzer(this, node).Analyze();
     }
 
@@ -91,7 +96,7 @@ public:
             if (!TryGetResult(result)) return;
 
             if (!node->type)
-                node->type = result.type->CreateReference();
+                node->type = result.type->Clone();
         } else if (!node->type->flags.Has(TypeFlag::OPTIONAL)) {
             auto resolvedType = node->type->ResolveType();
             if (!resolvedType) {
@@ -99,7 +104,7 @@ public:
                 return;
             }
 
-            if (!resolvedType->type->isValueType)
+            if (!resolvedType->isValueType)
                 // This is not a syntax error so we can continue.
                 ReportError(
                     ErrorCode::VALUE_CANNOT_BE_NULL,
@@ -112,7 +117,7 @@ public:
         }
 
         Compiler::getScopeManager().Add(node);
-        AddSuccess(node->type->ResolveType());
+        AddSuccess(node->type);
     }
 
     void Visit(class IfStatement* node) override {
@@ -154,8 +159,8 @@ public:
      */
 
     void Visit(class ConstructorCall* node) override {
-        auto type = node->type->ResolveType();
-        if (!type) {
+        auto type = node->type;
+        if (!type->ResolveType()) {
             ReportError(ErrorCode::TYPE_UNKNOWN, {node->type->name}, node->type);
             return;
         }
@@ -167,39 +172,18 @@ public:
     }
 
     void Visit(class FunctionCall* node) override {
-        std::vector<TypeReference *> paramTypes(node->arguments.size());
-        unsigned i = 0;
-        for (const auto& argument: node->arguments) {
-            argument->Accept(this);
+        if (!node->function->returnType) {
+            Visit(node->function);
 
-            VisitorResult result;
-            if (!TryGetResult(result)) return;
-
-            paramTypes[i++] = new TypeReference(result.type->type->token, result.type->type->name);
+            if (VisitorResult result; !TryGetResult(result)) return;
         }
 
-        if (!SymbolTable::GetInstance()->LookupFunction(node->name, paramTypes)) {
-            auto context = dynamic_cast<FunctionAnalysisContext *>(Compiler::getScopeManager().getContext());
-            if (!context) {
-                ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
-                return;
-            }
-
-            if (!context->function->ownerType) {
-                ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
-                return;
-            }
-
-            auto func = context->function->ownerType->GetFunction(node->name);
-            if (!func) {
-                ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
-                return;
-            }
-
-            // TODO: Validate parameters.
+        if (!node->function->returnType) {
+            AddFailure();
+            return;
         }
 
-        AddSuccess(node->getFinalType());
+        AddSuccess(node->function->returnType);
     }
 
     void Visit(class BinaryOperation* node) override {
@@ -230,12 +214,12 @@ public:
             auto field = symbol->GetField(current->name);
             if (!field) {
                 // FIXME: Temporary
-                if (auto func = symbol->narrowedType->type->GetFunction(current->name)) {
-                    AddSuccess(func->returnType->ResolveType());
+                if (auto func = symbol->narrowedType->ResolveType()->GetFunction(current->name)) {
+                    AddSuccess(func->returnType);
                     return;
                 }
 
-                ReportError(ErrorCode::TYPE_UNKNOWN_FIELD, {current->name, symbol->narrowedType->type->name}, current);
+                ReportError(ErrorCode::TYPE_UNKNOWN_FIELD, {current->name, symbol->narrowedType->name}, current);
                 return;
             }
 
@@ -247,7 +231,7 @@ public:
 
             // TODO: Support other types (like arrays) that proxy to their internal data.
             // Any string that is a part of a chain should load its internal data field.
-            if (field->narrowedType->type->name == "string" && current->next)
+            if (field->narrowedType->name == "string" && current->next)
                 current->loadInternalData = true;
 
             current = current->next;
@@ -258,7 +242,7 @@ public:
     }
 
     void Visit(class StaticRef* node) override {
-        auto anEnum = Compiler::getScopeManager().getEnum(node->name);
+        auto anEnum = SymbolTable::GetInstance()->Get<Enum>(node->name);
         if (!anEnum) {
             ReportError(ErrorCode::STATIC_REF_UNKNOWN, {node->name}, node);
             return;

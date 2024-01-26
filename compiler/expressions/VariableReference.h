@@ -5,10 +5,10 @@
 
 void getValueFromType(
     Visitor* v,
-    TypeBase* parentType,
+    const TypeBase* parentType,
     const ChainableNode* var,
     const ChainableNode* prevVar,
     llvm::Value* value
 );
 
-void generateVariableReference(Visitor* v, VariableReference* var);
+void generateVariableReference(Visitor* v, const VariableReference* var);

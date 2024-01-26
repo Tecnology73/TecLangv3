@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../ast/Statements.h"
 #include "../Compiler.h"
 #include "../TypeCoercion.h"
 #include "../../context/compiler/ReturnCompilerContext.h"
@@ -29,13 +28,14 @@ void generateReturn(Visitor* v, Return* ret) {
     // they create their own return instructions when inside a ReturnContext.
     if (!result.value) return;
 
-    auto coercedValue = TypeCoercion::coerce(result.value, returnType->type->llvmType);
+    auto coercedValue = TypeCoercion::coerce(result.value, returnType->ResolveType()->llvmType);
     if (!coercedValue) {
+        // FIXME: This should probably be caught during semantic analysis.
         v->ReportError(
             ErrorCode::TYPE_COERCION_IMPLICIT_FAILED,
             {
-                Compiler::getScopeManager().getType(result.value->getType())->name.c_str(),
-                returnType->type->name.c_str()
+                result.type->name,
+                returnType->name
             },
             ret->expression
         );
@@ -43,7 +43,7 @@ void generateReturn(Visitor* v, Return* ret) {
     }
 
     if (coercedValue->getType()->isPointerTy())
-        coercedValue = Compiler::getBuilder().CreateLoad(returnType->type->llvmType, coercedValue);
+        coercedValue = Compiler::getBuilder().CreateLoad(returnType->ResolveType()->llvmType, coercedValue);
 
     Compiler::getScopeManager().getContext()->handleReturn(ret, coercedValue);
     v->AddSuccess();

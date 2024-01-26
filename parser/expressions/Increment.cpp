@@ -1,8 +1,8 @@
-#include "../../ast/Expressions.h"
-#include "../../ast/Literals.h"
+#include "Increment.h"
 #include "Expression.h"
+#include "../../ast/literals/Integer.h"
+#include "../../ast/expressions/BinaryOperation.h"
 
-// TODO: IS THIS ACTUALLY CORRECT!?!?
 Node* parseIncrement(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::PlusPlus, Token::Type::MinusMinus)) {
         parser->PrintSyntaxError("++ or --");

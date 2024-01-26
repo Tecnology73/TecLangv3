@@ -6,6 +6,7 @@
 #include "../Compiler.h"
 #include "../TypeCoercion.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
+#include "../../ast/StringInternTable.h"
 
 llvm::Function* generateDefaultConstructor(Visitor* v, TypeDefinition* type) {
     auto funcType = llvm::FunctionType::get(
@@ -66,10 +67,10 @@ llvm::Function* generateDefaultConstructor(Visitor* v, TypeDefinition* type) {
                 }
             );
         } else
-            value = item->type->ResolveType()->type->getDefaultValue();
+            value = item->type->ResolveType()->getDefaultValue();
 
         Compiler::getBuilder().CreateStore(
-            TypeCoercion::coerce(value, item->type->ResolveType()->type->getLlvmType()),
+            TypeCoercion::coerce(value, item->type->ResolveType()->getLlvmType()),
             field
         );
     }
@@ -94,7 +95,7 @@ llvm::Function* generateConstructor(Visitor* visitor, Function* function, llvm::
     // Compile a list of all the parameters.
     std::vector<llvm::Type *> params = {};
     for (const auto& paramName: function->parameterOrder) {
-        auto ty = function->parameters[paramName]->type->ResolveType()->type->llvmType;
+        auto ty = function->parameters[paramName]->type->ResolveType()->llvmType;
         if (paramName == "this")
             ty = ty->getPointerTo();
         params.push_back(ty);
@@ -185,38 +186,39 @@ bool generateFunctions(Visitor* v, TypeDefinition* type) {
     return true;
 }
 
-TypeVariant* inferType(Visitor* v, Node* node) {
+TypeReference* inferType(Visitor* v, Node* node) {
     if (!node)
         return nullptr;
 
+    // TODO: Would be nice to replace the VarRef/StaticRef/FunctionCall with this.
+    /*if (auto chainNode = dynamic_cast<ChainableNode*>(node))
+        return chainNode->getFinalType();*/
+
     if (auto varRef = dynamic_cast<VariableReference *>(node))
-        return varRef->getFinalType();
+        return varRef->type;
 
-    if (auto pStaticRef = dynamic_cast<StaticRef *>(node)) {
-        if (auto anEnum = Compiler::getScopeManager().getEnum(pStaticRef->name))
-            return anEnum->createVariant();
-
-        return Compiler::getScopeManager().getType(pStaticRef->name)->createVariant();
-    }
-
-    if (auto pVariableDeclaration = dynamic_cast<VariableDeclaration *>(node)) {
-        if (pVariableDeclaration->type)
-            return pVariableDeclaration->type->ResolveType();
-
-        return inferType(v, pVariableDeclaration->expression);
-    }
+    if (auto pStaticRef = dynamic_cast<StaticRef *>(node))
+        return SymbolTable::GetInstance()->GetReference(pStaticRef->name);
 
     if (auto funcCall = dynamic_cast<FunctionCall *>(node))
-        return funcCall->getFinalType();
+        return funcCall->function->returnType;
+
+    if (auto pVariableDeclaration = dynamic_cast<VariableDeclaration *>(node)) {
+        /*if (pVariableDeclaration->type)
+            return pVariableDeclaration->type->ResolveType();
+
+        return inferType(v, pVariableDeclaration->expression);*/
+        return pVariableDeclaration->type;
+    }
 
     if (auto function = dynamic_cast<Function *>(node))
-        return function->returnType->ResolveType();
+        return function->returnType;
 
     if (auto literal = dynamic_cast<Literal *>(node))
         return literal->getType();
 
     if (auto constructCall = dynamic_cast<ConstructorCall *>(node))
-        return constructCall->type->ResolveType();
+        return constructCall->type;
 
     if (auto when = dynamic_cast<When *>(node))
         return when->returnType;
@@ -258,13 +260,13 @@ llvm::Type* generateTypeDefinition(Visitor* v, TypeDefinition* type) {
     std::vector<llvm::Type *> fields;
     for (const auto& fieldName: type->fieldOrder) {
         auto field = type->fields[fieldName];
-        if (!field->type->ResolveType()->type->llvmType) {
-            if (auto typeDef = dynamic_cast<TypeDefinition *>(field->type->ResolveType()->type))
+        if (!field->type->ResolveType()->llvmType) {
+            if (auto typeDef = dynamic_cast<TypeDefinition *>(field->type->ResolveType()))
                 generateTypeDefinition(v, typeDef);
         }
 
-        auto t = field->type->ResolveType()->type->getLlvmType();
-        if (!field->type->ResolveType()->type->isValueType)
+        auto t = field->type->ResolveType()->getLlvmType();
+        if (!field->type->ResolveType()->isValueType)
             t = t->getPointerTo();
 
         fields.push_back(t);

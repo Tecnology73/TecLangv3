@@ -1,8 +1,7 @@
 #pragma once
 
-#include "../Parser.h"
-#include "../../ast/Expressions.h"
+#include "../../ast/expressions/VarReference.h"
 
-ChainableNode *parseChainable(Parser *parser);
+ChainableNode* parseChainable(Parser* parser);
 
-VariableReference *parseVariableReference(Parser *parser);
+VariableReference* parseVariableReference(Parser* parser);

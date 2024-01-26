@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Parser.h"
-#include "../../ast/Statements.h"
+#include "../../ast/statements/VarDeclaration.h"
 
-VariableDeclaration *parseVariableDeclaration(Parser *parser);
+VariableDeclaration* parseVariableDeclaration(Parser* parser);

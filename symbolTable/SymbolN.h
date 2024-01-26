@@ -1,10 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <variant>
-
-class TypeDefinition;
-class Enum;
+#include "../ast/TopLevel.h"
 
 enum class SymbolType : uint8_t {
     Unknown = 0,
@@ -34,5 +31,5 @@ struct SymbolN {
     }
 
     SymbolType type;
-    std::variant<TypeDefinition *, Enum *> value;
+    TypeBase* value;
 };

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Parser.h"
-#include "../../ast/Expressions.h"
+#include "../../ast/expressions/StaticRef.h"
 
 StaticRef *parseStaticRef(Parser *parser);

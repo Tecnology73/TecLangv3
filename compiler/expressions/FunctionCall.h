@@ -6,8 +6,8 @@
 void generateTypeFunctionCall(
     Visitor* v,
     const TypeBase* parentType,
-    FunctionCall* var,
+    const FunctionCall* var,
     llvm::Value* value
 );
 
-void generateFunctionCall(Visitor* v, FunctionCall* node);
+void generateFunctionCall(Visitor* v, const FunctionCall* node);

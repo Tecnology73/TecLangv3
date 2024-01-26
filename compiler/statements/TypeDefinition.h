@@ -5,7 +5,7 @@
 
 class TypeDefinition;
 
-TypeVariant* inferType(Visitor* v, Node* node);
+TypeReference* inferType(Visitor* v, Node* node);
 
 llvm::Type* generateTypeDefinition(Visitor* v, TypeBase* type);
 

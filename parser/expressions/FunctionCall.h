@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../ast/Expressions.h"
-#include "../Parser.h"
+#include "../../ast/expressions/FunctionCall.h"
 
-FunctionCall *parseFunctionCall(Parser *parser);
+FunctionCall* parseFunctionCall(Parser* parser);

@@ -1,8 +1,7 @@
 #include "VariableDeclaration.h"
-
-#include "../../compiler/Compiler.h"
 #include "../expressions/Expression.h"
 #include "../expressions/TypeReference.h"
+#include "../../ast/StringInternTable.h"
 
 VariableDeclaration* parseVariableDeclaration(Parser* parser) {
     if (parser->currentToken.isNot(Token::Type::Identifier, Token::Type::Type)) {

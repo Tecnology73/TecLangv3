@@ -4,11 +4,12 @@
 #include "../TypeCoercion.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
 #include "../../ast/literals/String.h"
+#include "../statements/Function.h"
 
 void generateTypeFunctionCall(
     Visitor* v,
     const TypeBase* parentType,
-    FunctionCall* var,
+    const FunctionCall* var,
     llvm::Value* value
 ) {
     if (!var) {
@@ -57,18 +58,18 @@ void generateTypeFunctionCall(
     // Recurse
     if (var->next) {
         if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
-            generateTypeFunctionCall(v, func->returnType->ResolveType()->type, function, value);
+            generateTypeFunctionCall(v, func->returnType->ResolveType(), function, value);
             return;
         }
 
-        getValueFromType(v, func->returnType->ResolveType()->type, var->next, var, value);
+        getValueFromType(v, func->returnType->ResolveType(), var->next, var, value);
         return;
     }
 
     v->AddSuccess(value);
 }
 
-void tryGenerateWithThisPrefix(Visitor* v, FunctionCall* node) {
+void tryGenerateWithThisPrefix(Visitor* v, const FunctionCall* node) {
     // This allows for accessing fields of the current type without prefixing it with 'this.'
     auto context = Compiler::getScopeManager().findContext<FunctionCompilerContext>();
     if (!context) {
@@ -99,13 +100,7 @@ void tryGenerateWithThisPrefix(Visitor* v, FunctionCall* node) {
     generateTypeFunctionCall(v, currentFunction->ownerType, node, param->alloc);
 }
 
-void generateFunctionCall(Visitor* v, FunctionCall* node) {
-    auto function = Compiler::getScopeManager().getFunction(node->name);
-    if (!function) {
-        tryGenerateWithThisPrefix(v, node);
-        return;
-    }
-
+void generateFunctionCall(Visitor* v, const FunctionCall* node) {
     // Generate parameters
     std::vector<llvm::Value *> arguments;
     for (auto& argument: node->arguments) {
@@ -114,31 +109,36 @@ void generateFunctionCall(Visitor* v, FunctionCall* node) {
         VisitorResult result;
         if (!v->TryGetResult(result)) return;
 
-        auto arg = function->GetParameter(arguments.size());
+        auto arg = node->function->GetParameter(arguments.size());
         if (result.value->getType()->isPointerTy() && dynamic_cast<VariableReference *>(argument)) {
             // VariableReference does not load the right-most node.
-            result.value = Compiler::getBuilder().CreateLoad(result.type->type->getLlvmType(), result.value);
+            result.value = Compiler::getBuilder().CreateLoad(result.type->ResolveType()->getLlvmType(), result.value);
         }
 
         auto value = TypeCoercion::coerce(
             result.value,
-            arg->type->ResolveType()->type->getLlvmType()
+            arg->type->ResolveType()->getLlvmType()
         );
         arguments.push_back(value);
     }
 
+    // Ensure the function has been compiled.
+    // FIXME: This will break if the functions call each other...
+    node->function->Accept(v);
+    if (VisitorResult result; !v->TryGetResult(result)) return;
+
     auto value = Compiler::getBuilder().CreateCall(
-        function->llvmFunction,
+        node->function->llvmFunction,
         arguments,
         // Without this being named, it breaks a certain case of having a break
         // just before a statement call inside a for loop... Fuck knows why. 😕
-        function->llvmFunction->getReturnType()->isVoidTy() ? "" : function->name
+        node->function->llvmFunction->getReturnType()->isVoidTy() ? "" : node->name
     );
 
     if (auto func = dynamic_cast<FunctionCall *>(node->next)) {
-        generateTypeFunctionCall(v, function->returnType->ResolveType()->type, func, value);
+        generateTypeFunctionCall(v, node->function->returnType->ResolveType(), func, value);
         return;
     }
 
-    getValueFromType(v, function->returnType->ResolveType()->type, node->next, node, value);
+    getValueFromType(v, node->function->returnType->ResolveType(), node->next, node, value);
 }

@@ -7,7 +7,7 @@
 
 void getValueFromType(
     Visitor* v,
-    TypeBase* parentType,
+    const TypeBase* parentType,
     const ChainableNode* var,
     const ChainableNode* prevVar,
     llvm::Value* value
@@ -22,13 +22,13 @@ void getValueFromType(
             );
         }
 
-        v->AddSuccess(value, parentType->createVariant());
+        v->AddSuccess(value, parentType->CreateReference());
         return;
     }
 
     auto fieldType = parentType->GetField(var->name)->type;
-    auto actualType = fieldType->ResolveType()->type->llvmType;
-    if (!fieldType->ResolveType()->type->isValueType)
+    auto actualType = fieldType->ResolveType()->llvmType;
+    if (!fieldType->ResolveType()->isValueType)
         actualType = actualType->getPointerTo();
 
     value = Compiler::getBuilder().CreateStructGEP(
@@ -42,15 +42,15 @@ void getValueFromType(
         value = Compiler::getBuilder().CreateLoad(actualType, value, var->name);
 
         if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
-            generateTypeFunctionCall(v, fieldType->ResolveType()->type, function, value);
+            generateTypeFunctionCall(v, fieldType->ResolveType(), function, value);
             return;
         }
 
-        getValueFromType(v, fieldType->ResolveType()->type, var->next, var, value);
+        getValueFromType(v, fieldType->ResolveType(), var->next, var, value);
         return;
     }
 
-    v->AddSuccess(value, fieldType->ResolveType());
+    v->AddSuccess(value, fieldType);
 }
 
 void tryGenerateWithThisPrefix(Visitor* v, const VariableReference* var) {
@@ -84,7 +84,7 @@ void tryGenerateWithThisPrefix(Visitor* v, const VariableReference* var) {
     getValueFromType(v, currentFunction->ownerType, var, nullptr, param->alloc);
 }
 
-void generateVariableReference(Visitor* v, VariableReference* var) {
+void generateVariableReference(Visitor* v, const VariableReference* var) {
     auto symbol = Compiler::getScopeManager().GetVar(var->name);
     if (!symbol) {
         tryGenerateWithThisPrefix(v, var);
@@ -104,16 +104,16 @@ void generateVariableReference(Visitor* v, VariableReference* var) {
     }
 
     // If the variable is a constant, just return the expression.
-    auto varType = variable->type->ResolveType();
-    if (varType->type->isValueType) {
+    auto varType = variable->type;
+    if (varType->ResolveType()->isValueType) {
         v->AddSuccess(value, varType);
         return;
     }
 
     if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
-        generateTypeFunctionCall(v, varType->type, function, value);
+        generateTypeFunctionCall(v, varType->ResolveType(), function, value);
         return;
     }
 
-    getValueFromType(v, varType->type, var->next, var, value);
+    getValueFromType(v, varType->ResolveType(), var->next, var, value);
 }

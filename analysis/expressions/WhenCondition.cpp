@@ -1,5 +1,6 @@
 #include "WhenCondition.h"
 #include "../../compiler/Compiler.h"
+#include "../../context/analysis/WhenConditionAnalysisContext.h"
 
 void WhenConditionAnalyzer::Analyze() {
     // Create a context

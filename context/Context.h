@@ -13,7 +13,10 @@ public:
 
     virtual ~Context() = default;
 
-    virtual TypeVariant* getReturnType() {
+    virtual TypeReference* getReturnType() {
+        if (parent)
+            return parent->getReturnType();
+
         return nullptr;
     }
 
@@ -45,9 +48,9 @@ public:
         throw std::runtime_error("Return not implemented in this context.");
     }
 
-    virtual void handleReturn(const Node* node, const TypeVariant* value) {
+    virtual void handleReturn(const Node* node, const TypeReference* type) {
         if (parent) {
-            parent->handleReturn(node, value);
+            parent->handleReturn(node, type);
             return;
         }
 
@@ -62,7 +65,7 @@ public:
         throw std::runtime_error("Break not implemented in this context.");
     }
 
-    virtual void narrowType(const ChainableNode* node, const TypeVariant* variant) const {
+    virtual void narrowType(const ChainableNode* node, const TypeReference* type) const {
         throw std::runtime_error("Cannot narrow type in this context.");
     }
 

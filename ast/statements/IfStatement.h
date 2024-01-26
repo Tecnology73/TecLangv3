@@ -11,16 +11,16 @@ public:
         delete condition;
         delete elseStatement;
 
-        for (auto &node: body)
+        for (const auto& node: body)
             delete node;
     }
 
-    void Accept(Visitor *visitor) override {
+    void Accept(Visitor* visitor) override {
         visitor->Visit(this);
     }
 
 public:
-    Node *condition = nullptr;
+    Node* condition = nullptr;
     std::vector<Node *> body;
-    IfStatement *elseStatement = nullptr;
+    IfStatement* elseStatement = nullptr;
 };

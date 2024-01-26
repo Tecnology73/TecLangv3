@@ -17,5 +17,5 @@ private:
 
     void inferReturnTypes(const WhenAnalysisContext* context);
 
-    void reduceReturnTypes(std::set<const TypeVariant *>& types);
+    void reduceReturnTypes(std::set<TypeReference *>& types);
 };

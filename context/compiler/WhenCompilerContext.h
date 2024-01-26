@@ -8,7 +8,7 @@ class WhenCompilerContext : public Context {
 public:
     explicit WhenCompilerContext(Visitor* visitor, When* when);
 
-    TypeVariant* getReturnType() override;
+    TypeReference* getReturnType() override;
 
     void handleReturn(const Node* node, llvm::Value* value) override;
 

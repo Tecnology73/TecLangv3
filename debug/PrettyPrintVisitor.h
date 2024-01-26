@@ -26,14 +26,14 @@ public:
         printInfo(format, args...);
     }
 
-    std::string FormatType(const TypeVariant* type) const {
+    std::string FormatType(const TypeReference* type) const {
         if (type == nullptr)
             return "infer";
 
         if (type->flags.Has(TypeFlag::OPTIONAL))
-            return std::format("Option<{}>", type->type->name);
+            return std::format("Option<{}>", type->name);
 
-        return type->type->name;
+        return type->name;
     }
 
     std::string FormatTypeRef(const TypeReference* type) const {
@@ -276,7 +276,7 @@ public:
      */
 
     void Visit(ConstructorCall* node) override {
-        Print("Constructor call: %s\n", node->type->ResolveType()->type->name.c_str());
+        Print("Constructor call: %s\n", node->type->ResolveType()->name.c_str());
         indent += 2;
 
         Print("Arguments: %d\n", node->arguments.size());

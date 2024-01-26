@@ -1,5 +1,6 @@
 #include "IfStatement.h"
 #include "../../compiler/Compiler.h"
+#include "../../symbolTable/SymbolTable.h"
 
 void IfStatementAnalyzer::Analyze() {
     auto context = Compiler::getScopeManager().enter("if", new IfStatementAnalysisContext(visitor, node));
@@ -51,9 +52,9 @@ void IfStatementAnalyzer::propagateNarrowedTypes() {
         auto typeInParent = parentScope->GetVar(name)->narrowedType;
         auto type = symbol->narrowedType;
 
-        if (type->type->name == "null" && typeInParent->flags.Has(TypeFlag::OPTIONAL)) // is null
+        if (type->name == "null" && typeInParent->flags.Has(TypeFlag::OPTIONAL)) // is null
             typeInParent->flags.Clear(TypeFlag::OPTIONAL);
-        else if (!type->type->isValueType && typeInParent->flags.Has(TypeFlag::OPTIONAL)) // is Type
-            parentScope->Add(name, symbol->node, Compiler::getScopeManager().getType("null")->createVariant());
+        else if (!type->ResolveType()->isValueType && typeInParent->flags.Has(TypeFlag::OPTIONAL)) // is Type
+            parentScope->Add(name, symbol->node, SymbolTable::GetInstance()->GetReference("null"));
     }
 }
