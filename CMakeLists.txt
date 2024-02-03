@@ -22,13 +22,14 @@ add_definitions(${LLVM_DEFINITIONS_LIST})
 
 # Now build our tools
 file(GLOB_RECURSE AST_SOURCES LIST_DIRECTORIES true ast/*.h ast/*.cpp)
-file(GLOB_RECURSE COMPILER_SOURCES LIST_DIRECTORIES true compiler/*.h compiler/*.cpp)
 file(GLOB_RECURSE LEXER_SOURCES LIST_DIRECTORIES true lexer/*.h lexer/*.cpp)
 file(GLOB_RECURSE PARSER_SOURCES LIST_DIRECTORIES true parser/*.h parser/*.cpp)
-file(GLOB_RECURSE ANALYSIS_SOURCES LIST_DIRECTORIES true analysis/*.h analysis/*.cpp)
-file(GLOB_RECURSE ANALYSIS_FIRST_SOURCES LIST_DIRECTORIES true analysisFirst/*.h analysisFirst/*.cpp)
 file(GLOB_RECURSE CONTEXT_SOURCES LIST_DIRECTORIES true context/*.h context/*.cpp)
 file(GLOB_RECURSE SYMBOL_TABLE_SOURCES LIST_DIRECTORIES true symbolTable/*.h symbolTable/*.cpp)
+# Pipelines
+file(GLOB_RECURSE PRE_ANALYSIS_SOURCES LIST_DIRECTORIES true preAnalysis/*.h preAnalysis/*.cpp)
+file(GLOB_RECURSE ANALYSIS_SOURCES LIST_DIRECTORIES true analysis/*.h analysis/*.cpp)
+file(GLOB_RECURSE COMPILER_SOURCES LIST_DIRECTORIES true compiler/*.h compiler/*.cpp)
 
 add_executable(
         ${BINARY}_run
@@ -36,13 +37,14 @@ add_executable(
         Console.cpp
         App.cpp
         ${AST_SOURCES}
-        ${COMPILER_SOURCES}
         ${LEXER_SOURCES}
         ${PARSER_SOURCES}
-        ${ANALYSIS_SOURCES}
-        ${ANALYSIS_FIRST_SOURCES}
         ${CONTEXT_SOURCES}
         ${SYMBOL_TABLE_SOURCES}
+        # Pipelines
+        ${PRE_ANALYSIS_SOURCES}
+        ${ANALYSIS_SOURCES}
+        ${COMPILER_SOURCES}
 )
 #add_library(${BINARY}_lib Console.cpp ${AST_SOURCES} ${COMPILER_SOURCES} ${LEXER_SOURCES} ${PARSER_SOURCES} ${ANALYSIS_SOURCES} ${CONTEXT_SOURCES})
 #add_executable(${BINARY}_run main_network.cpp)

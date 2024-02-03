@@ -3,7 +3,7 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Verifier.h>
 #include "../Compiler.h"
-#include "../statements/TypeDefinition.h"
+#include "../topLevel/TypeBase.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
 
 void generateFunction(Visitor* v, Function* func) {
@@ -25,7 +25,7 @@ void generateFunction(Visitor* v, Function* func) {
     }
 
     // Define the function.
-    auto returnType = generateTypeDefinition(v, func->returnType->ResolveType());
+    auto returnType = TypeCompiler::compile(func->returnType);
     if (!func->returnType->ResolveType()->isValueType && !returnType->isPointerTy())
         returnType = returnType->getPointerTo();
 
@@ -53,17 +53,16 @@ void generateFunction(Visitor* v, Function* func) {
 
     if (!func->isExternal) {
         // Create a new basic block to start insertion into.
-        llvm::BasicBlock* basicBlock = llvm::BasicBlock::Create(
+        auto basicBlock = llvm::BasicBlock::Create(
             Compiler::getContext(),
             "entry",
             function
         );
 
-        // Create a new builder for the basic block.
         Compiler::getBuilder().SetInsertPoint(basicBlock);
 
         // Create a scope
-        Compiler::getScopeManager().enter(std::string(func->name), new FunctionCompilerContext(v, func));
+        Compiler::getScopeManager().enter(func->name, new FunctionCompilerContext(v, func));
 
         // Generate the parameters.
         for (const auto& paramName: func->parameterOrder) {

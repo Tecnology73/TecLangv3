@@ -2,7 +2,6 @@
 #include "Function.h"
 #include <llvm/IR/DerivedTypes.h>
 #include "../../compiler/Compiler.h"
-#include "../../compiler/statements/TypeDefinition.h"
 #include "../../compiler/TypeCoercion.h"
 #include "../StringInternTable.h"
 
@@ -28,8 +27,6 @@ llvm::Type* TypeBase::getLlvmType() {
             return setLlvmType(Compiler::getBuilder().getVoidTy());
         if (name == "ptr")
             return setLlvmType(Compiler::getBuilder().getPtrTy());
-        if (dynamic_cast<Enum *>(this))
-            return setLlvmType(llvm::Type::getInt32Ty(Compiler::getContext()));
     }
 
     if (!isValueType)
@@ -83,7 +80,6 @@ Function* TypeBase::GetFunction(const std::string& funcName) const {
 
 Function* TypeBase::FindFunction(
     const std::string& funcName,
-    const std::vector<llvm::Value *>& parameters,
     const std::vector<TypeReference *>& paramTypes
 ) const {
     auto it = functions.find(funcName);
@@ -91,10 +87,10 @@ Function* TypeBase::FindFunction(
         return nullptr;
 
     for (const auto& function: it->second) {
-        if (function->parameters.size() != parameters.size()) continue;
+        if (function->parameters.size() != paramTypes.size()) continue;
 
         bool match = true;
-        for (int i = 0; i < parameters.size(); i++) {
+        for (int i = 0; i < paramTypes.size(); i++) {
             auto arg = function->GetParameter(i);
             auto paramType = paramTypes[i];
 

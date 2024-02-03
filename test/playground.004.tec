@@ -23,6 +23,7 @@ extern func realloc(ptr, u64) ptr
 // extern func free(ptr) void
 
 extern func ceil(double) double
+extern func max(double, double) double
 extern func printf(ptr) void
 
 extern func strlen(ptr) u64
@@ -38,23 +39,15 @@ type string {
     length: u64
 }
 
-func<string> resize(newLength: u64) {
-    if this.capacity <= newLength {
-        this.capacity = ceil(newLength / 8.0) * 8
+func<string> resize(length: u64) {
+    this.capacity = max(this.capacity, ceil(length / 8.0) * 8)
+
+    if this.capacity == 0
+        this.data = malloc(this.capacity)
+    else if this.capacity <= length
         this.data = realloc(this.data, this.capacity)
-    }
 
-    this.length = newLength
-}
-
-func<string> tryResize(addLength: u64) {
-    newLength = this.length + addLength
-    if this.capacity <= newLength {
-        this.capacity = ceil(newLength / 8.0) * 8
-        this.data = realloc(this.data, this.capacity)
-    }
-
-    this.length = newLength
+    this.length = length
 }
 
 func<string> assign(str: ptr) {
@@ -63,7 +56,7 @@ func<string> assign(str: ptr) {
 }
 
 func<string> append(str: ptr) {
-    this.tryResize(strlen(str))
+    this.resize(this.length + strlen(str))
     strcat(this.data, str)
 }
 

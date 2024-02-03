@@ -21,7 +21,7 @@ public:
         delete oldNode;
     }
 
-    void handleReturn(const Node* node, const TypeReference* type) override {
+    void handleReturn(Node* node, const TypeReference* type) override {
         hasReturned = true;
         parent->handleReturn(node, type);
     }

@@ -9,7 +9,7 @@ public:
     explicit IfCompilerContext(Visitor* visitor, IfStatement* node) : Context(visitor), node(node) {
     }
 
-    void handleReturn(const Node* node, llvm::Value* value) override {
+    void handleReturn(Node* node, llvm::Value* value) override {
         parent->handleReturn(node, value);
     }
 

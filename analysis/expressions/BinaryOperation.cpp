@@ -29,30 +29,7 @@ void BinaryOperationAnalyzer::Analyze() {
     visitor->AddSuccess(TypeCoercion::getCommonType(lhsResult.type, rhsResult.type));
 }
 
-bool BinaryOperationAnalyzer::tryPromoteToVarDecl() {
-    auto varRef = dynamic_cast<VariableReference *>(node->lhs);
-    if (!varRef) return false;
-
-    // `a.x` is not a valid variable name.
-    if (varRef->next) return false;
-
-    // Check if the variable has already been declared. If so, this is a reassignment.
-    if (Compiler::getScopeManager().HasVar(varRef->name))
-        return false;
-
-    // Promote to a var declaration.
-    Compiler::getScopeManager().getContext()->ReplaceCurrentNode(
-        new VariableDeclaration(varRef->token, varRef->name, node->rhs)
-    );
-
-    visitor->AddSuccess();
-    return true;
-}
-
 void BinaryOperationAnalyzer::analyzeAssign() {
-    if (tryPromoteToVarDecl())
-        return;
-
     // LHS must be a chainable node.
     auto chainNode = dynamic_cast<ChainableNode *>(node->lhs);
     if (!chainNode) {

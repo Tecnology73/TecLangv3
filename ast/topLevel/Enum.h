@@ -11,11 +11,10 @@ public:
         visitor->Visit(this);
     }
 
-    llvm::Value* getDefaultValue() const override;
-
-    bool canCastTo(TypeBase* other) const override;
-
     static Enum* Create(const Token& token, const std::string& name);
+
+public:
+    TypeReference* underlyingType = nullptr;
 };
 
 class EnumValue : public TypeField {

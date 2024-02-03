@@ -1,25 +1,15 @@
 #pragma once
 
 #include "../Context.h"
-#include "../../ast/Statements.h"
 #include "../../ast/toplevel/Function.h"
 
-class FunctionAnalysisContext : public Context {
+class FunctionContext : public Context {
 public:
-    explicit FunctionAnalysisContext(Visitor* visitor, Function* function) : Context(visitor), function(function) {
-    }
-
-    TypeReference* getReturnType() override {
-        return function->returnType;
-    }
-
-    void handleReturn(Node* node) override {
-    }
-
-    void handleReturn(Node* node, llvm::Value* value) override {
+    explicit FunctionContext(Visitor* visitor, Function* function) : Context(visitor), function(function) {
     }
 
     void handleReturn(Node* node, const TypeReference* type) override {
+        function->analysisInfo->AddReturnType(node, type);
     }
 
     Node* GetNextNode() {

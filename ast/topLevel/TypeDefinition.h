@@ -11,10 +11,6 @@ public:
         visitor->Visit(this);
     }
 
-    llvm::Value* getDefaultValue() const override;
-
-    bool canCastTo(TypeBase* other) const override;
-
     static TypeDefinition* Create(const Token& token);
 
     static TypeBase* CreateUndeclared(const Token& token);

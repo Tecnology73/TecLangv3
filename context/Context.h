@@ -30,7 +30,7 @@ public:
         visitor->DecAstLoop();
     }
 
-    virtual void handleReturn(const Node* node) {
+    virtual void handleReturn(Node* node) {
         if (parent) {
             parent->handleReturn(node);
             return;
@@ -39,7 +39,7 @@ public:
         throw std::runtime_error("Return not implemented in this context.");
     }
 
-    virtual void handleReturn(const Node* node, llvm::Value* value) {
+    virtual void handleReturn(Node* node, llvm::Value* value) {
         if (parent) {
             parent->handleReturn(node, value);
             return;
@@ -48,7 +48,7 @@ public:
         throw std::runtime_error("Return not implemented in this context.");
     }
 
-    virtual void handleReturn(const Node* node, const TypeReference* type) {
+    virtual void handleReturn(Node* node, const TypeReference* type) {
         if (parent) {
             parent->handleReturn(node, type);
             return;

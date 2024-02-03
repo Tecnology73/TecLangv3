@@ -3,14 +3,16 @@
 #include <llvm/IR/Value.h>
 #include <string>
 #include "../Compiler.h"
-#include "../statements/TypeDefinition.h"
 #include "../ErrorManager.h"
 #include "../TypeCoercion.h"
 #include "../../context/compiler/VarDeclarationCompilerContext.h"
+#include "../topLevel/TypeBase.h"
+#include "../topLevel/TypeFunction.h"
 
 void generateConstructorCall(Visitor* v, const ConstructorCall* node) {
     auto nodeType = node->type->ResolveType();
-    generateTypeDefinition(v, nodeType);
+    TypeCompiler::compile(node->type);
+    TypeFunctionCompiler::compile(v, nodeType);
 
     // FIXME: This could probably be a little cleaner/efficient if we just pass in `node->parameters`
     //  to the statement lookup and (somehow) get the TypeDefinition from the node.
@@ -34,7 +36,7 @@ void generateConstructorCall(Visitor* v, const ConstructorCall* node) {
     }
 
     // Find the constructor that matches the argTypes.
-    auto constructFunction = nodeType->FindFunction("construct", args, argTypes);
+    auto constructFunction = nodeType->FindFunction("construct", argTypes);
     if (!constructFunction) {
         std::string argTypesStr;
         for (const auto& type: argTypes) {

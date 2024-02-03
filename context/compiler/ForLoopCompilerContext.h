@@ -8,7 +8,7 @@ public:
     explicit ForLoopCompilerContext(Visitor* visitor, ForLoop* loop): Context(visitor), loop(loop) {
     }
 
-    void handleReturn(const Node* node, llvm::Value* value) override {
+    void handleReturn(Node* node, llvm::Value* value) override {
         Compiler::getBuilder().CreateRet(value);
     }
 

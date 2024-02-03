@@ -7,6 +7,7 @@
 #include "../TypeCoercion.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
 #include "../../ast/StringInternTable.h"
+#include "../topLevel/TypeBase.h"
 
 llvm::Function* generateDefaultConstructor(Visitor* v, TypeDefinition* type) {
     auto funcType = llvm::FunctionType::get(
@@ -18,7 +19,7 @@ llvm::Function* generateDefaultConstructor(Visitor* v, TypeDefinition* type) {
     );
     auto func = llvm::Function::Create(
         funcType,
-        llvm::Function::ExternalLinkage,
+        llvm::Function::PrivateLinkage,
         type->name + "_construct",
         Compiler::getModule()
     );
@@ -51,7 +52,7 @@ llvm::Function* generateDefaultConstructor(Visitor* v, TypeDefinition* type) {
 
             value = result.value;
         } else if (type->name == "string" && fieldName == "data") {
-            auto emptyStr = Compiler::getBuilder().CreateGlobalStringPtr("\0");
+            auto emptyStr = Compiler::getBuilder().CreateGlobalStringPtr("");
             value = Compiler::getBuilder().CreateCall(
                 SymbolTable::GetInstance()->LookupFunction("malloc", {})->llvmFunction,
                 {
@@ -67,7 +68,7 @@ llvm::Function* generateDefaultConstructor(Visitor* v, TypeDefinition* type) {
                 }
             );
         } else
-            value = item->type->ResolveType()->getDefaultValue();
+            value = TypeCompiler::getDefaultValue(item->type);
 
         Compiler::getBuilder().CreateStore(
             TypeCoercion::coerce(value, item->type->ResolveType()->getLlvmType()),
@@ -109,7 +110,7 @@ llvm::Function* generateConstructor(Visitor* visitor, Function* function, llvm::
     );
     auto func = function->llvmFunction = llvm::Function::Create(
                     funcType,
-                    llvm::Function::ExternalLinkage,
+                    llvm::Function::PrivateLinkage,
                     variant->name + "_construct",
                     Compiler::getModule()
                 );
@@ -126,14 +127,14 @@ llvm::Function* generateConstructor(Visitor* visitor, Function* function, llvm::
     // Generate the parameters.
     for (const auto& paramName: function->parameterOrder) {
         function->parameters[paramName]->Accept(visitor);
-        if (!visitor->GetResult().success)
+        if (VisitorResult result; !visitor->TryGetResult(result))
             return nullptr;
     }
 
     // Generate the body.
     for (auto& statement: function->body) {
         statement->Accept(visitor);
-        if (!visitor->GetResult().success)
+        if (VisitorResult result; !visitor->TryGetResult(result))
             return nullptr;
     }
 
@@ -184,107 +185,4 @@ bool generateFunctions(Visitor* v, TypeDefinition* type) {
     Compiler::getBuilder().SetInsertPoint(lastBlock);
 
     return true;
-}
-
-TypeReference* inferType(Visitor* v, Node* node) {
-    if (!node)
-        return nullptr;
-
-    // TODO: Would be nice to replace the VarRef/StaticRef/FunctionCall with this.
-    /*if (auto chainNode = dynamic_cast<ChainableNode*>(node))
-        return chainNode->getFinalType();*/
-
-    if (auto varRef = dynamic_cast<VariableReference *>(node))
-        return varRef->type;
-
-    if (auto pStaticRef = dynamic_cast<StaticRef *>(node))
-        return SymbolTable::GetInstance()->GetReference(pStaticRef->name);
-
-    if (auto funcCall = dynamic_cast<FunctionCall *>(node))
-        return funcCall->function->returnType;
-
-    if (auto pVariableDeclaration = dynamic_cast<VariableDeclaration *>(node)) {
-        /*if (pVariableDeclaration->type)
-            return pVariableDeclaration->type->ResolveType();
-
-        return inferType(v, pVariableDeclaration->expression);*/
-        return pVariableDeclaration->type;
-    }
-
-    if (auto function = dynamic_cast<Function *>(node))
-        return function->returnType;
-
-    if (auto literal = dynamic_cast<Literal *>(node))
-        return literal->getType();
-
-    if (auto constructCall = dynamic_cast<ConstructorCall *>(node))
-        return constructCall->type;
-
-    if (auto when = dynamic_cast<When *>(node))
-        return when->returnType;
-
-    // FIXME: We reach this when trying to do `var = func()` and `func` doesn't exist.
-    v->ReportError(ErrorCode::TYPE_INFER_FAILED, {node->token.value.data()}, node);
-    return nullptr;
-}
-
-llvm::Type* generateTypeDefinition(Visitor* v, TypeBase* t) {
-    if (auto typeDef = dynamic_cast<TypeDefinition *>(t))
-        return generateTypeDefinition(v, typeDef);
-
-    return t->getLlvmType();
-}
-
-llvm::Type* generateTypeDefinition(Visitor* v, TypeDefinition* type) {
-    if (type->llvmType)
-        return type->getLlvmType();
-
-    if (type->name == "i8" || type->name == "u8")
-        return type->setLlvmType(Compiler::getBuilder().getInt8Ty());
-    if (type->name == "i16" || type->name == "u16")
-        return type->setLlvmType(Compiler::getBuilder().getInt16Ty());
-    if (type->name == "i32" || type->name == "u32")
-        return type->setLlvmType(Compiler::getBuilder().getInt32Ty());
-    if (type->name == "i64" || type->name == "u64")
-        return type->setLlvmType(Compiler::getBuilder().getInt64Ty());
-    if (type->name == "double")
-        return type->setLlvmType(Compiler::getBuilder().getDoubleTy());
-    if (type->name == "bool")
-        return type->setLlvmType(Compiler::getBuilder().getInt1Ty());
-    if (type->name == "void")
-        return type->setLlvmType(Compiler::getBuilder().getVoidTy());
-    if (type->name == "ptr")
-        return type->setLlvmType(Compiler::getBuilder().getPtrTy());
-
-    // Generate the fields for the struct
-    std::vector<llvm::Type *> fields;
-    for (const auto& fieldName: type->fieldOrder) {
-        auto field = type->fields[fieldName];
-        if (!field->type->ResolveType()->llvmType) {
-            if (auto typeDef = dynamic_cast<TypeDefinition *>(field->type->ResolveType()))
-                generateTypeDefinition(v, typeDef);
-        }
-
-        auto t = field->type->ResolveType()->getLlvmType();
-        if (!field->type->ResolveType()->isValueType)
-            t = t->getPointerTo();
-
-        fields.push_back(t);
-    }
-
-    // Set the compiled type.
-    type->setLlvmType(
-        llvm::StructType::create(
-            Compiler::getContext(),
-            fields,
-            type->name
-        )
-    );
-
-    // Generate all the functions for the type.
-    // This includes the constructors.
-    if (!generateFunctions(v, type))
-        return nullptr;
-
-    return type->llvmType;
 }

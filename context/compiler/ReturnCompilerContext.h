@@ -8,7 +8,7 @@ public:
     explicit ReturnCompilerContext(Visitor* visitor, Return* aReturn) : Context(visitor), aReturn(aReturn) {
     }
 
-    void handleReturn(const Node* node, llvm::Value* value) override {
+    void handleReturn(Node* node, llvm::Value* value) override {
         Compiler::getBuilder().CreateRet(value);
     }
 

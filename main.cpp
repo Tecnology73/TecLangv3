@@ -6,7 +6,7 @@
 #include "debug/timer.h"
 #include "parser/Parser.h"
 // Visitors
-#include "analysisFirst/AnalysisFirstStageVisitor.h"
+#include "preAnalysis/PreAnalysisVisitor.h"
 #include "analysis/SemanticAnalysisVisitor.h"
 #include "debug/PrettyPrintVisitor.h"
 #include "compiler/CodegenVisitor.h"
@@ -50,11 +50,11 @@ int main(int argc, char* argv[]) {
     //
 
     std::vector<std::unique_ptr<Visitor>> visitorPipeline;
-    visitorPipeline.emplace_back(std::make_unique<AnalysisFirstStageVisitor>(parser));
+    visitorPipeline.emplace_back(std::make_unique<PreAnalysisVisitor>(parser));
     visitorPipeline.emplace_back(std::make_unique<SemanticAnalysisVisitor>(parser));
     if (args.printAst)
         visitorPipeline.emplace_back(std::make_unique<PrettyPrintVisitor>(parser));
-    visitorPipeline.emplace_back(std::make_unique<CodegenVisitor>(parser));
+    // visitorPipeline.emplace_back(std::make_unique<CodegenVisitor>(parser));
 
     for (const auto& visitor: visitorPipeline) {
         MEASURE(visitor->name);

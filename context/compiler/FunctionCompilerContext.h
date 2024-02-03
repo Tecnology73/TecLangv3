@@ -12,11 +12,11 @@ public:
         return function->returnType;
     }
 
-    void handleReturn(const Node* node) override {
+    void handleReturn(Node* node) override {
         Compiler::getBuilder().CreateRetVoid();
     }
 
-    void handleReturn(const Node* node, llvm::Value* value) override {
+    void handleReturn(Node* node, llvm::Value* value) override {
         Compiler::getBuilder().CreateRet(value);
     }
 

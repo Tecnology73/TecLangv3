@@ -61,12 +61,7 @@ bool FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) 
         VisitorResult result;
         if (!visitor->TryGetResult(result)) return false;
 
-        // We know what the type is now.
-        auto it = node->analysisInfo->possibleReturnTypes.find(result.type->name);
-        if (it == node->analysisInfo->possibleReturnTypes.end())
-            it = node->analysisInfo->possibleReturnTypes.emplace(result.type->name, std::vector<Node *>()).first;
-
-        it->second.push_back(result.type);
+        node->analysisInfo->AddReturnType(node, result.type);
 
         // We don't pop it until here so that we can maybe
         // use it to show a more detailed error message.
@@ -87,6 +82,7 @@ bool FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) 
     node->returnType = SymbolTable::GetInstance()->GetReference(
         std::string(node->analysisInfo->possibleReturnTypes.begin()->first)
     );
+    return true;
 }
 
 /// <summary>

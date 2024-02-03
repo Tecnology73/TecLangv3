@@ -1,8 +1,8 @@
 #pragma once
 
 #include <llvm/IR/Value.h>
-#include "../../ast/Expressions.h"
 #include "../../context/compiler/WhenCompilerContext.h"
+#include "../topLevel/TypeBase.h"
 
 void generateWhen(Visitor* v, When* node) {
     // Setup context
@@ -82,7 +82,7 @@ void generateWhen(Visitor* v, When* node) {
         // We need to ensure that the exit block has something inside of it,
         // otherwise it's considered invalid.
         // FIXME: When all possible cases are covered (such as with an enum), it would be better if we didn't generate an exit block at all.
-        Compiler::getBuilder().CreateRet(context->getReturnType()->ResolveType()->getDefaultValue());
+        Compiler::getBuilder().CreateRet(TypeCompiler::getDefaultValue(context->getReturnType()));
     } else
         Compiler::getBuilder().SetInsertPoint(context->exitBlock);
 

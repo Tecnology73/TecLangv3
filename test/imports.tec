@@ -48,10 +48,19 @@ func log() { }
 // main.tec
 func main() {
     log() // Which log is called???
+
     return 0
 }
 
 // ----------------------------------------------------
+// When there are 2 symbols found matching the requested signature,
+// an error is thrown.
+// 
+// Error: Multiple functions found matching the signature `log() void`
+// Hint: Try using the fully qualified name.
+// - account.log()
+// - user.log()
+
 // user.tec
 func log() {}
 
@@ -63,6 +72,9 @@ import user
 import account
 
 func main() {
-    log() // Warning: log() from account.tec is called
+    log() // Error: Multiple functions found matching signature.
+    user.log()
+    account.log()
+
     return 0
 }

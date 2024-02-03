@@ -2,8 +2,6 @@
 
 #include "Compiler.h"
 #include "../ast/TopLevel.h"
-#include "../ast/Statements.h"
-#include "../ast/Expressions.h"
 #include "../ast/Literals.h"
 // Top-level
 #include "topLevel/Enum.h"
@@ -16,7 +14,6 @@
 #include "expressions/StaticRef.h"
 #include "expressions/When.h"
 // Statements
-#include "statements/TypeDefinition.h"
 #include "statements/Function.h"
 #include "statements/Return.h"
 #include "statements/IfStatement.h"

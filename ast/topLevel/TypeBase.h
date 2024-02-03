@@ -19,10 +19,6 @@ public:
     TypeBase(const Token& token, const std::string& name) : Node(token), name(name) {
     }
 
-    virtual llvm::Value* getDefaultValue() const = 0;
-
-    virtual bool canCastTo(TypeBase* other) const = 0;
-
     class TypeReference* CreateReference() const;
 
     llvm::Type* getLlvmType();
@@ -41,7 +37,6 @@ public:
 
     Function* FindFunction(
         const std::string& funcName,
-        const std::vector<llvm::Value *>& parameters,
         const std::vector<TypeReference *>& paramTypes
     ) const;
 
@@ -57,6 +52,9 @@ public:
 
     llvm::Type* llvmType = nullptr;
     bool isValueType = false;
+    // This is true for types like string/array that act like a Proxy
+    // where accessing the object itself actually returns `obj.data`.
+    bool hasInternalData = false;
 };
 
 class TypeField : public Node {

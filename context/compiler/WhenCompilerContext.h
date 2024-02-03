@@ -10,7 +10,7 @@ public:
 
     TypeReference* getReturnType() override;
 
-    void handleReturn(const Node* node, llvm::Value* value) override;
+    void handleReturn(Node* node, llvm::Value* value) override;
 
     bool isParentReturn() const;
 

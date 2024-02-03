@@ -17,7 +17,7 @@ TypeReference* WhenCompilerContext::getReturnType() {
     return nullptr;
 }
 
-void WhenCompilerContext::handleReturn(const Node* node, llvm::Value* value) {
+void WhenCompilerContext::handleReturn(Node* node, llvm::Value* value) {
     if (auto varContext = dynamic_cast<VarDeclarationCompilerContext *>(parent)) {
         auto coercedValue = TypeCoercion::coerce(value, varContext->var->type->ResolveType()->llvmType);
         if (!coercedValue) {
