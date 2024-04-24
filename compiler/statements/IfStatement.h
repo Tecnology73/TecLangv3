@@ -32,7 +32,7 @@ namespace {
 }
 
 void generateIfStatement(Visitor* v, IfStatement* node) {
-    auto context = Compiler::getScopeManager().enter("if", new IfCompilerContext(v, node));
+    auto [scope, context] = Scope::Enter<IfCompilerContext>(v, node);
 
     llvm::Value* condition = nullptr;
     if (node->condition) {
@@ -41,11 +41,15 @@ void generateIfStatement(Visitor* v, IfStatement* node) {
         VisitorResult result;
         if (!v->TryGetResult(result)) return;
 
-        condition = Compiler::getBuilder().CreateICmpEQ(
-            result.value,
-            Compiler::getBuilder().getInt1(true),
-            "@if.cond"
-        );
+        // If the condition returns a boolean (from a comparison operation), just use that directly.
+        if (result.value->getType()->isIntegerTy(1))
+            condition = result.value;
+        else
+            condition = Compiler::getBuilder().CreateICmpEQ(
+                result.value,
+                Compiler::getBuilder().getInt1(true),
+                "@if.cond"
+            );
     }
 
     auto thenBlock = llvm::BasicBlock::Create(
@@ -54,10 +58,10 @@ void generateIfStatement(Visitor* v, IfStatement* node) {
         Compiler::getBuilder().GetInsertBlock()->getParent()
     );
     auto exitBlock = context->exitBlock = llvm::BasicBlock::Create(
-                         Compiler::getContext(),
-                         "if.else",
-                         Compiler::getBuilder().GetInsertBlock()->getParent()
-                     );
+        Compiler::getContext(),
+        "if.else",
+        Compiler::getBuilder().GetInsertBlock()->getParent()
+    );
 
     Compiler::getBuilder().CreateCondBr(condition, thenBlock, exitBlock);
 
@@ -92,8 +96,7 @@ void generateIfStatement(Visitor* v, IfStatement* node) {
     }
 
     // Cleanup
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave("if");
+    scope->Leave();
 
     v->AddSuccess();
 }

@@ -140,7 +140,7 @@ namespace {
 
     Node* tryExpandAssignment(const Token& op, Node* lhs, Node* rhs) {
         auto newOp = assignmentMap.find(op.type);
-        if (newOp == assignmentMap.end() || dynamic_cast<String *>(rhs))
+        if (newOp == assignmentMap.end() || dynamic_cast<String*>(rhs))
             return new BinaryOperation(op, lhs, rhs);
 
         return new BinaryOperation(

@@ -3,10 +3,9 @@
 #include <llvm/IR/DerivedTypes.h>
 #include "../../compiler/Compiler.h"
 #include "../../compiler/TypeCoercion.h"
-#include "../StringInternTable.h"
 
-TypeReference* TypeBase::CreateReference() const {
-    return new TypeReference(token, StringInternTable::Intern(name));
+TypeReference* TypeBase::CreateReference() {
+    return new TypeReference(this);
 }
 
 llvm::Type* TypeBase::getLlvmType() {
@@ -49,7 +48,7 @@ void TypeBase::AddField(TypeField* field) {
 
 void TypeBase::AddFunction(Function* function) {
     if (!functions.contains(function->name))
-        functions[function->name] = std::vector<Function *>();
+        functions[function->name] = std::vector<Function*>();
 
     functions[function->name].push_back(function);
 }
@@ -80,7 +79,7 @@ Function* TypeBase::GetFunction(const std::string& funcName) const {
 
 Function* TypeBase::FindFunction(
     const std::string& funcName,
-    const std::vector<TypeReference *>& paramTypes
+    const std::vector<TypeReference*>& paramTypes
 ) const {
     auto it = functions.find(funcName);
     if (it == functions.end())

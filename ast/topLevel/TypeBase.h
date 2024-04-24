@@ -6,6 +6,7 @@
 #include "../../misc/BitFlag.h"
 
 class Function;
+
 class TypeField;
 
 enum class TypeFlag : int {
@@ -19,7 +20,7 @@ public:
     TypeBase(const Token& token, const std::string& name) : Node(token), name(name) {
     }
 
-    class TypeReference* CreateReference() const;
+    class TypeReference* CreateReference();
 
     llvm::Type* getLlvmType();
 
@@ -37,7 +38,7 @@ public:
 
     Function* FindFunction(
         const std::string& funcName,
-        const std::vector<TypeReference *>& paramTypes
+        const std::vector<TypeReference*>& paramTypes
     ) const;
 
 public:
@@ -46,8 +47,8 @@ public:
     bool isDeclared = false;
 
     // Because we allow overloading, we need to store an array of functions.
-    std::unordered_map<std::string_view, std::vector<Function *>> functions;
-    std::unordered_map<std::string_view, TypeField *> fields;
+    std::unordered_map<std::string_view, std::vector<Function*>> functions;
+    std::unordered_map<std::string_view, TypeField*> fields;
     std::vector<std::string_view> fieldOrder;
 
     llvm::Type* llvmType = nullptr;

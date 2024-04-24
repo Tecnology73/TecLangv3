@@ -1,6 +1,7 @@
 #include "TypeCoercion.h"
+#include "Compiler.h"
 
-std::pair<llvm::Value *, llvm::Value *> TypeCoercion::coerce(llvm::Value* valueA, llvm::Value* valueB) {
+std::pair<llvm::Value*, llvm::Value*> TypeCoercion::coerce(llvm::Value* valueA, llvm::Value* valueB) {
     auto priorityA = getTypePriority(valueA->getType());
     auto priorityB = getTypePriority(valueB->getType());
 
@@ -26,7 +27,7 @@ llvm::Value* TypeCoercion::coerce(llvm::Value* value, llvm::Type* toType, bool f
 
     // return nullptr;
     // Will this break anything if we don't return nullptr?
-    // Technically, if nullptr is returned, shit would break anyways...
+    // Technically, if nullptr is returned, shit would break any ways...
     return value;
 }
 

@@ -3,11 +3,12 @@
 #include "../../compiler/Compiler.h"
 #include "../../context/preAnalysis/FunctionContext.h"
 #include "../../symbolTable/SymbolTable.h"
+#include "../../scope/Scope.h"
 
 bool tryPromoteToVarDecl(Visitor* visitor, const BinaryOperation* node) {
     if (node->op != Token::Type::Assign) return false;
 
-    auto varRef = dynamic_cast<VariableReference *>(node->lhs);
+    auto varRef = dynamic_cast<VariableReference*>(node->lhs);
     if (!varRef) return false;
 
     // `a.x` is not a valid variable name.
@@ -15,11 +16,11 @@ bool tryPromoteToVarDecl(Visitor* visitor, const BinaryOperation* node) {
     if (varRef->next) return false;
 
     // Check if the variable has already been declared. If so, this is a re-assignment.
-    if (Compiler::getScopeManager().HasVar(varRef->name))
+    if (Scope::GetScope()->Has(varRef->name))
         return false;
 
     // Promote to a var declaration.
-    Compiler::getScopeManager().getContext()->ReplaceCurrentNode(
+    Scope::GetContext()->ReplaceCurrentNode(
         new VariableDeclaration(varRef->token, varRef->name, node->rhs)
     );
 

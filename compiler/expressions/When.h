@@ -3,10 +3,11 @@
 #include <llvm/IR/Value.h>
 #include "../../context/compiler/WhenCompilerContext.h"
 #include "../topLevel/TypeBase.h"
+#include "../../scope/Scope.h"
 
 void generateWhen(Visitor* v, When* node) {
     // Setup context
-    auto context = Compiler::getScopeManager().enter("when", new WhenCompilerContext(v, node));
+    auto [scope, context] = Scope::Enter<WhenCompilerContext>(v, node);
 
     // Setup switch
     auto entryBlock = Compiler::getBuilder().GetInsertBlock();
@@ -87,8 +88,7 @@ void generateWhen(Visitor* v, When* node) {
         Compiler::getBuilder().SetInsertPoint(context->exitBlock);
 
     // Cleanup
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave("when");
+    scope->Leave();
 
     v->AddSuccess();
 }

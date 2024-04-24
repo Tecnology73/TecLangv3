@@ -4,7 +4,7 @@
 #include "../../context/compiler/ForLoopCompilerContext.h"
 
 void generateBreak(Visitor* v, Break* node) {
-    auto context = Compiler::getScopeManager().findContext<ForLoopCompilerContext>();
+    auto context = Scope::FindContext<ForLoopCompilerContext>();
     if (!context) {
         // v->PrintError("Continue statement must be inside a for loop");
         // v->AddFailure();

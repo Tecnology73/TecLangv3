@@ -1,0 +1,39 @@
+/*extern func malloc(u64) ptr
+extern func realloc(ptr, u64) ptr
+extern func free(ptr) void
+
+extern func ceil(double) double
+extern func max(double, double) double
+extern func printf(ptr) void
+
+extern func strlen(ptr) u64
+extern func strcat(ptr, ptr) ptr
+extern func strcpy(ptr, ptr) ptr
+
+type User {
+    id: u32
+}
+
+func<User> getId() u32 {
+    return this.id
+}
+
+func main() i32 {
+    user = new User()
+    printf("%d\n", user.getId())
+
+    return 0
+}*/
+
+func main() {
+    a = a()
+    return a
+}
+
+func a() {
+    return b()
+}
+
+func b() {
+    return 0
+}

@@ -4,10 +4,11 @@
 #include "../topLevel/Enum.h"
 #include "../../ast/literals/String.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
+#include "../../scope/Scope.h"
 
 void getValueFromType(
     Visitor* v,
-    const TypeBase* parentType,
+    TypeBase* parentType,
     const ChainableNode* var,
     const ChainableNode* prevVar,
     llvm::Value* value
@@ -41,7 +42,7 @@ void getValueFromType(
     if (var->next) {
         value = Compiler::getBuilder().CreateLoad(actualType, value, var->name);
 
-        if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
+        if (auto function = dynamic_cast<FunctionCall*>(var->next)) {
             generateTypeFunctionCall(v, fieldType->ResolveType(), function, value);
             return;
         }
@@ -55,7 +56,7 @@ void getValueFromType(
 
 void tryGenerateWithThisPrefix(Visitor* v, const VariableReference* var) {
     // This allows for accessing fields of the current type without prefixing it with 'this.'
-    auto context = Compiler::getScopeManager().findContext<FunctionCompilerContext>();
+    auto context = Scope::FindContext<FunctionCompilerContext>();
     if (!context) {
         v->AddFailure();
         return;
@@ -85,13 +86,13 @@ void tryGenerateWithThisPrefix(Visitor* v, const VariableReference* var) {
 }
 
 void generateVariableReference(Visitor* v, const VariableReference* var) {
-    auto symbol = Compiler::getScopeManager().GetVar(var->name);
+    auto symbol = Scope::GetScope()->Get(var->name);
     if (!symbol) {
         tryGenerateWithThisPrefix(v, var);
         return;
     }
 
-    auto variable = dynamic_cast<const VariableDeclaration *>(symbol->node);
+    auto variable = dynamic_cast<const VariableDeclaration*>(symbol->node);
     if (!variable) {
         v->AddFailure();
         return;
@@ -110,7 +111,7 @@ void generateVariableReference(Visitor* v, const VariableReference* var) {
         return;
     }
 
-    if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
+    if (auto function = dynamic_cast<FunctionCall*>(var->next)) {
         generateTypeFunctionCall(v, varType->ResolveType(), function, value);
         return;
     }

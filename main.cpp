@@ -1,6 +1,5 @@
 #include <chrono>
 #include <iostream>
-#include <filesystem>
 #include "App.h"
 #include "Builder.h"
 #include "debug/timer.h"
@@ -21,7 +20,8 @@ int main(int argc, char* argv[]) {
     // Parser
     //
 
-    Parser* parser; {
+    Parser* parser;
+    {
         MEASURE("Parser");
 
         if (!args.eval.empty())
@@ -33,15 +33,15 @@ int main(int argc, char* argv[]) {
             return 1;
 
         if (!parser->Parse()) return 1;
-    }
 
-    auto totalLines = parser->lexer->CountLines();
-    auto duration = timer.duration();
-    auto linesPerSec = totalLines / (duration / 1000);
-    std::cout << "Parsed " << totalLines
-        << " lines in " << timer.duration()
-        << "ms (" << linesPerSec << " lines/sec)"
-        << std::endl;
+        auto totalLines = parser->lexer->CountLines();
+        auto duration = timer.duration();
+        auto linesPerSec = totalLines / (duration / 1000);
+        std::cout << "Parsed " << totalLines
+                  << " lines in " << duration
+                  << "ms (" << linesPerSec << " lines/sec)"
+                  << std::endl;
+    }
 
     // return 0;
 
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     visitorPipeline.emplace_back(std::make_unique<SemanticAnalysisVisitor>(parser));
     if (args.printAst)
         visitorPipeline.emplace_back(std::make_unique<PrettyPrintVisitor>(parser));
-    // visitorPipeline.emplace_back(std::make_unique<CodegenVisitor>(parser));
+    visitorPipeline.emplace_back(std::make_unique<CodegenVisitor>(parser));
 
     for (const auto& visitor: visitorPipeline) {
         MEASURE(visitor->name);
@@ -73,7 +73,9 @@ int main(int argc, char* argv[]) {
                 auto result = results.top();
                 results.pop();
 
-                std::cerr << "Error: " << static_cast<int>(result.errorCode) << std::endl;
+                std::cerr << "Error: " << static_cast<int>(result.errorCode)
+                          << " (Success: " << result.success << ")"
+                          << std::endl;
             }
 
             return 1;
@@ -84,31 +86,29 @@ int main(int argc, char* argv[]) {
     // Output
     //
 
-    {
-        if (!args.appOutput.empty()) {
-            MEASURE("Build");
-            if (auto buildResult = build(args); buildResult != 0)
-                return buildResult;
-        }
+    if (!args.appOutput.empty()) {
+        MEASURE("Build");
+        if (auto buildResult = build(args); buildResult != 0)
+            return buildResult;
+    }
 
-        // Print out the llvm module to file
-        if (!args.llOutput.empty()) {
-            MEASURE("LL Output");
-            std::error_code err;
-            llvm::raw_fd_ostream out(args.llOutput.string(), err);
+    // Print out the llvm module to file
+    if (!args.llOutput.empty()) {
+        MEASURE("LL Output");
+        std::error_code err;
+        llvm::raw_fd_ostream out(args.llOutput.string(), err);
 
-            if (!err) {
-                Compiler::getModule().print(out, nullptr);
-                out.flush();
-                out.close();
-                if (out.has_error()) {
-                    std::cerr << "Could not write to file: " << err.message() << std::endl;
-                    return 1;
-                }
-            } else {
-                std::cerr << "Could not open file: " << err.message() << std::endl;
+        if (!err) {
+            Compiler::getModule().print(out, nullptr);
+            out.flush();
+            out.close();
+            if (out.has_error()) {
+                std::cerr << "Could not write to file: " << err.message() << std::endl;
                 return 1;
             }
+        } else {
+            std::cerr << "Could not open file: " << err.message() << std::endl;
+            return 1;
         }
     }
 

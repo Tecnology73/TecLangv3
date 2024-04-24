@@ -1,10 +1,9 @@
 #include "FunctionCall.h"
-#include "../Compiler.h"
 #include "VariableReference.h"
 #include "../TypeCoercion.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
 #include "../../ast/literals/String.h"
-#include "../statements/Function.h"
+#include "../../scope/Scope.h"
 
 void generateTypeFunctionCall(
     Visitor* v,
@@ -24,7 +23,7 @@ void generateTypeFunctionCall(
     }
 
     // Generate parameters
-    std::vector<llvm::Value *> arguments{
+    std::vector<llvm::Value*> arguments{
         value // this
     };
     for (auto& argument: var->arguments) {
@@ -36,7 +35,7 @@ void generateTypeFunctionCall(
         // String literals are stored as a global.
         // Inside a function, we normally load the value if it's a pointer (which it is in the case of a string).
         // This is a bit of a hack to get around that.
-        if (dynamic_cast<String *>(argument)) {
+        if (dynamic_cast<String*>(argument)) {
             auto tmp = Compiler::getBuilder().CreateAlloca(result.value->getType());
             Compiler::getBuilder().CreateStore(result.value, tmp);
 
@@ -53,11 +52,11 @@ void generateTypeFunctionCall(
     VisitorResult result;
     if (!v->TryGetResult(result)) return;
 
-    value = Compiler::getBuilder().CreateCall(static_cast<llvm::Function *>(result.value), arguments, "");
+    value = Compiler::getBuilder().CreateCall(static_cast<llvm::Function*>(result.value), arguments, "");
 
     // Recurse
     if (var->next) {
-        if (auto function = dynamic_cast<FunctionCall *>(var->next)) {
+        if (auto function = dynamic_cast<FunctionCall*>(var->next)) {
             generateTypeFunctionCall(v, func->returnType->ResolveType(), function, value);
             return;
         }
@@ -71,7 +70,7 @@ void generateTypeFunctionCall(
 
 void tryGenerateWithThisPrefix(Visitor* v, const FunctionCall* node) {
     // This allows for accessing fields of the current type without prefixing it with 'this.'
-    auto context = Compiler::getScopeManager().findContext<FunctionCompilerContext>();
+    auto context = Scope::FindContext<FunctionCompilerContext>();
     if (!context) {
         v->ReportError(ErrorCode::FUNCTION_UNKNOWN, {node->name}, node);
         return;
@@ -102,7 +101,7 @@ void tryGenerateWithThisPrefix(Visitor* v, const FunctionCall* node) {
 
 void generateFunctionCall(Visitor* v, const FunctionCall* node) {
     // Generate parameters
-    std::vector<llvm::Value *> arguments;
+    std::vector<llvm::Value*> arguments;
     for (auto& argument: node->arguments) {
         argument->Accept(v);
 
@@ -110,7 +109,7 @@ void generateFunctionCall(Visitor* v, const FunctionCall* node) {
         if (!v->TryGetResult(result)) return;
 
         auto arg = node->function->GetParameter(arguments.size());
-        if (result.value->getType()->isPointerTy() && dynamic_cast<VariableReference *>(argument)) {
+        if (result.value->getType()->isPointerTy() && dynamic_cast<VariableReference*>(argument)) {
             // VariableReference does not load the right-most node.
             result.value = Compiler::getBuilder().CreateLoad(result.type->ResolveType()->getLlvmType(), result.value);
         }
@@ -135,7 +134,7 @@ void generateFunctionCall(Visitor* v, const FunctionCall* node) {
         node->function->llvmFunction->getReturnType()->isVoidTy() ? "" : node->name
     );
 
-    if (auto func = dynamic_cast<FunctionCall *>(node->next)) {
+    if (auto func = dynamic_cast<FunctionCall*>(node->next)) {
         generateTypeFunctionCall(v, node->function->returnType->ResolveType(), func, value);
         return;
     }

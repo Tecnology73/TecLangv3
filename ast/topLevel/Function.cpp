@@ -15,7 +15,7 @@ bool Function::AddParameter(const Token& token, const std::string& paramName, Ty
 }
 
 bool Function::AddParameter(const Token& token, TypeReference* type) {
-    auto& paramName = StringInternTable::Intern(std::to_string(parameters.size() + 1));
+    auto& paramName = StringInternTable::Intern(std::to_string(parameters.size()));
     if (parameters.contains(paramName))
         return false;
 

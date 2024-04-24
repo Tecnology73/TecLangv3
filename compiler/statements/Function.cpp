@@ -5,6 +5,7 @@
 #include "../Compiler.h"
 #include "../topLevel/TypeBase.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
+#include "../../scope/Scope.h"
 
 void generateFunction(Visitor* v, Function* func) {
     if (func->llvmFunction) {
@@ -15,8 +16,8 @@ void generateFunction(Visitor* v, Function* func) {
     auto lastBlock = Compiler::getBuilder().GetInsertBlock();
 
     // Generate parameters
-    std::vector<llvm::Type *> parameters;
-    for (auto& paramName: func->parameterOrder) {
+    std::vector<llvm::Type*> parameters;
+    for (const auto& paramName: func->parameterOrder) {
         auto paramType = func->parameters[paramName]->type->ResolveType()->getLlvmType();
         // if (paramType)
         // paramType = paramType->getPointerTo();
@@ -45,11 +46,11 @@ void generateFunction(Visitor* v, Function* func) {
         funcName = func->ownerType->name + "_" + funcName;
 
     llvm::Function* function = func->llvmFunction = llvm::Function::Create(
-                                   funcType,
-                                   linkage,
-                                   funcName.data(),
-                                   Compiler::getModule()
-                               );
+        funcType,
+        linkage,
+        funcName.data(),
+        Compiler::getModule()
+    );
 
     if (!func->isExternal) {
         // Create a new basic block to start insertion into.
@@ -62,7 +63,7 @@ void generateFunction(Visitor* v, Function* func) {
         Compiler::getBuilder().SetInsertPoint(basicBlock);
 
         // Create a scope
-        Compiler::getScopeManager().enter(func->name, new FunctionCompilerContext(v, func));
+        auto [scope, context] = Scope::Enter<FunctionCompilerContext>(v, func);
 
         // Generate the parameters.
         for (const auto& paramName: func->parameterOrder) {
@@ -79,8 +80,7 @@ void generateFunction(Visitor* v, Function* func) {
         }
 
         // Close the scope
-        Compiler::getScopeManager().popContext();
-        Compiler::getScopeManager().leave(std::string(func->name));
+        scope->Leave();
     }
 
     // Validate the generated code, checking for consistency.

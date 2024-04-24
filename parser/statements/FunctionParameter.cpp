@@ -1,6 +1,7 @@
 #include "FunctionParameter.h"
 #include "../../ast/topLevel/TypeDefinition.h"
 #include "../../ast/StringInternTable.h"
+#include "../expressions/TypeReference.h"
 
 bool parseFunctionParameter(Parser* parser, Function* function, const bool isNameOptional) {
     if (parser->currentToken.isNot(Token::Type::Identifier)) {
@@ -13,7 +14,8 @@ bool parseFunctionParameter(Parser* parser, Function* function, const bool isNam
     }
 
     auto beginToken = parser->currentToken;
-    if (!isNameOptional) {
+    auto hasName = false;
+    if (!isNameOptional || parser->PeekToken().is(Token::Type::Colon)) {
         if (parser->NextToken().isNot(Token::Type::Colon)) {
             parser->PrintSyntaxError(":");
             return false;
@@ -23,23 +25,26 @@ bool parseFunctionParameter(Parser* parser, Function* function, const bool isNam
             parser->PrintSyntaxError("type");
             return false;
         }
+
+        hasName = true;
     }
 
     // TODO: Add default value support.
     // TODO: Infer type from default value.
-    auto paramType = new TypeReference(
-        parser->currentToken,
-        StringInternTable::Intern(parser->currentToken.value)
-    );
-    if (isNameOptional)
-        function->AddParameter(beginToken, paramType);
-    else
+    auto paramType = parseTypeReference(parser);
+    if (!paramType) {
+        parser->PrintSyntaxError("type");
+        return false;
+    }
+
+    if (hasName)
         function->AddParameter(
             beginToken,
             StringInternTable::Intern(beginToken.value),
             paramType
         );
-
-    parser->NextToken(); // Consume the param/type name.
+    else
+        function->AddParameter(beginToken, paramType);
+    
     return true;
 }

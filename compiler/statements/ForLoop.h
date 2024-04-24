@@ -10,22 +10,22 @@
 
 void generateForLoop(Visitor* v, ForLoop* node) {
     // Setup context
-    auto context = Compiler::getScopeManager().enter("for", new ForLoopCompilerContext(v, node));
+    auto [scope, context] = Scope::Enter<ForLoopCompilerContext>(v, node);
 
     // Basic Blocks
     auto entryBlock = Compiler::getBuilder().GetInsertBlock();
     auto loop = llvm::BasicBlock::Create(Compiler::getContext(), "loop", entryBlock->getParent());
     auto loopBody = llvm::BasicBlock::Create(Compiler::getContext(), "loop.body", entryBlock->getParent());
     auto loopTail = context->tailBlock = llvm::BasicBlock::Create(
-                        Compiler::getContext(),
-                        "loop.tail",
-                        entryBlock->getParent()
-                    );
+        Compiler::getContext(),
+        "loop.tail",
+        entryBlock->getParent()
+    );
     auto loopExit = context->exitBlock = llvm::BasicBlock::Create(
-                        Compiler::getContext(),
-                        "loop.exit",
-                        entryBlock->getParent()
-                    );
+        Compiler::getContext(),
+        "loop.exit",
+        entryBlock->getParent()
+    );
 
     //
     // Head - Create iterator & check loop expression
@@ -34,7 +34,7 @@ void generateForLoop(Visitor* v, ForLoop* node) {
     Compiler::getBuilder().SetInsertPoint(loop);
 
     // TODO: Support more than just a range expression (lower..upper)
-    auto cond = static_cast<BinaryOperation *>(node->value);
+    auto cond = static_cast<BinaryOperation*>(node->value);
 
     // iterator
     auto it = node->identifier = new VariableDeclaration(node->token, StringInternTable::Intern("it"));
@@ -44,7 +44,8 @@ void generateForLoop(Visitor* v, ForLoop* node) {
     auto keyPhi = Compiler::getBuilder().CreatePHI(it->type->ResolveType()->llvmType, 2, node->identifier->name);
     it->alloc = keyPhi;
 
-    Compiler::getScopeManager().Add(it);
+    // Compiler::getScopeManager().Add(it);
+    scope->Add(it);
 
     // Initial expression of the iterator
     cond->lhs->Accept(v);
@@ -105,8 +106,7 @@ void generateForLoop(Visitor* v, ForLoop* node) {
     loopExit->moveAfter(&entryBlock->getParent()->back());
 
     // Cleanup
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave("for");
+    scope->Leave();
     Compiler::getBuilder().SetInsertPoint(loopExit);
 
     v->AddSuccess();

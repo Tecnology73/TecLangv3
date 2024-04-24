@@ -1,14 +1,15 @@
 #include "VarReference.h"
-#include "../../compiler/Compiler.h"
+#include "../../scope/Scope.h"
+#include "../expressions/TypeReference.h"
 
 TypeBase* VariableReference::getFinalType() {
-    auto variable = Compiler::getScopeManager().GetVar(name);
+    auto variable = Scope::GetScope()->Get(name);
     if (!variable) return nullptr;
 
     if (next)
-        return next->getFinalType(variable->narrowedType->ResolveType());
+        return next->getFinalType(variable->type->ResolveType());
 
-    return variable->narrowedType->ResolveType();
+    return variable->type->ResolveType();
 }
 
 TypeBase* VariableReference::getFinalType(const TypeBase* parentType) {

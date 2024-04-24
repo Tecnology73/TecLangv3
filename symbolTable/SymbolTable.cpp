@@ -1,7 +1,5 @@
 #include "SymbolTable.h"
-#include "../ast/TopLevel.h"
 #include "../compiler/TypeCoercion.h"
-#include "../ast/StringInternTable.h"
 
 SymbolTable* SymbolTable::instance = nullptr;
 
@@ -45,10 +43,10 @@ SymbolTable* SymbolTable::GetInstance() {
 }
 
 SymbolTable* SymbolTable::GetInstance(const std::string& package) {
-    auto instance = GetInstance();
-    auto it = instance->packages.find(package);
-    if (it == instance->packages.end())
-        it = instance->packages.emplace(package, new SymbolTable(package)).first;
+    auto root = GetInstance();
+    auto it = root->packages.find(package);
+    if (it == root->packages.end())
+        it = root->packages.emplace(package, new SymbolTable(package)).first;
 
     return it->second;
 }
@@ -72,7 +70,7 @@ bool SymbolTable::Add(Enum* type) {
 bool SymbolTable::Add(Function* function) {
     auto it = functions.find(function->name);
     if (it == functions.end())
-        it = functions.emplace(function->name, std::vector<Function *>()).first;
+        it = functions.emplace(function->name, std::vector<Function*>()).first;
 
     it->second.emplace_back(function);
     return true;
@@ -94,7 +92,7 @@ std::optional<SymbolN> SymbolTable::Get(const std::string& name) const {
     return it->second;
 }
 
-const std::vector<Function *>& SymbolTable::LookupFunction(const std::string& name) const {
+const std::vector<Function*>& SymbolTable::LookupFunction(const std::string& name) const {
     auto it = functions.find(name);
     if (it == functions.end())
         return {};
@@ -102,12 +100,12 @@ const std::vector<Function *>& SymbolTable::LookupFunction(const std::string& na
     return it->second;
 }
 
-Function* SymbolTable::LookupFunction(const std::string& name, const std::vector<TypeReference *>& args) const {
+Function* SymbolTable::LookupFunction(const std::string& name, const std::vector<TypeReference*>& args) const {
     auto it = functions.find(name);
     if (it == functions.end())
         return nullptr;
 
-    // Bit of a hack to get external functions (like `printf(...)`)to resolve properly
+    // This is a bit of a hack to get external functions (like `printf(...)`) to resolve properly
     // when the provided arguments don't actually match.
     if (it->second.size() == 1 && it->second[0]->isExternal)
         return it->second[0];

@@ -7,3 +7,4 @@
 #include "expressions/VarReference.h"
 #include "expressions/StaticRef.h"
 #include "expressions/When.h"
+#include "expressions/ArrayRef.h"

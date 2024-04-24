@@ -4,12 +4,12 @@
 #include "../topLevel/Enum.h"
 #include "../../ast/expressions/StaticRef.h"
 #include "../../ast/literals/Integer.h"
-#include "../../compiler/Compiler.h"
 #include "../../compiler/TypeCoercion.h"
+#include "../../scope/Scope.h"
 
 void WhenAnalyzer::Analyze() {
     // Create a context
-    auto context = Compiler::getScopeManager().enter("when", new WhenAnalysisContext(visitor, node));
+    auto [scope, context] = Scope::Enter<WhenAnalysisContext>(visitor, node);
 
     // Visit everything in the body
     for (const auto& item: node->body) {
@@ -23,8 +23,7 @@ void WhenAnalyzer::Analyze() {
     inferReturnTypes(context);
 
     // Cleanup
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave("when");
+    scope->Leave();
 
     if (node->returnType)
         visitor->AddSuccess(node->returnType);
@@ -40,7 +39,7 @@ bool WhenAnalyzer::exhaustiveCaseCheck() {
         if (!item->condition)
             throw std::runtime_error("`hasElse` returned false but there is an expression-less case.");
 
-        if (auto staticRef = static_cast<StaticRef *>(item->condition))
+        if (auto staticRef = static_cast<StaticRef*>(item->condition))
             caseValues.emplace(staticRef->next->name);
         else
             throw std::runtime_error("Unhandled expression expression.");
@@ -75,7 +74,7 @@ bool WhenAnalyzer::exhaustiveCaseCheck() {
     return false;
 }
 
-void WhenAnalyzer::inferReturnTypes(const WhenAnalysisContext* context) {
+void WhenAnalyzer::inferReturnTypes(std::shared_ptr<WhenAnalysisContext> context) {
     // Collect all the return types seen
     /*std::set<const TypeVariant *> returnTypes;
     for (const auto &key: context->returnStatements | std::views::keys)
@@ -100,10 +99,10 @@ void WhenAnalyzer::inferReturnTypes(const WhenAnalysisContext* context) {
 /// For example, if a bool & i8 are returned, the common type would be i8.
 /// The goal is to reduce the number of return types to 1.
 /// </summary>
-void WhenAnalyzer::reduceReturnTypes(std::set<TypeReference *>& types) {
+void WhenAnalyzer::reduceReturnTypes(std::set<TypeReference*>& types) {
     if (types.size() <= 1) return;
 
-    std::vector<TypeReference *> typesArray;
+    std::vector<TypeReference*> typesArray;
     typesArray.reserve(types.size());
     for (const auto& item: types)
         typesArray.emplace_back(item);

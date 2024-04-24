@@ -4,6 +4,7 @@
 #include "../lexer/Token.h"
 
 class TypeBase;
+
 class TypeReference;
 
 class Node {

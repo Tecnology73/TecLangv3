@@ -8,6 +8,8 @@ class TypeReference : public Node {
 public:
     explicit TypeReference(const Token& token, const std::string& name);
 
+    explicit TypeReference(TypeBase* type);
+
     void Accept(Visitor* visitor) override;
 
     TypeReference* Clone() const;
@@ -19,7 +21,7 @@ public:
     BitFlag<TypeFlag> flags;
 
 private:
-    inline static TypeReference* infer = nullptr;
+//    inline static TypeReference* infer = nullptr;
 
     bool resolved = false;
     TypeBase* concreteType = nullptr;

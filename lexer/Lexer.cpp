@@ -70,8 +70,9 @@ Token Lexer::GetNextToken(const bool useStack) {
         return token;
     }
 
+    char c = EOF;
     while (position.index < this->sourceLength) {
-        char c = peekChar(0);
+        c = peekChar(0);
         if (c == EOF) break;
 
         if (isspace(c)) {

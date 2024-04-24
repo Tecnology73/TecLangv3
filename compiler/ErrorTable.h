@@ -26,6 +26,7 @@ enum class ErrorCode {
     VALUE_CANNOT_BE_NULL,
     VALUE_POSSIBLY_NULL,
     ASSIGN_TYPE_MISMATCH,
+    OUT_OF_RANGE,
 };
 
 extern const std::map<ErrorCode, std::string> ErrorTable;

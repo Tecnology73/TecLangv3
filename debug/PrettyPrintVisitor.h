@@ -131,14 +131,17 @@ public:
         Print("EnumConstructor: %s\n", node->name.c_str());
         indent += 2;
 
-        for (auto& parameter: node->parameters)
-            parameter->Accept(this);
+        for (auto& paramName: node->parameterOrder)
+            node->parameters[paramName]->Accept(this);
 
         indent -= 2;
     }
 
     void Visit(EnumParameter* node) override {
-        Print("%s: %s\n", node->name, node->type->name.c_str());
+        if (node->name)
+            Print("%s: %s\n", (*node->name).c_str(), node->type->name.c_str());
+        else
+            Print("(unnamed): %s\n", node->type->name.c_str());
     }
 
     void Visit(Function* node) override {
@@ -326,6 +329,15 @@ public:
 
     void Visit(VariableReference* node) override {
         Print("VarRef: %s\n", node->name.c_str());
+        indent += 2;
+        if (node->next)
+            node->next->Accept(this);
+
+        indent -= 2;
+    }
+
+    void Visit(ArrayRef* node) override {
+        Print("ArrayRef: %d\n", node->index);
         indent += 2;
         if (node->next)
             node->next->Accept(this);

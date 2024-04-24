@@ -6,6 +6,7 @@
 #include "../../ast/expressions/ConstructorCall.h"
 #include "../../symbolTable/SymbolTable.h"
 #include "../../context/compiler/VarDeclarationCompilerContext.h"
+#include "../../scope/Scope.h"
 
 void generateConstructorCall(Visitor* v, VariableDeclaration* node) {
     node->alloc = Compiler::getBuilder().CreateCall(
@@ -17,18 +18,18 @@ void generateConstructorCall(Visitor* v, VariableDeclaration* node) {
 
     // Call expression
     if (node->expression) {
-        Compiler::getScopeManager().enter(std::string(node->name), new VarDeclarationCompilerContext(v, node));
+        auto [scope, context] = Scope::Enter<VarDeclarationCompilerContext>(v, node);
 
         // Some expressions (like 'when') don't return an expression directly.
         node->expression->Accept(v);
         if (VisitorResult result; !v->TryGetResult(result)) return;
 
         // Cleanup
-        Compiler::getScopeManager().popContext();
-        Compiler::getScopeManager().leave(node->name);
+        scope->Leave();
     }
 
-    Compiler::getScopeManager().Add(node);
+    // Compiler::getScopeManager().Add(node);
+    Scope::GetScope()->Add(node);
 
     v->AddSuccess(node->alloc);
 }
@@ -46,12 +47,12 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
     // If the expression is a constant, we don't need to do any allocations.
     /*if (!node->type->isStruct && dynamic_cast<Literal *>(node->expression)) {
         node->alloc = node->expression->Accept(v);
-        Compiler::getScopeManager().add(node);
+        Scope::GetScope()->Add(node);
 
         return node->alloc;
     }*/
 
-    if (dynamic_cast<ConstructorCall *>(node->expression)) {
+    if (dynamic_cast<ConstructorCall*>(node->expression)) {
         generateConstructorCall(v, node);
         return;
     }
@@ -64,7 +65,7 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
 
     // Generate the expression.
     if (node->expression) {
-        Compiler::getScopeManager().enter(node->name, new VarDeclarationCompilerContext(v, node));
+        auto [scope, context] = Scope::Enter<VarDeclarationCompilerContext>(v, node);
 
         // Some expressions (like when) don't return an expression directly.
         node->expression->Accept(v);
@@ -73,13 +74,13 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
         if (!v->TryGetResult(result)) return;
 
         if (nodeType->name == "string") {
-            if (!dynamic_cast<ConstructorCall *>(node->expression))
+            if (!dynamic_cast<ConstructorCall*>(node->expression))
                 Compiler::getBuilder().CreateCall(
                     nodeType->GetFunction("construct")->llvmFunction,
                     {node->alloc}
                 );
 
-            if (dynamic_cast<String *>(node->expression)) {
+            if (dynamic_cast<String*>(node->expression)) {
                 auto tmp = Compiler::getBuilder().CreateAlloca(result.value->getType());
                 Compiler::getBuilder().CreateStore(result.value, tmp);
 
@@ -96,13 +97,12 @@ void generateVariableDeclaration(Visitor* v, VariableDeclaration* node) {
         }
 
         // Cleanup
-        Compiler::getScopeManager().popContext();
-        Compiler::getScopeManager().leave(node->name);
+        scope->Leave();
     } else {
         // Assign the default expression for the type.
         Compiler::getBuilder().CreateStore(TypeCompiler::getDefaultValue(node->type), node->alloc);
     }
 
-    Compiler::getScopeManager().Add(node);
+    Scope::GetScope()->Add(node);
     v->AddSuccess(node->alloc);
 }

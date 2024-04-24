@@ -1,7 +1,7 @@
 #include "Enum.h"
 #include "../expressions/Expression.h"
-#include "../expressions/TypeReference.h"
-#include "../../ast/StringInternTable.h"
+#include "../statements/FunctionParameter.h"
+#include "../../ast/topLevel/TypeDefinition.h"
 
 namespace ParseEnum {
     EnumValue* parseValue(Parser* parser) {
@@ -45,30 +45,15 @@ namespace ParseEnum {
         // v4(i32, i32, i32, i32)
         // v4(a: i32, b: i32, c: i32, d: i32)
         while (parser->currentToken.isNot(Token::Type::CloseParen)) {
-            if (parser->PeekToken().is(Token::Type::Colon)) {
-                // id: Type
-                auto param = new EnumParameter(
-                    parser->currentToken,
-                    StringInternTable::Intern(parser->currentToken.value)
-                );
+            if (!parseFunctionParameter(parser, constructor, true))
+                return nullptr;
 
-                parser->NextToken(); // Consume identifier
-
-                if (parser->NextToken().isNot(Token::Type::Identifier)) {
-                    parser->PrintSyntaxError("type");
-                    return nullptr;
-                }
-
-                param->type = parseTypeReference(parser);
-                constructor->parameters.push_back(param);
-            } else {
-                // Type
-                auto param = new EnumParameter(parser->currentToken);
-                param->type = parseTypeReference(parser);
+            if (parser->currentToken.is(Token::Type::Comma))
+                parser->NextToken(); // Consume ':'
+            else if (parser->currentToken.isNot(Token::Type::CloseParen)) {
+                parser->PrintSyntaxError("',' or ')'");
+                return nullptr;
             }
-
-            if (parser->NextToken().is(Token::Type::Comma))
-                parser->NextToken(); // Consume ','
         }
 
         parser->NextToken(); // Consume ')'
@@ -109,12 +94,14 @@ Enum* parseEnum(Parser* parser) {
             if (!constructor)
                 return nullptr;
 
-            anEnum->AddField(constructor);
+            constructor->returnType = anEnum->CreateConstructorType(constructor);
+            anEnum->AddFunction(constructor);
         } else {
             auto value = ParseEnum::parseValue(parser);
             if (!value)
                 return nullptr;
 
+            value->type = anEnum->CreateReference();
             anEnum->AddField(value);
         }
     }

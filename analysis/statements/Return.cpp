@@ -1,10 +1,11 @@
 #include "Return.h"
 #include "../../compiler/Compiler.h"
 #include "../../symbolTable/SymbolTable.h"
+#include "../../scope/Scope.h"
 
 void ReturnAnalyzer::Analyze() {
     if (!node->expression) {
-        Compiler::getScopeManager().getContext()->handleReturn(
+        Scope::GetContext()->handleReturn(
             node,
             SymbolTable::GetInstance()->GetReference("void")
         );
@@ -16,6 +17,6 @@ void ReturnAnalyzer::Analyze() {
     VisitorResult result;
     if (!visitor->TryGetResult(result)) return;
 
-    Compiler::getScopeManager().getContext()->handleReturn(node, result.type);
+    Scope::GetContext()->handleReturn(node, result.type);
     visitor->AddSuccess(result.type);
 }

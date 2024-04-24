@@ -5,7 +5,7 @@
 
 void getValueFromType(
     Visitor* v,
-    const TypeBase* parentType,
+    TypeBase* parentType,
     const ChainableNode* var,
     const ChainableNode* prevVar,
     llvm::Value* value

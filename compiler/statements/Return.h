@@ -5,21 +5,22 @@
 #include "../../context/compiler/ReturnCompilerContext.h"
 
 void generateReturn(Visitor* v, Return* ret) {
-    auto returnType = Compiler::getScopeManager().getContext()->getReturnType();
+    auto context = Scope::GetContext();
+    auto returnType = context->getReturnType();
     if (!returnType) {
         v->ReportError(ErrorCode::SYNTAX_ERROR, {"return"}, ret);
         return;
     }
 
     if (!ret->expression) {
-        Compiler::getScopeManager().getContext()->handleReturn(ret);
+        context->handleReturn(ret);
         v->AddSuccess();
         return;
     }
 
-    Compiler::getScopeManager().pushContext(new ReturnCompilerContext(v, ret));
+    auto [scope, _] = Scope::Enter<ReturnCompilerContext>(v, ret);
     ret->expression->Accept(v);
-    Compiler::getScopeManager().popContext();
+    scope->Leave();
 
     VisitorResult result;
     if (!v->TryGetResult(result)) return;
@@ -45,6 +46,6 @@ void generateReturn(Visitor* v, Return* ret) {
     if (coercedValue->getType()->isPointerTy())
         coercedValue = Compiler::getBuilder().CreateLoad(returnType->ResolveType()->llvmType, coercedValue);
 
-    Compiler::getScopeManager().getContext()->handleReturn(ret, coercedValue);
+    context->handleReturn(ret, coercedValue);
     v->AddSuccess();
 }

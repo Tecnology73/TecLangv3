@@ -1,10 +1,10 @@
 #include "WhenCondition.h"
-#include "../../compiler/Compiler.h"
 #include "../../context/analysis/WhenConditionAnalysisContext.h"
+#include "../../scope/Scope.h"
 
 void WhenConditionAnalyzer::Analyze() {
     // Create a context
-    auto context = Compiler::getScopeManager().enter("whenCondition", new WhenConditionAnalysisContext(visitor, node));
+    auto [scope, context] = Scope::Enter<WhenConditionAnalysisContext>(visitor, node);
 
     // Not present for the `else` case.
     if (node->condition) {
@@ -25,8 +25,7 @@ void WhenConditionAnalyzer::Analyze() {
     }
 
     // Cleanup
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave("whenCondition");
+    scope->Leave();
 
     visitor->AddSuccess();
 }

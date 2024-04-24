@@ -13,7 +13,7 @@ public:
     void Analyze() override;
 
 private:
-    bool inferReturnTypes(const FunctionAnalysisContext* context);
+    bool inferReturnTypes(std::shared_ptr<FunctionAnalysisContext> context);
 
-    void reduceReturnTypes(std::set<TypeReference *>& types);
+    void reduceReturnTypes(std::set<TypeReference*>& types);
 };

@@ -4,7 +4,6 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/TargetSelect.h>
-#include "./scope/ScopeManager.h"
 
 class Compiler {
 public:
@@ -31,11 +30,8 @@ public:
 
     static llvm::IRBuilder<>& getBuilder() { return getInstance().builder; }
 
-    static ScopeManager& getScopeManager() { return getInstance().scopeManager; }
-
 private:
     llvm::LLVMContext context;
     llvm::Module module;
     llvm::IRBuilder<> builder;
-    ScopeManager scopeManager;
 };

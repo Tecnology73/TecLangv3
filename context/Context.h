@@ -5,8 +5,6 @@
 class TypeBase;
 
 class Context {
-    friend class ScopeManager;
-
 public:
     explicit Context(Visitor* visitor) : visitor(visitor) {
     }

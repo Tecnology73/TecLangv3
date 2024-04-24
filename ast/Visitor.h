@@ -3,6 +3,7 @@
 #include <llvm/IR/Value.h>
 #include "../parser/Parser.h"
 #include "../compiler/ErrorManager.h"
+#include "../scope/Symbol.h"
 #include "topLevel/TypeBase.h"
 
 struct VisitorResult {
@@ -10,6 +11,7 @@ struct VisitorResult {
     llvm::Value* value = nullptr;
     TypeReference* type = nullptr;
     ErrorCode errorCode = ErrorCode::UNKNOWN_ERROR;
+    std::shared_ptr<Symbol> symbol;
 };
 
 class Visitor {
@@ -38,6 +40,10 @@ public:
 
     void AddSuccess(TypeReference* type) {
         results.emplace(true, nullptr, type);
+    }
+
+    void AddSuccess(std::shared_ptr<Symbol> symbol) {
+        results.emplace(true, nullptr, symbol->type, ErrorCode::UNKNOWN_ERROR, symbol);
     }
 
     void AddSuccess(llvm::Value* value, TypeReference* type) {
@@ -166,6 +172,8 @@ public:
     virtual void Visit(class TypeReference* node) = 0;
 
     virtual void Visit(class VariableReference* node) = 0;
+
+    virtual void Visit(class ArrayRef* node) = 0;
 
     virtual void Visit(class StaticRef* node) = 0;
 

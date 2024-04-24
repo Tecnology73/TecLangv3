@@ -1,19 +1,18 @@
 #include "IfStatement.h"
-#include "../../compiler/Compiler.h"
 #include "../../symbolTable/SymbolTable.h"
+#include "../../scope/Scope.h"
 
 void IfStatementAnalyzer::Analyze() {
-    auto context = Compiler::getScopeManager().enter("if", new IfStatementAnalysisContext(visitor, node));
+    auto [scope, context] = Scope::Enter<IfStatementAnalysisContext>(visitor, node);
 
     if (analyzeCondition() && analyzeBody(context) && analyzeElse()) {
         visitor->AddSuccess();
 
         if (context->hasReturned)
-            propagateNarrowedTypes();
+            propagateNarrowedTypes(scope);
     }
 
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave("if");
+    scope->Leave();
 }
 
 bool IfStatementAnalyzer::analyzeCondition() {
@@ -27,7 +26,7 @@ bool IfStatementAnalyzer::analyzeCondition() {
     return visitor->TryGetResult(result);
 }
 
-bool IfStatementAnalyzer::analyzeBody(IfStatementAnalysisContext* context) {
+bool IfStatementAnalyzer::analyzeBody(std::shared_ptr<IfStatementAnalysisContext> context) {
     while (const auto& item = context->GetNextNode()) {
         item->Accept(visitor);
 
@@ -46,15 +45,15 @@ bool IfStatementAnalyzer::analyzeElse() {
     return visitor->TryGetResult(result);
 }
 
-void IfStatementAnalyzer::propagateNarrowedTypes() {
-    auto parentScope = Compiler::getScopeManager().GetParentScope();
-    for (const auto& [name, symbol]: Compiler::getScopeManager().GetVars()) {
-        auto typeInParent = parentScope->GetVar(name)->narrowedType;
-        auto type = symbol->narrowedType;
+void IfStatementAnalyzer::propagateNarrowedTypes(std::shared_ptr<Scope> scope) {
+    /*auto parentScope = scope->GetParent();
+    for (const auto& [name, symbol]: scope->List()) {
+        auto typeInParent = parentScope->Get(name)->type;
+        auto type = symbol->type;
 
         if (type->name == "null" && typeInParent->flags.Has(TypeFlag::OPTIONAL)) // is null
             typeInParent->flags.Clear(TypeFlag::OPTIONAL);
         else if (!type->ResolveType()->isValueType && typeInParent->flags.Has(TypeFlag::OPTIONAL)) // is Type
             parentScope->Add(name, symbol->node, SymbolTable::GetInstance()->GetReference("null"));
-    }
+    }*/
 }

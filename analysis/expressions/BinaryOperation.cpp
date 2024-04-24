@@ -6,6 +6,7 @@
 #include "../../ast/expressions/VarReference.h"
 #include "../../ast/expressions/StaticRef.h"
 #include "../../ast/literals/Null.h"
+#include "../../scope/Scope.h"
 
 void BinaryOperationAnalyzer::Analyze() {
     if (node->op == Token::Type::Assign) {
@@ -31,7 +32,7 @@ void BinaryOperationAnalyzer::Analyze() {
 
 void BinaryOperationAnalyzer::analyzeAssign() {
     // LHS must be a chainable node.
-    auto chainNode = dynamic_cast<ChainableNode *>(node->lhs);
+    auto chainNode = dynamic_cast<ChainableNode*>(node->lhs);
     if (!chainNode) {
         visitor->ReportError(ErrorCode::SYNTAX_ERROR, {}, node);
         return;
@@ -68,11 +69,11 @@ void BinaryOperationAnalyzer::analyzeAssign() {
 }
 
 void BinaryOperationAnalyzer::analyzeIs() {
-    if (auto chainNode = dynamic_cast<ChainableNode *>(node->lhs)) {
-        if (auto null = dynamic_cast<Null *>(node->rhs))
-            Compiler::getScopeManager().getContext()->narrowType(chainNode, null->getType());
-        else if (auto staticRef = dynamic_cast<StaticRef *>(node->rhs))
-            Compiler::getScopeManager().getContext()->narrowType(
+    if (auto chainNode = dynamic_cast<ChainableNode*>(node->lhs)) {
+        if (auto null = dynamic_cast<Null*>(node->rhs))
+            Scope::GetContext()->narrowType(chainNode, null->getType());
+        else if (auto staticRef = dynamic_cast<StaticRef*>(node->rhs))
+            Scope::GetContext()->narrowType(
                 chainNode,
                 staticRef->getFinalType()->CreateReference()
             );

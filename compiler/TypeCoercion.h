@@ -2,11 +2,11 @@
 
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
-#include "Compiler.h"
+#include "../ast/expressions/TypeReference.h"
 
 class TypeCoercion {
 public:
-    static std::pair<llvm::Value *, llvm::Value *> coerce(llvm::Value* valueA, llvm::Value* valueB);
+    static std::pair<llvm::Value*, llvm::Value*> coerce(llvm::Value* valueA, llvm::Value* valueB);
 
     static llvm::Value* coerce(llvm::Value* value, llvm::Type* toType, bool forcePointerCast = false);
 

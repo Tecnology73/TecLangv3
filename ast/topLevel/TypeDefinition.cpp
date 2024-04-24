@@ -21,9 +21,9 @@ TypeBase* TypeDefinition::CreateUndeclared(const Token& token) {
     auto symbol = SymbolTable::GetInstance()->Get(name);
     if (symbol.has_value()) {
         if (symbol->type == SymbolType::Enum)
-            return dynamic_cast<Enum *>(symbol->value);
+            return dynamic_cast<Enum*>(symbol->value);
 
-        return dynamic_cast<TypeDefinition *>(symbol->value);
+        return dynamic_cast<TypeDefinition*>(symbol->value);
     }
 
     // Create a new type.

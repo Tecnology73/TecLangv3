@@ -1,22 +1,21 @@
 #pragma once
 
 #include "../ast/Visitor.h"
-#include "../compiler/Compiler.h"
 #include "../symbolTable/SymbolTable.h"
-//
+// Top Level
 #include "topLevel/Enum.h"
 #include "topLevel/Function.h"
-//
+// Expressions
 #include "expressions/When.h"
 #include "expressions/WhenCondition.h"
 #include "expressions/BinaryOperation.h"
-//
+#include "expressions/StaticRef.h"
+// Statements
 #include "statements/IfStatement.h"
 #include "statements/Return.h"
-//
-#include "../ast/expressions/StaticRef.h"
-#include "../ast/expressions/ConstructorCall.h"
-#include "../ast/expressions/VarReference.h"
+// AST
+#include "../ast/Expressions.h"
+#include "../ast/Statements.h"
 #include "../ast/Literals.h"
 
 class SemanticAnalysisVisitor : public Visitor {
@@ -53,9 +52,11 @@ public:
     }
 
     void Visit(class EnumValue* node) override {
+        AddSuccess(node->type);
     }
 
     void Visit(class EnumConstructor* node) override {
+        AddSuccess(node->returnType);
     }
 
     void Visit(class EnumParameter* node) override {
@@ -71,7 +72,7 @@ public:
             return;
         }
 
-        Compiler::getScopeManager().Add(node);
+        Scope::GetScope()->Add(node);
         AddSuccess();
     }
 
@@ -84,7 +85,7 @@ public:
     }
 
     void Visit(class VariableDeclaration* node) override {
-        if (Compiler::getScopeManager().HasVar(node->name)) {
+        if (Scope::GetScope()->Has(node->name)) {
             ReportError(ErrorCode::VARIABLE_ALREADY_DECLARED, {node->name}, node);
             return;
         }
@@ -105,7 +106,7 @@ public:
             }
 
             if (!resolvedType->isValueType)
-                // This is not a syntax error so we can continue.
+                // This is not a syntax error, so we can continue.
                 ReportError(
                     ErrorCode::VALUE_CANNOT_BE_NULL,
                     {
@@ -116,7 +117,7 @@ public:
                 );
         }
 
-        Compiler::getScopeManager().Add(node);
+        Scope::GetScope()->Add(node);
         AddSuccess(node->type);
     }
 
@@ -194,22 +195,49 @@ public:
     }
 
     void Visit(class VariableReference* node) override {
-        auto symbol = Compiler::getScopeManager().GetVar(node->name);
-        if (!symbol) {
-            ReportError(ErrorCode::VARIABLE_UNDECLARED, {node->name}, node);
-            return;
+        // Get the TypeReference first so that we can perform null checks.
+        std::shared_ptr<Symbol> symbol;
+        if (node->prev) {
+            // If there is a previous ChainableNode, get the type of whatever we resolved last,
+            // so we can look up the field on that type.
+            VisitorResult result;
+            if (!TryGetResult(result)) return;
+
+            auto prev = result.symbol;
+            if (!symbol) {
+                ReportError(ErrorCode::UNKNOWN_ERROR, {}, node);
+                return;
+            }
+
+            symbol = prev->GetField(node->name);
+            if (!symbol) {
+                ReportError(ErrorCode::TYPE_UNKNOWN_FIELD, {node->name, symbol->type->name}, node);
+                return;
+            }
+        } else {
+            // If there is no previous ChainableNode, we must be the left-most VarRef.
+            symbol = Scope::GetScope()->Get(node->name);
+            if (!symbol) {
+                ReportError(ErrorCode::VARIABLE_UNDECLARED, {node->name}, node);
+                return;
+            }
         }
 
         // We only want to check for the optional flag when we're accessing a child field.
         // This allows for `foo = null` to pass through fine
         // but will error for `foo.bar = null` (when foo: Foo?).
-        if (node->next && symbol->narrowedType->flags.Has(TypeFlag::OPTIONAL)) {
+        if (node->next && symbol->type->flags.Has(TypeFlag::OPTIONAL)) {
             ErrorManager::QueueHint("Check if the value is null or use optional chaining.", {});
             ReportError(ErrorCode::VALUE_POSSIBLY_NULL, {}, node);
             return;
         }
 
-        auto current = node->next;
+        // We add a result before processing the next node so that the next node can reference this symbol.
+        AddSuccess(symbol);
+        if (node->next)
+            node->next->Accept(this);
+
+        /*auto current = node->next;
         while (current) {
             auto field = symbol->GetField(current->name);
             if (!field) {
@@ -238,23 +266,32 @@ public:
             symbol = field;
         }
 
-        AddSuccess(symbol->narrowedType);
+        AddSuccess(symbol->narrowedType);*/
+    }
+
+    void Visit(ArrayRef* node) override {
+        VisitorResult result;
+        if (!TryGetResult(result)) return; // This should never happen.
+
+        auto symbol = result.symbol;
+        if (!symbol) {
+            ReportError(ErrorCode::UNKNOWN_ERROR, {}, node);
+            return;
+        }
+
+        auto field = symbol->GetField(node->name);
+        if (!field) {
+            ReportError(ErrorCode::OUT_OF_RANGE, {node->name}, node);
+            return;
+        }
+
+        AddSuccess(field);
+        if (node->next)
+            node->next->Accept(this);
     }
 
     void Visit(class StaticRef* node) override {
-        auto anEnum = SymbolTable::GetInstance()->Get<Enum>(node->name);
-        if (!anEnum) {
-            ReportError(ErrorCode::STATIC_REF_UNKNOWN, {node->name}, node);
-            return;
-        }
-
-        auto key = anEnum->GetField(node->next->name);
-        if (!key) {
-            ReportError(ErrorCode::ENUM_UNKNOWN_VALUE, {node->next->name, anEnum->name}, node->next);
-            return;
-        }
-
-        key->expression->Accept(this);
+        StaticRefAnalyzer(this, node).Analyze();
     }
 
     void Visit(class When* node) override {

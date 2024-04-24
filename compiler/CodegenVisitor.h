@@ -111,6 +111,9 @@ public:
         generateVariableReference(this, node);
     }
 
+    void Visit(ArrayRef* node) override {
+    }
+
     void Visit(StaticRef* node) override {
         generateStaticRef(this, node);
     }
@@ -156,4 +159,3 @@ public:
         AddSuccess(llvm::ConstantPointerNull::get(Compiler::getBuilder().getPtrTy()));
     }
 };
-

@@ -91,6 +91,9 @@ public:
     void Visit(class VariableReference* node) override {
     }
 
+    void Visit(class ArrayRef* node) override {
+    }
+
     void Visit(class StaticRef* node) override {
     }
 

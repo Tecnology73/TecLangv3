@@ -1,6 +1,7 @@
 #include "VariableReference.h"
 #include "FunctionCall.h"
 #include "StaticRef.h"
+#include "ArrayRef.h"
 #include "../../ast/StringInternTable.h"
 
 ChainableNode* parseChainable(Parser* parser) {
@@ -32,14 +33,20 @@ VariableReference* parseVariableReference(Parser* parser) {
         if (!next) return nullptr;
 
         next->prev = node;
-        if (auto varRef = dynamic_cast<VariableReference *>(next))
+        if (auto varRef = dynamic_cast<VariableReference*>(next))
             node->next = varRef;
-        else if (auto funcCall = dynamic_cast<FunctionCall *>(next))
+        else if (auto funcCall = dynamic_cast<FunctionCall*>(next))
             node->next = funcCall;
         else {
             parser->PrintSyntaxError("variable reference or statement call");
             return nullptr;
         }
+    } else if (parser->currentToken.is(Token::Type::OpenBracket)) {
+        auto next = parseArrayRef(parser);
+        if (!next) return nullptr;
+
+        next->prev = node;
+        node->next = dynamic_cast<ArrayRef*>(next);
     }
 
     return node;

@@ -18,11 +18,11 @@ void generateConstructorCall(Visitor* v, const ConstructorCall* node) {
     //  to the statement lookup and (somehow) get the TypeDefinition from the node.
     // This would allow us to do any type coercion (or just override the bits for an integer?).
     // Perhaps we could just have a `TypeDefinition::callFunction` that does all the work for us?
-    auto context = dynamic_cast<VarDeclarationCompilerContext *>(Compiler::getScopeManager().getContext());
-    std::vector<llvm::Value *> args = {
+    auto context = std::dynamic_pointer_cast<VarDeclarationCompilerContext>(Scope::GetContext());
+    std::vector<llvm::Value*> args = {
         context->var->alloc
     };
-    std::vector<TypeReference *> argTypes{
+    std::vector<TypeReference*> argTypes{
         context->var->type
     };
     for (const auto& item: node->arguments) {

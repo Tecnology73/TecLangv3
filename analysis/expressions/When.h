@@ -15,7 +15,7 @@ public:
 private:
     bool exhaustiveCaseCheck();
 
-    void inferReturnTypes(const WhenAnalysisContext* context);
+    void inferReturnTypes(std::shared_ptr<WhenAnalysisContext> context);
 
-    void reduceReturnTypes(std::set<TypeReference *>& types);
+    void reduceReturnTypes(std::set<TypeReference*>& types);
 };

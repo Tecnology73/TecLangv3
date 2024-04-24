@@ -3,6 +3,7 @@
 #include "../Context.h"
 #include "../../ast/statements/IfStatement.h"
 #include "../../compiler/Compiler.h"
+#include "../../scope/Scope.h"
 
 class IfStatementAnalysisContext : public Context {
 public:
@@ -22,17 +23,19 @@ public:
     }
 
     void handleReturn(Node* node, const TypeReference* type) override {
+        // TODO: Properly determine if all branches have returned.
         hasReturned = true;
         parent->handleReturn(node, type);
     }
 
     void narrowType(const ChainableNode* node, const TypeReference* type) const override {
-        auto fullName = node->GetText();
+        // TODO: Implement new type-narrowing system.
+        /*auto fullName = node->GetText();
         // Check to see if the full chain has already been cached.
-        auto symbol = Compiler::getScopeManager().GetVar(fullName);
+        auto symbol = Scope::GetScope()->Get(fullName);
         if (!symbol) {
             // Resolve the full chain.
-            symbol = Compiler::getScopeManager().GetVar(node->name);
+            symbol = Scope::GetScope()->Get(node->name);
 
             auto current = node->next;
             while (symbol && current) {
@@ -45,7 +48,7 @@ public:
             // Something's serious fucked up if we end up here...
             return;
 
-        Compiler::getScopeManager().Add(fullName, symbol->node, type);
+        Scope::GetScope()->Add(fullName, symbol->node, type);*/
     }
 
 public:

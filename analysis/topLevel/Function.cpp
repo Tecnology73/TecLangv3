@@ -1,7 +1,7 @@
 #include "Function.h"
-#include "../../compiler/Compiler.h"
 #include "../../compiler/TypeCoercion.h"
 #include "../../symbolTable/SymbolTable.h"
+#include "../../scope/Scope.h"
 
 void FunctionAnalyzer::Analyze() {
     if (node->isExternal)
@@ -13,10 +13,7 @@ void FunctionAnalyzer::Analyze() {
     }
 
     // Create a context
-    auto context = Compiler::getScopeManager().enter(
-        std::string(node->name),
-        new FunctionAnalysisContext(visitor, node)
-    );
+    auto [scope, context] = Scope::Enter<FunctionAnalysisContext>(visitor, node);
 
     // Visit all the parameters
     for (const auto& param: node->parameters | std::views::values) {
@@ -42,13 +39,12 @@ void FunctionAnalyzer::Analyze() {
         return;
 
     // Cleanup
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave(std::string(node->name));
+    scope->Leave();
 
     visitor->AddSuccess(node->returnType);
 }
 
-bool FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) {
+bool FunctionAnalyzer::inferReturnTypes(std::shared_ptr<FunctionAnalysisContext> context) {
     if (node->returnType)
         return true;
 
@@ -90,10 +86,10 @@ bool FunctionAnalyzer::inferReturnTypes(const FunctionAnalysisContext* context) 
 /// For example, if a bool & i8 are returned, the common type would be i8.
 /// The goal is to reduce the number of return types to 1.
 /// </summary>
-void FunctionAnalyzer::reduceReturnTypes(std::set<TypeReference *>& types) {
+void FunctionAnalyzer::reduceReturnTypes(std::set<TypeReference*>& types) {
     if (types.size() <= 1) return;
 
-    std::vector<TypeReference *> typesArray;
+    std::vector<TypeReference*> typesArray;
     typesArray.reserve(types.size());
     for (const auto& item: types)
         typesArray.emplace_back(item);

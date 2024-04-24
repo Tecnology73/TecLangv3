@@ -10,7 +10,7 @@ void EnumAnalyzer::Analyze() {
     int64_t largestValue = 0;
     for (const auto& item: node->fieldOrder) {
         const auto field = node->fields[item];
-        if (auto node = static_cast<Integer *>(field->expression)) {
+        if (auto node = static_cast<Integer*>(field->expression)) {
             largestValue = std::max(largestValue, node->value + 1);
             continue;
         }

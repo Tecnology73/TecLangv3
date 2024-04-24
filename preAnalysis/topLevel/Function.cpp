@@ -1,7 +1,7 @@
 #include "Function.h"
-#include "../../compiler/Compiler.h"
 #include "../../symbolTable/SymbolTable.h"
 #include "../../context/preAnalysis/FunctionContext.h"
+#include "../../scope/Scope.h"
 
 void analyseFunction(Visitor* visitor, Function* node) {
     if (node->analysisInfo) {
@@ -11,11 +11,11 @@ void analyseFunction(Visitor* visitor, Function* node) {
     }
 
     node->analysisInfo = new AnalysisInfo(node);
-    auto context = Compiler::getScopeManager().enter(node->name, new FunctionContext(visitor, node));
+    auto [scope, context] = Scope::Enter<FunctionContext>(visitor, node);
 
     while (const auto item = context->GetNextNode()) {
         item->Accept(visitor);
-        // We don't actually care about the result at this stage
+        // We don't actually care about the result at this stage,
         // but we still need to consume it.
         visitor->GetResult();
     }
@@ -31,16 +31,14 @@ void analyseFunction(Visitor* visitor, Function* node) {
 
             node->analysisInfo->possibleReturnTypes.clear();
         } else {
-            Compiler::getScopeManager().popContext();
-            Compiler::getScopeManager().leave(node->name);
+            scope->Leave();
 
             visitor->ReportError(ErrorCode::FUNCTION_MULTIPLE_RETURN_TYPES, {node->name}, node);
             return;
         }
     }
 
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave(node->name);
+    scope->Leave();
 
     visitor->AddSuccess();
 }

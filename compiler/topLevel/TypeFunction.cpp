@@ -1,11 +1,12 @@
 #include "TypeFunction.h"
 #include <llvm/IR/Function.h>
-
 #include "TypeBase.h"
 #include "../Compiler.h"
 #include "../TypeCoercion.h"
+#include "../../ast/topLevel/Function.h"
 #include "../../ast/StringInternTable.h"
 #include "../../context/compiler/FunctionCompilerContext.h"
+#include "../../scope/Scope.h"
 
 llvm::Function* compileDefaultConstructor(Visitor* visitor, TypeBase* type) {
     auto returnType = llvm::FunctionType::get(
@@ -25,7 +26,7 @@ llvm::Function* compileDefaultConstructor(Visitor* visitor, TypeBase* type) {
 
     // The instance is always passed in as the first argument.
     // This allows us to allocate memory for the instance
-    // differently (stack vs heap) based on it's lifetime.
+    // differently (stack vs heap) based on its lifetime.
     auto ptr = function->getArg(0);
     ptr->setName("this");
 
@@ -76,7 +77,7 @@ llvm::Function* compileConstructor(Visitor* visitor, Function* function, llvm::F
         return function->llvmFunction;
 
     // Generate the function signature.
-    std::vector<llvm::Type *> params = {};
+    std::vector<llvm::Type*> params = {};
     params.reserve(function->parameters.size());
     for (const auto& param: function->parameters | std::views::values) {
         auto paramType = TypeCompiler::compile(param->type);
@@ -101,7 +102,7 @@ llvm::Function* compileConstructor(Visitor* visitor, Function* function, llvm::F
     auto entry = llvm::BasicBlock::Create(Compiler::getContext(), "entry", func);
     Compiler::getBuilder().SetInsertPoint(entry);
 
-    Compiler::getScopeManager().enter("construct", new FunctionCompilerContext(visitor, function));
+    auto [scope, context] = Scope::Enter<FunctionCompilerContext>(visitor, function);
 
     // Call the default constructor.
     Compiler::getBuilder().CreateCall(defaultConstructor, {func->getArg(0)});
@@ -126,8 +127,7 @@ llvm::Function* compileConstructor(Visitor* visitor, Function* function, llvm::F
     Compiler::getBuilder().CreateRetVoid();
 
     // Cleanup.
-    Compiler::getScopeManager().popContext();
-    Compiler::getScopeManager().leave("construct");
+    scope->Leave();
 
     // Only set this once everything has successfully compiled.
     return function->llvmFunction = func;

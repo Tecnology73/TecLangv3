@@ -26,6 +26,7 @@ file(GLOB_RECURSE LEXER_SOURCES LIST_DIRECTORIES true lexer/*.h lexer/*.cpp)
 file(GLOB_RECURSE PARSER_SOURCES LIST_DIRECTORIES true parser/*.h parser/*.cpp)
 file(GLOB_RECURSE CONTEXT_SOURCES LIST_DIRECTORIES true context/*.h context/*.cpp)
 file(GLOB_RECURSE SYMBOL_TABLE_SOURCES LIST_DIRECTORIES true symbolTable/*.h symbolTable/*.cpp)
+file(GLOB_RECURSE SCOPE_SOURCES LIST_DIRECTORIES true scope/*.h scope/*.cpp)
 # Pipelines
 file(GLOB_RECURSE PRE_ANALYSIS_SOURCES LIST_DIRECTORIES true preAnalysis/*.h preAnalysis/*.cpp)
 file(GLOB_RECURSE ANALYSIS_SOURCES LIST_DIRECTORIES true analysis/*.h analysis/*.cpp)
@@ -41,6 +42,7 @@ add_executable(
         ${PARSER_SOURCES}
         ${CONTEXT_SOURCES}
         ${SYMBOL_TABLE_SOURCES}
+        ${SCOPE_SOURCES}
         # Pipelines
         ${PRE_ANALYSIS_SOURCES}
         ${ANALYSIS_SOURCES}

@@ -2,6 +2,7 @@
 
 #include "../Context.h"
 #include "../../compiler/Compiler.h"
+#include "../../ast/topLevel/Function.h"
 
 class FunctionCompilerContext : public Context {
 public:

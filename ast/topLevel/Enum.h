@@ -1,7 +1,9 @@
 #pragma once
 
 #include "TypeBase.h"
+#include "Function.h"
 #include "../Visitor.h"
+#include "../StringInternTable.h"
 
 class Enum : public TypeBase {
 public:
@@ -12,6 +14,8 @@ public:
     }
 
     static Enum* Create(const Token& token, const std::string& name);
+
+    TypeReference* CreateConstructorType(EnumConstructor* constructor) const;
 
 public:
     TypeReference* underlyingType = nullptr;
@@ -26,16 +30,13 @@ public:
     }
 };
 
-class EnumConstructor : public EnumValue {
+class EnumConstructor : public Function {
 public:
-    using EnumValue::EnumValue;
+    using Function::Function;
 
     void Accept(Visitor* visitor) override {
         visitor->Visit(this);
     }
-
-public:
-    std::vector<class EnumParameter *> parameters;
 };
 
 class EnumParameter : public Node {
